@@ -242,6 +242,7 @@ jobs:
             -p appDnsZone=${{ env.APP_DNS_ZONE }} \
             -p acrName=${{ env.ACR_NAME }} \
             -p azureStorageName=${{ env.AZ_STORAGE_NAME }}  \
+            -p blobContainerName=${{ env.AZ_BLOB_CONTAINER_NAME }} \
             -p deployToVNet=${{ env.DEPLOY_TO_VNET }}
 
           vetsServicePrincipalId=$(az deployment group show --name aks-identities -g ${{ env.RG_APP }} --query properties.outputs.vetsServicePrincipalId.value -o tsv)
