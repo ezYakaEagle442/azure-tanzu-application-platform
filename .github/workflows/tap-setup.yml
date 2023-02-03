@@ -1,6 +1,4 @@
-# This workflow will deploy all the Azure services, including AKS, KV & secrets, MYSQL (eventually with a Firewall rule to allow your workstation IP)
-# eventually if DEPLOY_TO_VNET is set to true : also VNet, AKS deployed to VNet, private DNS-Zone, client VM deployed to the VNet
-
+# This workflow will install TAP on AKS
 name: Install TAP on AKS
 
 env:
@@ -37,7 +35,7 @@ env:
   AKS_SUBNET_CIDR: 172.16.1.0/24
   AKS_SUBNET_NAME: snet-aks
 
-  DNS_PREFIX: appinnojava # customize this
+  DNS_PREFIX: tanzu-tap42 # customize this
   ING_NS: ingress # Namespace to use for the Ingress Controller
   AKS_IDENTITY_NAME: id-tap-cluster-dev-westeurope-101 # customize this
 
