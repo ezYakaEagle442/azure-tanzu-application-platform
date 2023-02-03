@@ -35,6 +35,13 @@ env:
   MYSQL_CHARACTER_SET: utf8
   MYSQL_PORT: 3306
 
+  PG_SERVER_NAME: tap4242
+  PG_DB_NAME: tap4242
+  PG_ADM_USR: pg_adm
+  PG_TIME_ZONE: Europe/Paris
+  PG_CHARACTER_SET: utf8
+  PG_PORT: 5432
+
   DEPLOY_TO_VNET: false
 
   SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT: https://kv-tap42.vault.azure.net/
@@ -62,6 +69,7 @@ env:
 
   TANZU_NET_USER: ${{ secrets.TANZU_NET_USER }}
   TANZU_NET_PASSWORD: ${{ secrets.TANZU_NET_PASSWORD }}
+  PG_ADM_PWD: ${{ secrets.PG_ADM_PWD }}
 
   SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
   SPRING_CLOUD_AZURE_TENANT_ID: ${{ secrets.SPRING_CLOUD_AZURE_TENANT_ID }}
@@ -239,6 +247,8 @@ jobs:
             -p aksSubnetName=${{ env.AKS_SUBNET_NAME }} \
             -p mySQLServerName=${{ env.MYSQL_SERVER_NAME }} \
             -p mySQLadministratorLoginPassword=${{ env.SPRING_DATASOURCE_PASSWORD }} \
+            -p postgreSQLServerName=${{ env.PG_SERVER_NAME }} \
+            -p postgreSQLadministratorLoginPassword=${{ env.PG_ADM_PWD }} \            
             -p appDnsZone=${{ env.APP_DNS_ZONE }} \
             -p acrName=${{ env.ACR_NAME }} \
             -p azureStorageName=${{ env.AZ_STORAGE_NAME }}  \

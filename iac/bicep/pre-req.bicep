@@ -34,7 +34,17 @@ param mySQLadministratorLoginPassword string
 @description('The MySQL server name')
 param mySQLServerName string = appName
 
-@description('Should a MySQL Firewall be set to allow client workstation for local Dev/Test only')
+@description('The PostgreSQL DB Admin Login.')
+param postgreSQLadministratorLogin string = 'pg_adm'
+
+@secure()
+@description('The PostgreSQL DB Admin Password.')
+param postgreSQLadministratorLoginPassword string
+
+@description('The PostgreSQL server name')
+param postgreSQLServerName string = appName
+
+@description('Should a DB Firewall be set to allow client workstation for local Dev/Test only')
 param setFwRuleClient bool = false
 
 @description('The Azure Active Directory tenant ID that should be used for authenticating requests to the Key Vault.')
@@ -151,6 +161,20 @@ module mysql './modules/mysql/mysql.bicep' = {
     // The default number of managed outbound public IPs is 1.
     // https://learn.microsoft.com/en-us/azure/aks/load-balancer-standard#scale-the-number-of-managed-outbound-public-ips
     mySQLServerName: mySQLServerName
+    setFwRuleClient: setFwRuleClient
+  }
+}
+
+module postgresqldb './modules/pg/postgresql.bicep' = {
+  name: 'postgresqldb'
+  params: {
+    appName: appName
+    location: location
+    postgreSQLadministratorLogin: postgreSQLadministratorLogin 
+    postgreSQLadministratorLoginPassword: postgreSQLadministratorLoginPassword
+    // The default number of managed outbound public IPs is 1.
+    // https://learn.microsoft.com/en-us/azure/aks/load-balancer-standard#scale-the-number-of-managed-outbound-public-ips
+    postgreSQLServerName: postgreSQLServerName
     setFwRuleClient: setFwRuleClient
   }
 }

@@ -1,0 +1,74 @@
+# This workflow will Load SQL scripts to DB
+name: Load SQL scripts to DB
+
+env:
+  APP_NAME: tap42
+  LOCATION: westeurope
+
+  RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, postgresql, etc.
+  
+  PG_SERVER_NAME: tap4242
+  PG_DB_NAME: tap4242
+  PG_ADM_USR: pg_adm
+  PG_TIME_ZONE: Europe/Paris
+  PG_CHARACTER_SET: utf8
+  PG_PORT: 5432
+
+  # ==== Secrets ====
+
+  PG_ADM_PWD: ${{ secrets.PG_ADM_PWD }}
+  credentials: ${{ secrets.AZURE_CREDENTIALS }}
+
+  # ==== Versions ====
+  AZ_CLI_VERSION: 2.42.0
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+
+  sql-load:
+    runs-on: ubuntu-latest
+            
+    steps:
+    - name: Login with GHA Runner SP
+      uses: azure/login@v1.4.6 # fails https://github.com/marketplace/actions/azure-login
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }} # ${{ env.credentials }}
+
+    - name: Checkout
+      uses: actions/checkout@v3 # https://github.com/actions/checkout
+
+    - name: Configure DB
+      run: |
+            az postgres flexible-server parameter set --name time_zone --value ${{ env.PG_TIME_ZONE }} \
+            -s ${{ env.PG_SERVER_NAME }} -g ${{ env.RG_APP }}
+
+            # https://www.postgresql.org/docs/current/multibyte.html
+            az postgres flexible-server parameter set --name character_set_server --value ${{ env.PG_CHARACTER_SET }} \
+            -g ${{ env.RG_APP }} -s ${{ env.PG_SERVER_NAME }}
+
+            LOCAL_IP=$(curl whatismyip.akamai.com)
+            az postgres flexible-server firewall-rule create -g ${{ env.RG_APP }} -n ${{ env.PG_SERVER_NAME }} --rule-name gha \
+            --start-ip-address $LOCAL_IP --end-ip-address $LOCAL_IP
+
+            # az postgres flexible-server execute -n ${{ env.PG_SERVER_NAME }}.postgresql.database.azure.com -u ${{ env.PG_ADM_USR }} -p ${{ env.PG_ADM_PWD }} -d ${{ env.PG_DB_NAME }} -f "./test.sql"
+
+      shell: bash
+
+    - name: Disable local IP access to the DB
+      if: ${{ always() }}
+      run: |
+            az postgres flexible-server firewall-rule delete -g ${{ env.RG_APP }} -n ${{ env.PG_SERVER_NAME }} --rule-name gha --yes
+      shell: bash
+
+    # security hardening for self-hosted agents: https://github.com/marketplace/actions/azure-login
+    # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#hardening-for-self-hosted-runners
+    # if the runner is self-hosted which is not github provided it is recommended to manually logout at the end of the workflow as shown below.
+    - name: Azure Logout security hardening
+      run: |
+          az logout
+          az cache purge
+          az account clear
+      shell: bash
