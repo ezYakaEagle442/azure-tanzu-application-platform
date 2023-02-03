@@ -5,7 +5,7 @@ setenv.*
 .env
 tanzu/cli/*
 tanzu/tanzu-framework-linux-amd64-v0.25.4.1.tar
-tanzu-cluster-essentials-linux-amd64-1.4.0.tgz
+tanzu/tanzu-cluster-essentials-linux-amd64-1.4.0.tgz
 
 # Maven
 target/
