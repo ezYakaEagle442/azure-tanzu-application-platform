@@ -105,7 +105,9 @@ jobs:
         # host myip.opendns.com resolver1.opendns.com | grep "myip.opendns.com has address"
         # myip=$(curl icanhazip.com)
         # myip=$(dig +short myip.opendns.com @resolver1.opendns.com)      
-        echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV     
+        echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
+
+        az version
       shell: bash
 
     - name: Login with GHA Runner SP
@@ -187,14 +189,14 @@ jobs:
           # woraround using --file to fix this error : Unable to parse parameter: OPENSSH
           echo "${{ env.SSH_PRV_KEY }}" > ${{ env.SSH_KEY }}
           ls -al ${{ env.SSH_KEY }}
-          az keyvault secret set --name "SSH-PRV-KEY" --vault-name ${{ env.KV_NAME }} -g ${{ env.RG_KV }} --file ${{ env.SSH_KEY }}
+          az keyvault secret set --name "SSH-PRV-KEY" --vault-name ${{ env.KV_NAME }} --file ${{ env.SSH_KEY }}
       shell: bash
 
     - name: Create SSH-PUB-KEY secret in Azure Key Vault
       run: |
           echo "${{ secrets.SSH_PUB_KEY }}" > ${{ env.SSH_KEY }}.pub
           ls -al ${{ env.SSH_KEY }}.pub
-          az keyvault secret set --name "SSH-PUB-KEY" --vault-name ${{ env.KV_NAME }} -g ${{ env.RG_KV }} --file ${{ env.SSH_KEY }}.pub
+          az keyvault secret set --name "SSH-PUB-KEY" --vault-name ${{ env.KV_NAME }} --file ${{ env.SSH_KEY }}.pub
       shell: bash
 
     - name: Disable local IP access to the Key Vault
@@ -210,7 +212,8 @@ jobs:
 
     - name: Set Base environment variables
       run: |
-        echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV     
+        echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
+        az version
       shell: bash
 
     - name: Login with GHA Runner SP
