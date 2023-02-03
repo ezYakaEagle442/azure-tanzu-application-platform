@@ -13,7 +13,7 @@ env:
   AZURE_DNS_LABEL_NAME: tap
 
   PETCLINIC_NAMESPACE: petclinic
-  AKS_CLUSTER_NAME: aks-petcliaks
+  AKS_CLUSTER_NAME: aks-tap42
   VNET_NAME: vnet-aks
 
   DNS_PREFIX: appinnojava # customize this
