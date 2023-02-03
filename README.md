@@ -153,7 +153,8 @@ az ad app show --id $SPN_APP_ID
 az ad app list --show-mine --query "[?displayName=='${SPN_APP_NAME}'].{objectId:id}"
 
 # This is the unique ID of the Service Principal object associated with this application.
-SPN_OBJECT_ID=$(az ad app show --id $SPN_APP_ID --query id -o tsv)
+# SPN_OBJECT_ID=$(az ad app show --id $SPN_APP_ID --query id -o tsv)
+SPN_OBJECT_ID==$(az ad sp list --all --query "[?appDisplayName=='${SPN_APP_NAME}'].{id:id}" --output tsv)
 
 # This is the unique ID of the Service Principal object associated with this application.
 az ad sp show --id $SPN_OBJECT_ID
