@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: admin-server
+  #namespace: staging
+spec:
+  selector:
+      matchLabels:
+        app: admin-server
+  replicas: 3
+  template:
+      metadata:
+        labels:
+            app: admin-server
+      spec:
+        containers:
+        - name: admin-server
+          image: ${CONTAINER_REGISTRY}.azurecr.io/${REPO}/admin-server:${IMAGE_TAG}
+          imagePullPolicy: Always
+          startupProbe:
+            initialDelaySeconds: 30
+            timeoutSeconds: 30
+            failureThreshold: 6
+            successThreshold: 1
+            periodSeconds: 60
+            httpGet:
+              path: "/manage/health"
+              port: 8081 
+          livenessProbe: # https://docs.spring.io/spring-boot/docs/2.6.3/reference/html/actuator.html#actuator.endpoints.kubernetes-probes
+            initialDelaySeconds: 30
+            timeoutSeconds: 30
+            failureThreshold: 5
+            successThreshold: 1
+            periodSeconds: 60
+            httpGet:
+              # https://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
+              # management.endpoints.web.base-path=/actuator
+              # https://github.com/spring-projects/spring-petclinic/blob/master/src/main/resources/application.properties
+              path: /manage/health/liveness # /actuator
+              port: 8081
+              scheme: HTTP              
+          readinessProbe:
+            initialDelaySeconds: 30
+            timeoutSeconds: 30
+            failureThreshold: 5
+            successThreshold: 1
+            periodSeconds: 60
+            httpGet:
+              path: "/manage/health/readiness"
+              port: 8081           
+            #tcpSocket:
+            #  port: 8081
+          resources:
+            # https://github.com/kubernetes/kubernetes/issues/63396
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          ports:
+          - containerPort: 9090
+            name: server
+          - containerPort: 8081
+            name: management

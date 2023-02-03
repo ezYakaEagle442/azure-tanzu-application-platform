@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ing-petclinic-customers
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: $ING_HOST
+    http:
+      paths:
+      - path: /customers-service
+        pathType: "Prefix"      
+        backend:
+          service:
+            name: customers-service
+            port: 
+              number: 80                      
+      - path: /manage/health
+        pathType: "Prefix"
+        backend:
+          service:
+            name: customers-service
+            port: 
+              number: 8081
+      - path: /manage/info
+        pathType: "Prefix"
+        backend:
+          service:
+            name: customers-service
+            port: 
+              number: 8081

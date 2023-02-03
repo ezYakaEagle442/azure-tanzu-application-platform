@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ui-service
+  #namespace: staging
+spec:
+  selector:
+      matchLabels:
+        app: ui-service
+  replicas: 1
+  template:
+      metadata:
+        labels:
+            app: ui-service
+      spec:
+        containers:
+        - name: ui-service
+          image: ${CONTAINER_REGISTRY}.azurecr.io/${REPO}/api-gateway:${IMAGE_TAG}
+          imagePullPolicy: Always
+          startupProbe:
+            initialDelaySeconds: 10
+            timeoutSeconds: 30
+            failureThreshold: 5
+            successThreshold: 1
+            periodSeconds: 30
+            httpGet:
+              path: "/manage/health"
+              port: 8081           
+          livenessProbe: # https://docs.spring.io/spring-boot/docs/2.6.3/reference/html/actuator.html#actuator.endpoints.kubernetes-probes
+            initialDelaySeconds: 60
+            timeoutSeconds: 30
+            httpGet:
+              # https://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
+              # management.endpoints.web.base-path=/actuator
+              # https://github.com/spring-projects/spring-petclinic/blob/master/src/main/resources/application.properties
+              path: /manage/health/liveness # /actuator
+              port: 8081
+              scheme: HTTP
+          readinessProbe:
+            initialDelaySeconds: 10
+            timeoutSeconds: 30
+            failureThreshold: 5
+            successThreshold: 1
+            periodSeconds: 30
+            httpGet:
+              path: "/manage/health/readiness"
+              port: 8081           
+            #tcpSocket:
+            #  port: 8081
+          resources:
+            # https://github.com/kubernetes/kubernetes/issues/63396
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          ports:
+          - containerPort: 8080
+            name: server
+          - containerPort: 8081
+            name: management

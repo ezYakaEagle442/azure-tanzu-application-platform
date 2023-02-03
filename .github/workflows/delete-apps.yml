@@ -1,0 +1,91 @@
+# This workflow will delete all the ACA Apps
+name: Delete Apps
+
+env:
+  APP_NAME: tap42
+  TAP_NAMESPACE: tanzu
+  PETCLINIC_NAMESPACE: petclinic
+  LOCATION: westeurope # francecentral
+  
+  RG_KV: rg-kv-tanzu101 # RG where to deploy KV
+  RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
+  AKS_CLUSTER_NAME: aks-tap42 #aks-<App Name>-<Environment>-<###>
+
+  # https://github.com/Azure/actions-workflow-samples/blob/master/assets/create-secrets-for-GitHub-workflows.md#consume-secrets-in-your-workflow
+  # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#example-using-secrets
+
+  # ==== Secrets ====
+  credentials: ${{ secrets.AZURE_CREDENTIALS }}
+
+  # ==== Versions ====
+  AZ_CLI_VERSION: 2.42.0
+
+on:
+  workflow_dispatch:
+
+jobs:
+  delete-apps:
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Azure Login
+      uses: azure/login@v1 # https://github.com/marketplace/actions/azure-login
+      with:
+        creds: ${{ env.credentials }}
+
+    # https://github.com/marketplace/actions/azure-kubernetes-set-context
+    - uses: azure/aks-set-context@v3
+      with:
+        resource-group: ${{ env.RG_APP }}
+        cluster-name: ${{ env.AKS_CLUSTER_NAME }}
+
+    - name: Delete Apps
+      run: |
+          az config set extension.use_dynamic_install=yes_without_prompt
+
+          # az aks list -o table
+          # az aks get-credentials --name ${{ env.AKS_CLUSTER_NAME }} -g ${{ env.RG_APP }}
+          az aks show -n ${{ env.AKS_CLUSTER_NAME }} -g ${{ env.RG_APP }}
+          kubectl cluster-info
+          # kubectl config view --minify
+          kubectl config get-contexts
+
+          #aks_api_server_url=$(az aks show -n ${{ env.AKS_CLUSTER_NAME }} -g ${{ env.RG_APP }} --query 'fqdn' -o tsv)
+          #echo "AKS API server URL: " $aks_api_server_url
+
+          kubectl get deploy,po -n ${{ env.PETCLINIC_NAMESPACE }}
+          kubectl get po -o=custom-columns=':metadata.name' -n ${{ env.PETCLINIC_NAMESPACE }}
+
+          for pod in $(kubectl get po -n ${{ env.PETCLINIC_NAMESPACE }} -o=custom-columns=:.metadata.name)
+          do
+            if [[ "$pod"=~"^$service*" ]]
+              then
+                echo "Verifying Pod $pod"
+                containerName=$(kubectl get  po $pod -n ${{ env.PETCLINIC_NAMESPACE }} -o=jsonpath={..containers[1].name})
+                echo "Verifying container $containerName"
+                # kubectl logs $pod -c $containerName -n ${{ env.PETCLINIC_NAMESPACE }} | grep -i "Error"
+            fi
+          done
+
+          for dp in $(kubectl get deploy -n ${{ env.PETCLINIC_NAMESPACE }} -o=custom-columns=:.metadata.name)
+          do
+            if [[ "$dp"=~"^$service*" ]]
+              then
+                echo "About to delete Deployment $dp"
+                kubectl delete deployment $dp -n ${{ env.PETCLINIC_NAMESPACE }}
+            fi
+          done
+      shell: bash
+
+    # security hardening for self-hosted agents: https://github.com/marketplace/actions/azure-login
+    # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#hardening-for-self-hosted-runners
+    # if the runner is self-hosted which is not github provided it is recommended to manually logout at the end of the workflow as shown below.
+    - name: Azure Logout security hardening
+      uses: azure/CLI@v1
+      with:
+        azcliversion: ${{ env.AZ_CLI_VERSION }}
+        inlineScript: |
+          az logout
+          az cache purge
+          az account clear

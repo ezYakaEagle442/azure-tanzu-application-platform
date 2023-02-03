@@ -1,0 +1,30 @@
+prv/*
+deploy/*
+cnf/*
+setenv.*
+.env
+tanzu/cli/*
+tanzu/tanzu-framework-linux-amd64-v0.25.4.1.tar
+tanzu-cluster-essentials-linux-amd64-1.4.0.tgz
+
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Jenv
+.java-version
+
+# Eclipse
+.settings/
+.classpath
+.project
+
+# IntelliJ IDEA
+.idea
+*.iml
+
+# Visual Studio Code
+.factorypath
+
+# Branch switching
+generated/

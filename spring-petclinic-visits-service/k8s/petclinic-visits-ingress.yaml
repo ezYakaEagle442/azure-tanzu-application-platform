@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ing-petclinic-visits
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: $ING_HOST
+    http:
+      paths:
+      - path: /visits-service
+        pathType: "Prefix"
+        backend:
+          service:
+            name: visits-service
+            port: 
+              number: 80

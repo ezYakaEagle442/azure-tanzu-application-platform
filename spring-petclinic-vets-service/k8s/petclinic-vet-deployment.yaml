@@ -1,0 +1,139 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vets-service
+  #namespace: staging
+spec:
+  selector:
+      matchLabels:
+        app: vets-service
+  replicas: 1
+  template:
+      metadata:
+        labels:
+            app: vets-service
+            azure.workload.identity/use: "true"
+      spec:
+        serviceAccountName: sa-aad-wi-vets
+        initContainers:
+        - name: init-networking
+          image: mcr.microsoft.com/oss/azure/workload-identity/proxy-init:v${AAD_WI_VERSION}
+          securityContext:
+            capabilities:
+              add:
+              - NET_ADMIN
+              drop:
+              - ALL
+            privileged: true
+            runAsUser: 0
+          env:
+          - name: PROXY_PORT
+            value: "8008"      
+        containers:
+        - name: proxy
+          image: mcr.microsoft.com/oss/azure/workload-identity/proxy:v${AAD_WI_VERSION}
+          resources:
+            requests:
+              memory: "180Mi"
+              cpu: "100m"
+            limits:
+              memory: "360Mi"
+              cpu: "300m"          
+          ports:
+          - containerPort: 8008
+        - name: vets-service
+          image: ${CONTAINER_REGISTRY}.azurecr.io/${REPO}/vets-service:${IMAGE_TAG}
+          imagePullPolicy: Always
+          env:
+          - name: "CONFIG_SERVER_URL"
+            valueFrom:
+              configMapKeyRef:
+                name: config-server
+                key: CONFIG_SERVER_URL
+          - name: "SPRING_CLOUD_AZURE_TENANT_ID"
+            valueFrom:
+              configMapKeyRef:
+                name: springcloudazure
+                key: SPRING_CLOUD_AZURE_TENANT_ID
+          - name: "SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT"
+            valueFrom:
+              configMapKeyRef:
+                name: springcloudazure
+                key: SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT
+          - name: "VETS_SVC_APP_IDENTITY_CLIENT_ID"
+            valueFrom:
+              configMapKeyRef:
+                name: springcloudazure
+                key: VETS_SVC_APP_IDENTITY_CLIENT_ID
+          - name: "APPLICATIONINSIGHTS_CONNECTION_STRING"
+            valueFrom:
+              configMapKeyRef:
+                name: appins
+                key: APPLICATIONINSIGHTS_CONNECTION_STRING
+          - name: "APPLICATIONINSIGHTS_CONFIGURATION_FILE"
+            valueFrom:
+              configMapKeyRef:
+                name: appins
+                key: APPLICATIONINSIGHTS_CONFIGURATION_FILE
+          - name: "SPRING_PROFILES_ACTIVE"
+            value: docker,mysql,azure
+          startupProbe:
+            initialDelaySeconds: 30
+            timeoutSeconds: 30
+            failureThreshold: 6
+            successThreshold: 1
+            periodSeconds: 60
+            httpGet:
+              path: "/manage/health"
+              port: 8081           
+          livenessProbe: # https://docs.spring.io/spring-boot/docs/2.6.3/reference/html/actuator.html#actuator.endpoints.kubernetes-probes
+            initialDelaySeconds: 10
+            timeoutSeconds: 30
+            failureThreshold: 5
+            successThreshold: 1
+            periodSeconds: 30
+            httpGet:
+              # https://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
+              # management.endpoints.web.base-path=/actuator
+              # https://github.com/spring-projects/spring-petclinic/blob/master/src/main/resources/application.properties
+              path: /manage/health/liveness # /actuator
+              port: 8081
+              scheme: HTTP
+          readinessProbe:
+            initialDelaySeconds: 10
+            timeoutSeconds: 30
+            failureThreshold: 5
+            successThreshold: 1
+            periodSeconds: 30
+            httpGet:
+              path: "/manage/health/readiness"
+              port: 8081           
+            #tcpSocket:
+            #  port: 8081
+          resources:
+            # https://github.com/kubernetes/kubernetes/issues/63396
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          ports:
+          - containerPort: 8080
+            name: server
+          - containerPort: 8081
+            name: management
+          volumeMounts:
+          - name: secrets-store-inline
+            mountPath: "/mnt/secrets-store"
+            readOnly: true            
+        # https://learn.microsoft.com/en-us/azure/aks/csi-secrets-store-identity-access
+        # https://azure.github.io/secrets-store-csi-driver-provider-azure/docs/getting-started/usage/
+        # https://github.com/Azure/secrets-store-csi-driver-provider-azure/blob/master/examples/keyvault-secrets/v1alpha1_secretproviderclass_secrets.yaml
+        volumes:
+          - name: secrets-store-inline
+            csi:
+              driver: secrets-store.csi.k8s.io
+              readOnly: true
+              volumeAttributes:
+                secretProviderClass: "azure-kv-wi-vets"            

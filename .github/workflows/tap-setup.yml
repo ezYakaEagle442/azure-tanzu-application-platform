@@ -1,0 +1,265 @@
+# This workflow will deploy all the Azure services, including AKS, KV & secrets, MYSQL (eventually with a Firewall rule to allow your workstation IP)
+# eventually if DEPLOY_TO_VNET is set to true : also VNet, AKS deployed to VNet, private DNS-Zone, client VM deployed to the VNet
+
+name: Install TAP on AKS
+
+env:
+  APP_NAME: tap42
+  LOCATION: westeurope # francecentral
+  RG_KV: rg-kv-tanzu101 # RG where to deploy KV
+  RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
+  
+  ACR_NAME: tanzu42 # customize this
+  DNS_ZONE: cloudapp.azure.com
+  APP_DNS_ZONE: tap.westeurope.cloudapp.azure.com
+  CUSTOM_DNS: javaonazurehandsonlabs.com
+  AZURE_DNS_LABEL_NAME: petclinic
+
+  TANZU_INSTALL_DIR: ../../tanzu
+  TANZU_CLI_VERSION: v0.25.4.1
+  DOWNLOADED-CLUSTER-ESSENTIALS-BUNDLE: ../../tanzu/tanzu-cluster-essentials-linux-amd64-1.4.0.tgz
+  TAP_VERSION_NUMBER: 1.4.0
+  TANZU_REGISTRY: registry.tanzu.vmware.com
+
+  AZURE_CONTAINER_REGISTRY: tanzu42 # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
+  REGISTRY_URL: tanzu42.azurecr.io  # set this to the URL of your registry
+  REPOSITORY: tap                  # set this to your ACR repository
+
+  TAP_NAMESPACE: tanzu
+  DEV_NAMESPACE: tap-dev
+  TAP_INSTALL_NAMESPACE: tap-install                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+  KAPP_NAMESPACE: kapp-controller
+  AKS_CLUSTER_NAME: aks-tap42
+  CONTEXT_NAME: aks-tap42
+
+  VNET_NAME: vnet-aks
+  VNET_CIDR: 172.16.0.0/16
+  AKS_SUBNET_CIDR: 172.16.1.0/24
+  AKS_SUBNET_NAME: snet-aks
+
+  DNS_PREFIX: appinnojava # customize this
+  ING_NS: ingress # Namespace to use for the Ingress Controller
+  AKS_IDENTITY_NAME: id-tap-cluster-dev-westeurope-101 # customize this
+
+  # APPLICATION INSIGHTS
+  APPLICATIONINSIGHTS_CONFIGURATION_FILE: BOOT-INF/classes/applicationinsights.json
+
+  # ==== Identities ====:
+ 
+
+  SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT: https://kv-tap42.vault.azure.net/
+  KV_NAME: kv-tap42 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
+  SET_KV_ACCESS_POLICIES: false # let it to false
+
+  
+  # ==== APPS ====
+  CLOUD_PROVIDER_ENV: azure
+
+  # ==== Secrets ====
+
+  credentials: ${{ secrets.AZURE_CREDENTIALS }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+  TANZU_NET_USER: ${{ secrets.TANZU_NET_USER }}
+  TANZU_NET_PASSWORD: ${{ secrets.TANZU_NET_PASSWORD }}
+
+  # ==== Versions ====
+  DEPLOYMENT_VERSION: 2.6.13
+  AZ_CLI_VERSION: 2.42.0
+  JAVA_VERSION: 11
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+ 
+  install-tap:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set Base environment variables
+      run: |
+        echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
+        echo "GH_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV # "/github/workspace"
+
+        managed_rg=$(az aks show --resource-group ${{ env.RG_APP }} --name ${{ env.AKS_CLUSTER_NAME }} --query nodeResourceGroup -o tsv)
+        echo "CLUSTER_RESOURCE_GROUP:" $managed_rg
+        echo "managed_rg=$managed_rg" >> $GITHUB_ENV
+
+      shell: bash
+
+    - name: Display environment variables
+      run: |
+        echo "Checking GITHUB_ENV"
+        echo "LOCAL_IP=$LOCAL_IP"
+        echo "managed_rg=$managed_rg"
+        echo "GH_WORKSPACE=$GH_WORKSPACE"
+      shell: bash
+
+    - name: Login with GHA Runner SP
+      uses: azure/login@v1.4.6 # https://github.com/marketplace/actions/azure-login
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }} # ${{ env.credentials }}
+
+    - name: Checkout
+      uses: actions/checkout@v3 # https://github.com/actions/checkout
+
+    # https://github.com/Azure/aks-set-context/tree/releases/v1
+    - name: AKS Set Context
+      uses: azure/aks-set-context@v1
+      with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}' # Azure credentials
+          resource-group: ${{ env.RG_APP }} 
+          cluster-name: ${{ env.AKS_CLUSTER_NAME }}
+      id: akslogin
+
+    # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/prerequisites.html
+    # https://github.com/beeNotice/tanzu-tools/tree/main/tap
+
+    - name: Get Tanzu Application Platform GUI Blank Catalog
+      run: |
+
+      shell: bash
+
+    - name: Install CLI & Plugins
+      run: |
+            tar -xvf ${{ env.TANZU_INSTALL_DIR }}/tanzu-framework-linux-amd64-${{ env.TANZU_CLI_VERSION }}.tar -C ${{ env.TANZU_INSTALL_DIR }}
+            export TANZU_CLI_NO_INIT=true
+
+            cd ${{ env.TANZU_INSTALL_DIR }}
+            export VERSION=${{ env.TANZU_CLI_VERSION }}
+            install cli/core/$VERSION/tanzu-core-linux_amd64 /usr/local/bin/tanzu
+
+            tanzu version
+            tanzu plugin install --local cli all
+            tanzu plugin list
+
+      shell: bash
+
+    # https://docs.vmware.com/en/Cluster-Essentials-for-VMware-Tanzu/1.4/cluster-essentials/deploy.html
+    - name: Deploy Cluster Cluster Essentials
+      run: |
+            mkdir ./tanzu-cluster-essentials
+            tar -xvf ${{ env.TANZU_INSTALL_DIR }}/${{ env.DOWNLOADED-CLUSTER-ESSENTIALS-BUNDLE }} -C ./tanzu-cluster-essentials
+
+            # Ensure you are in the directory where you have downloaded DOWNLOADED-CLUSTER-ESSENTIALS-BUNDLE
+            mkdir tanzu-cluster-essentials
+            tar -xvf ${{ env.DOWNLOADED-CLUSTER-ESSENTIALS-BUNDLE }} -C tanzu-cluster-essentials
+
+            kubectl config get-contexts
+            kubectl config use-context ${{ env.CONTEXT_NAME }}
+            kubectl create namespace ${{ env.KAPP_NAMESPACE }}
+            kubectl create secret generic kapp-controller-config \
+              --namespace ${{ env.KAPP_NAMESPACE }} \
+              --from-file caCerts=ca.crt
+
+            export INSTALL_BUNDLE=${{ env.TANZU_REGISTRY}}/tanzu-cluster-essentials/cluster-essentials-bundle@sha256:5fd527dda8af0e4c25c427e5659559a2ff9b283f6655a335ae08357ff63b8e7f
+            export INSTALL_REGISTRY_HOSTNAME=${{ env.TANZU_REGISTRY}}
+            export INSTALL_REGISTRY_USERNAME=${{ env.TANZU_NET_USER }}
+            export INSTALL_REGISTRY_PASSWORD=${{ env.TANZU_NET_PASSWORD }}
+            cd ./tanzu-cluster-essentials
+            ./install.sh --yes
+
+            cp ./tanzu-cluster-essentials/kapp /usr/local/bin/kapp
+            cp ./tanzu-cluster-essentials/imgpkg /usr/local/bin/imgpkg
+
+      shell: bash
+
+    # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/install.html
+    - name: Relocate images to ACR
+      run: |
+            set -euo pipefail
+            access_token=$(az account get-access-token --query accessToken -o tsv)
+            refresh_token=$(curl https://${{ env.REGISTRY_URL }}/oauth2/exchange -v -d "grant_type=access_token&service=${{ env.REGISTRY_URL }}&access_token=$access_token" | jq -r .refresh_token)
+            docker login ${{ env.REGISTRY_URL }} -u 00000000-0000-0000-0000-000000000000 --password-stdin <<< "$refresh_token"
+            # az configure --defaults acr=${{ env.AZURE_CONTAINER_REGISTRY }}
+
+            docker login ${{ env.TANZU_REGISTRY}} -u ${{ env.TANZU_NET_USER }} -p ${{ env.TANZU_NET_PASSWORD }}
+
+            export INSTALL_REGISTRY_HOSTNAME=${{ env.REGISTRY_URL }}
+            export INSTALL_REGISTRY_USERNAME=00000000-0000-0000-0000-000000000000
+            export INSTALL_REGISTRY_PASSWORD="$refresh_token"
+
+            export TAP_VERSION=${{ env.TAP_VERSION_NUMBER }}
+            export INSTALL_REPO=${{ env.REPOSITORY }}  
+            
+            imgpkg tag list -i ${{ env.TANZU_REGISTRY}}/tanzu-application-platform/tap-packages | grep -v sha | sort -V
+            imgpkg copy -b ${{ env.TANZU_REGISTRY}}/tanzu-application-platform/tap-packages:${TAP_VERSION} --to-repo ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tap-packages
+
+            kubectl create ns ${{ env.TAP_INSTALL_NAMESPACE}}
+
+            tanzu secret registry add tap-registry \
+              --username ${INSTALL_REGISTRY_USERNAME} --password ${INSTALL_REGISTRY_PASSWORD} \
+              --server ${INSTALL_REGISTRY_HOSTNAME} \
+              --export-to-all-namespaces --yes --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
+
+            tanzu package repository add tanzu-tap-repository \
+              --url ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tap-packages:$TAP_VERSION \
+              --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
+
+            tanzu package repository get tanzu-tap-repository --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
+            tanzu package available list --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
+
+      shell: bash
+
+
+    # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/install.html#full-profile
+    # Create a tap-values.yaml 
+    - name: Install TAP profile
+      run: |
+            tanzu package available list tap.tanzu.vmware.com --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
+
+            mkdir ${{ env.TANZU_INSTALL_DIR }}/deploy
+            envsubst < ${{ env.TANZU_INSTALL_DIR }}/tap-values.yaml > ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yaml 
+
+            tanzu package install tap -p tap.tanzu.vmware.com -v $TAP_VERSION --values-file ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yaml -n ${{ env.TAP_INSTALL_NAMESPACE}}
+            tanzu package installed get tap -n ${{ env.TAP_INSTALL_NAMESPACE}}
+            tanzu package installed list -A
+
+            tanzu package available list buildservice.tanzu.vmware.com --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
+            imgpkg copy -b ${{ env.TANZU_REGISTRY}}/tanzu-application-platform/full-tbs-deps-package-repo:${TAP_VERSION} \
+              --to-repo ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tbs-full-deps
+
+            tanzu package repository add tbs-full-deps-repository \
+              --url ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tbs-full-deps:${TAP_VERSION} \
+              --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
+
+            tanzu package install full-tbs-deps -p full-tbs-deps.tanzu.vmware.com -v ${TAP_VERSION} -n ${{ env.TAP_INSTALL_NAMESPACE}}
+
+      shell: bash
+
+    # After installing the full profile on your cluster, you must set up developer namespaces. 
+    # Otherwise, creating a workload, a Knative service or other Tanzu Application Platform packages fails.
+    - name: Setup Developer namespaces
+      run: |
+            tanzu secret registry add tbs-registry-credentials --server REGISTRY-SERVER --username REGISTRY-USERNAME --password REGISTRY-PASSWORD --export-to-all-namespaces --yes --namespace tap-install
+            kubectl create namespace YOUR-NEW-DEVELOPER-NAMESPACE
+            kubectl label namespaces YOUR-NEW-DEVELOPER-NAMESPACE apps.tanzu.vmware.com/tap-ns=""
+            kubectl get secrets,serviceaccount,rolebinding,pods,workload,configmap -n YOUR-NEW-DEVELOPER-NAMESPACE
+
+      shell: bash
+
+    # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/namespace-provisioner-how-tos.html#control-desired-namespaces
+    - name: Configure GitOps
+      run: |
+            echo TODO ...
+
+      shell: bash
+
+    - name: Configure DNS
+      run: |
+            echo TODO
+      shell: bash
+
+
+  logout:
+    needs: [call-maven-build-workflow, call-maven-build-ui-workflow, deploy-iac, call-tap-setup-workflow]
+    runs-on: ubuntu-latest
+    steps:    
+    - name: Azure Logout security hardening
+      run: |
+          az logout
+          az cache purge
+          az account clear
+      shell: bash

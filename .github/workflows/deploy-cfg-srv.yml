@@ -1,0 +1,184 @@
+name: Deploy Config-Server
+
+env:
+  APP_NAME: tap42
+  LOCATION: westeurope # francecentral
+  RG_KV: rg-kv-tanzu101 # RG where to deploy KV
+  RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
+  
+  DEPLOY_TO_VNET: false
+
+  KV_NAME: kv-tap42 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
+  SET_KV_ACCESS_POLICIES: false # let it to false
+
+  DNS_ZONE: cloudapp.azure.com
+  APP_DNS_ZONE: tap.westeurope.cloudapp.azure.com
+  CUSTOM_DNS: javaonazurehandsonlabs.com
+  AZURE_DNS_LABEL_NAME: tap
+  
+  TAP_NAMESPACE: tanzu
+  PETCLINIC_NAMESPACE: petclinic
+  AKS_CLUSTER_NAME: aks-tap42
+  AZURE_CONTAINER_REGISTRY: tanzu42 # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
+  REGISTRY_URL: tanzu42.azurecr.io  # set this to the URL of your registry
+  REPOSITORY: tap                  # set this to your ACR repository
+
+  # ==== Azure storage to store Artifacts , values must be consistent with the ones in storage.bicep ====:
+  AZ_STORAGE_NAME : statapaks # customize this
+  AZ_BLOB_CONTAINER_NAME: statapaks-blob # customize this
+  # AZ_BLOB_SVC_NAME: default # MUST NOT BE MODIFIED
+  # https://stakspetcliaks.blob.core.windows.net/petcliaks-blob/spring-petclinic-vets-service-2.6.13.jar
+
+  # https://learn.microsoft.com/en-us/rest/api/storageservices/setting-timeouts-for-blob-service-operations
+  AZ_BLOB_MAX_CONNECTIONS: 5
+  AZ_BLOB_MAXSIZE_CONDITION: 104857600
+  AZ_BLOB_TIMEOUT: 600
+  
+  # ==== APPS ====
+  CLOUD_PROVIDER_ENV: azure
+  PRJ_PREFIX: spring-petclinic
+
+  API_GATEWAY: api-gateway
+  ADMIN_SERVER: admin-server
+  CUSTOMERS_SERVICE: customers-service
+  VETS_SERVICE: vets-service
+  VISITS_SERVICE: visits-service
+
+  CONFIG_SERVER: config-server
+  DISCOVERY_SERVER: discovery-server
+
+  # ==== Secrets ====
+  credentials: ${{ secrets.AZURE_CREDENTIALS }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+  SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT: ${{ secrets.SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT }}
+  SPRING_CLOUD_AZURE_TENANT_ID: ${{ secrets.SPRING_CLOUD_AZURE_TENANT_ID }}
+
+  # ==== Versions ====
+  DEPLOYMENT_VERSION: 2.6.13
+  AZ_CLI_VERSION: 2.40.0
+  JAVA_VERSION: 11
+  WI_VERSION: 0.15.0 # Azure AD Workload Identity version: https://github.com/Azure/azure-workload-identity/releases
+
+on:
+  workflow_call:
+    inputs: # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#onworkflow_callinputs
+      tag_id:
+        description: the Image Tag ID
+        required: true
+        type: string  
+  workflow_dispatch:
+    inputs: # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#onworkflow_dispatchinputs
+      tag_id:
+        description: the Image Tag ID
+        required: true
+        type: string
+
+jobs:
+  deploy-config-server:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Azure Login
+      uses: azure/login@v1.4.6 # https://github.com/marketplace/actions/azure-login
+      with:
+        creds: ${{ env.credentials }}
+
+    # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#environment-files
+    # /!\ IMPORTANT:  The step that creates or updates the environment variable does not have access to the new value, but all subsequent steps in a job will have access.
+    - name: Set Base environment variables
+      run: |
+        echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
+        
+        echo "CONFIG_SERVER_FOLDER=${{ env.PRJ_PREFIX }}-${{ env.CONFIG_SERVER }}" >> $GITHUB_ENV
+
+        echo "GH_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV # "/github/workspace"
+      shell: bash
+
+    - name: Display environment variables
+      run: |
+        echo "Checking GITHUB_ENV"
+        echo "LOCAL_IP=$LOCAL_IP"        
+        echo "CONFIG_SERVER_FOLDER=$CONFIG_SERVER_FOLDER"
+        echo "GH_WORKSPACE=$GH_WORKSPACE"
+      shell: bash
+
+    # https://github.com/Azure/aks-set-context/tree/releases/v1
+    - name: AKS Set Context
+      uses: azure/aks-set-context@v1
+      with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}' # Azure credentials
+          resource-group: ${{ env.RG_APP }} 
+          cluster-name: ${{ env.AKS_CLUSTER_NAME }}
+      id: akslogin
+
+    # https://github.com/marketplace/actions/helm-tool-installer
+
+    - name: Prepare Manifests to deploy Config-server
+      # with: # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepswith
+      run: |
+          echo "About to deploy the Config-Server ..." 
+          tag_id=${{ inputs.tag_id }}
+          echo "Image Build tag ID:"$tag_id
+
+          imageNameConfigServer="${{ env.REGISTRY_URL }}/${{ env.REPOSITORY }}/${{ env.CONFIG_SERVER }}:$tag_id"
+          echo "imageNameConfigServer="$imageNameConfigServer
+
+          managed_rg=$(az aks show --resource-group ${{ env.RG_APP }} --name ${{ env.AKS_CLUSTER_NAME }} --query nodeResourceGroup -o tsv)
+          echo "CLUSTER_RESOURCE_GROUP:" $managed_rg
+
+          # az aks get-credentials --name ${{ env.AKS_CLUSTER_NAME }} -g ${{ env.RG_APP }} --admin
+
+          export CONTAINER_REGISTRY=${{ env.AZURE_CONTAINER_REGISTRY }}
+          export REPO=${{ env.REPOSITORY }} 
+          export IMAGE_TAG=$tag_id
+          export DNS_LABEL=${{ env.AZURE_DNS_LABEL_NAME }}
+
+          export ING_HOST=${{ env.APP_DNS_ZONE }}
+          echo "INGRESS HOST " $ING_HOST
+
+          export AAD_WI_VERSION=${{ env.WI_VERSION }}
+          echo "AAD_WI_VERSION HOST " $AAD_WI_VERSION
+
+          mkdir $CONFIG_SERVER_FOLDER/k8s/deploy
+
+          echo "Cheking folder " $CONFIG_SERVER_FOLDER
+          ls -al $CONFIG_SERVER_FOLDER/k8s
+
+          envsubst < $CONFIG_SERVER_FOLDER/k8s/petclinic-config-server-cm.yaml > $CONFIG_SERVER_FOLDER/k8s/deploy/petclinic-config-server-cm.yaml
+          envsubst < $CONFIG_SERVER_FOLDER/k8s/petclinic-config-server-deployment.yaml > $CONFIG_SERVER_FOLDER/k8s/deploy/petclinic-config-server-deployment.yaml
+          envsubst < $CONFIG_SERVER_FOLDER/k8s/petclinic-config-server-ingress.yaml > $CONFIG_SERVER_FOLDER/k8s/deploy/petclinic-config-server-ingress.yaml 
+          envsubst < $CONFIG_SERVER_FOLDER/k8s/petclinic-config-server-srv-cluster-ip.yaml > $CONFIG_SERVER_FOLDER/k8s/deploy/petclinic-config-server-srv-cluster-ip.yaml 
+
+          echo "Cheking folder " $CONFIG_SERVER_FOLDER
+          ls -al $CONFIG_SERVER_FOLDER/k8s/deploy
+
+          set -euo pipefail
+          access_token=$(az account get-access-token --query accessToken -o tsv)
+          refresh_token=$(curl https://${{ env.REGISTRY_URL }}/oauth2/exchange -v -d "grant_type=access_token&service=${{ env.REGISTRY_URL }}&access_token=$access_token" | jq -r .refresh_token)
+          docker login ${{ env.REGISTRY_URL }} -u 00000000-0000-0000-0000-000000000000 --password-stdin <<< "$refresh_token"
+
+          az configure --defaults acr=${{ env.AZURE_CONTAINER_REGISTRY }}
+
+      shell: bash
+
+    - name: Deploy Manifests to AKS
+      uses: Azure/k8s-deploy@v4
+      with:
+        namespace: ${{ env.PETCLINIC_NAMESPACE }}
+        manifests: |
+            spring-petclinic-config-server/k8s/deploy
+
+    # security hardening for self-hosted agents: https://github.com/marketplace/actions/azure-login
+    # https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#hardening-for-self-hosted-runners
+    # if the runner is self-hosted which is not github provided it is recommended to manually logout at the end of the workflow as shown below.
+    - name: Azure Logout security hardening
+      run: |
+          az logout
+          az cache purge
+          az account clear
+      shell: bash

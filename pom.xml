@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- tip to verify the dependencies: mvn dependency:tree -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>2.7.8</version> <!-- /!\ Bug in Netty with Spring Boot 2.6.6, see https://github.com/netty/netty/issues/12343 -->
+    </parent>
+
+    <groupId>org.springframework.samples</groupId>
+    <artifactId>spring-petclinic-microservices</artifactId>
+    <version>2.6.13</version>
+    <name>${project.artifactId}</name>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>spring-petclinic-config-server</module>
+        <module>spring-petclinic-vets-service</module>
+        <module>spring-petclinic-customers-service</module>
+        <module>spring-petclinic-visits-service</module>
+        <module>spring-petclinic-api-gateway</module>
+    </modules>
+
+    <properties>
+
+        <spring.jmx.enabled>true</spring.jmx.enabled>
+        <!-- 
+            https://docs.spring.io/spring-boot/docs/2.7.3/reference/html/application-properties.html#application-properties.core.spring.jmx.enabled
+            https://learn.microsoft.com/en-us/azure/spring-apps/how-to-prepare-app-deployment?tabs=basic-standard-tier&pivots=programming-language-java
+            You must specify spring.jmx.enabled=true in your configuration property. Otherwise, metrics can't be visualized in the Azure portal.
+            
+            https://docs.spring.io/spring-cloud/docs/2021.0.4/reference/html/configprops.html
+            Don't specify spring.cloud.config.enabled=false in your bootstrap configuration. Otherwise, your application stops working with Config Server.
+            It is true by default
+        -->    
+        
+        <!-- 
+        https://github.com/Azure/azure-sdk-for-java/wiki/Spring-Versions-Mapping#which-version-of-spring-cloud-azure-should-i-use 
+        https://spring.io/projects/spring-cloud#adding-spring-cloud-to-an-existing-spring-boot-application 
+        2021.0.3 should be used, NOT 2022.0.0-M3
+        -->
+        <spring-cloud.version>2021.0.4</spring-cloud.version>
+        <spring-cloud-azure.version>4.5.0</spring-cloud-azure.version>
+        <spring.jmx.enabled>true</spring.jmx.enabled>
+
+        <!-- 
+        https://googlecloudplatform.github.io/spring-cloud-gcp/reference/html/index.html#compatibility-with-spring-project-versions
+        https://github.com/GoogleCloudPlatform/spring-cloud-gcp
+        -->
+        <spring-cloud-gcp.version>3.4.0</spring-cloud-gcp.version> 
+        <!-- https://docs.spring.io/spring-boot/docs/2.7.8/reference/html/getting-started.html#getting-started.system-requirements Java 17 is supported-->
+        <spring-boot.version>2.6.13</spring-boot.version> <!-- /!\ Bug in Netty with Spring Boot 2.6.6, see https://github.com/netty/netty/issues/12343 -->
+
+        <java.version>11</java.version>
+        <maven.compiler.release>11</maven.compiler.release>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+
+        <assertj.version>3.17.1</assertj.version>
+        <lombok.version>1.18.22</lombok.version>
+        <chaos-monkey-spring-boot.version>2.6.1</chaos-monkey-spring-boot.version>
+        
+    </properties>
+
+    <!-- https://www.baeldung.com/maven-dependencymanagement-vs-dependencies-tags -->
+    <dependencyManagement>
+        <dependencies>
+
+            <!-- https://docs.microsoft.com/en-us/azure/developer/java/spring-framework/spring-cloud-azure?tabs=maven#bill-of-material-bom -->
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>                
+			</dependency>
+
+            <!-- Azure Key Vault : https://microsoft.github.io/spring-cloud-azure/current/reference/html/appendix.html#migration-guide-for-4-0 -->
+            <dependency>
+                <groupId>com.azure.spring</groupId>
+                <artifactId>spring-cloud-azure-dependencies</artifactId>
+                <version>${spring-cloud-azure.version}</version>
+                <type>pom</type>
+                <scope>import</scope>                
+            </dependency>
+
+            <!-- GCP Secret Manager 
+            https://googlecloudplatform.github.io/spring-cloud-gcp/reference/html/index.html#secret-manager 
+            https://search.maven.org/artifact/com.google.cloud/spring-cloud-gcp-dependencies
+            -->    
+            <dependency>
+                <groupId>com.google.cloud</groupId>
+                <artifactId>spring-cloud-gcp-dependencies</artifactId>
+                <version>${spring-cloud-gcp.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-actuator</artifactId>
+                <version>${spring-boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>de.codecentric</groupId>
+                <artifactId>chaos-monkey-spring-boot</artifactId>
+                <version>${chaos-monkey-spring-boot.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>${assertj.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <!-- https://stackoverflow.com/questions/66876776/cant-find-error-debug-info-methods-in-log-object-which-is-created-via -->
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+
+    <!-- 
+     Dockerize plugin adds dependencies and is deprecated.
+    FYI https://www.eclipse.org/jkube/docs/kubernetes-maven-plugin is the next gen plugin.
+    -->
+    <profiles>
+        <profile>
+            <id>dev</id>
+            <activation>
+                <property>
+                    <name>env</name>
+                    <value>development</value>
+                </property>
+            </activation>
+        </profile>
+
+        <profile>
+            <id>azure</id>
+            <activation>
+                <property>
+                    <name>env</name>
+                    <value>azure</value>
+                </property>
+            </activation>
+            <dependencies>
+                <!-- Azure Key Vault 
+                https://search.maven.org/search?q=a:azure-keyvault-secrets-spring-boot-starter
+                
+                Azure Key Vault : https://microsoft.github.io/spring-cloud-azure/current/reference/html/index.html#dependency-setup-3
+                https://search.maven.org/search?q=a:spring-cloud-azure-starter-keyvault-secrets
+                -->
+
+                <dependency>
+                    <groupId>org.springframework.cloud</groupId>
+                    <artifactId>spring-cloud-dependencies</artifactId>
+                    <version>${spring-cloud.version}</version>
+                    <type>pom</type>
+                    <scope>import</scope>
+                </dependency>
+
+                <!-- https://stackoverflow.com/questions/20244696/could-not-resolve-placeholder-in-string-value -->
+                <dependency>
+                    <groupId>org.springframework.cloud</groupId>
+                    <artifactId>spring-cloud-context</artifactId>
+                </dependency>
+                    
+                <dependency>
+                    <groupId>com.azure.spring</groupId>
+                    <artifactId>spring-cloud-azure-dependencies</artifactId>
+                    <version>${spring-cloud-azure.version}</version>
+                    <type>pom</type>
+                    <scope>import</scope>
+                </dependency>
+
+                <!-- https://microsoft.github.io/spring-cloud-azure/4.4.1/reference/html/appendix.html#configuration-spring-cloud-azure-starter-keyvault-secrets -->
+                <dependency>
+                    <groupId>com.azure.spring</groupId>
+                    <artifactId>spring-cloud-azure-starter-keyvault-secrets</artifactId>
+                </dependency>	
+
+                <!-- https://github.com/Azure/azure-sdk-for-java/issues/29241 -->
+                <dependency>
+                    <groupId>com.azure</groupId>
+                    <artifactId>azure-identity</artifactId>
+                    <version>1.7.2</version>
+                </dependency>
+
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>gcp</id>
+            <activation>
+                <property>
+                    <name>env</name>
+                    <value>gcp</value>
+                </property>
+            </activation>
+            <dependencies>
+                <!-- GCP Secret Manager
+                https://search.maven.org/search?q=a:spring-cloud-gcp-starter-secretmanager
+                
+                https://spring.io/projects/spring-cloud-gcp
+                https://search.maven.org/search?q=a:spring-cloud-gcp-starter-secretmanager
+                -->
+
+                <dependency>
+                    <groupId>org.springframework.cloud</groupId>
+                    <artifactId>spring-cloud-dependencies</artifactId>
+                    <version>${spring-cloud.version}</version>
+                    <type>pom</type>
+                    <scope>import</scope>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.springframework.cloud</groupId>
+                    <artifactId>spring-cloud-context</artifactId>
+                </dependency>
+                
+                <!-- https://googlecloudplatform.github.io/spring-cloud-gcp/reference/html/index.html#secret-manager 
+                https://search.maven.org/artifact/com.google.cloud/spring-cloud-gcp-dependencies
+                -->    
+                <dependency>
+                    <groupId>com.google.cloud</groupId>
+                    <artifactId>spring-cloud-gcp-dependencies</artifactId>
+                    <version>${spring-cloud-gcp.version}</version>
+                    <type>pom</type>
+                    <scope>import</scope>
+                </dependency>
+
+                <!-- https://googlecloudplatform.github.io/spring-cloud-gcp/reference/html/appendix.html -->
+                <dependency>
+                    <groupId>com.google.cloud</groupId>
+                    <artifactId>spring-cloud-gcp-starter-secretmanager</artifactId>
+                </dependency>	
+
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>springboot</id>
+            <activation>
+                <file>
+                    <!-- Just a way to identify a Spring Boot application -->
+                    <exists>src/main/resources/application.yml</exists>
+                </file>
+            </activation>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-deploy-plugin</artifactId>
+                            <version>3.0.0-M2</version>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>            
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>3.10.1</version>
+                        <configuration>
+                            <release>11</release>
+                        </configuration>
+                    </plugin>                
+                    <plugin>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-maven-plugin</artifactId>
+                        <configuration>
+                            <fork>true</fork>
+                            <!-- Layered jars optimizes Docker images -->
+                            <layers>
+                                <enabled>true</enabled>
+                            </layers>
+                        </configuration>                        
+                        <executions>
+                            <execution>
+                                <!-- Spring Boot Actuator displays build-related information if a META-INF/build-info.properties file is present -->
+                                <goals>
+                                    <goal>build-info</goal>
+                                </goals>
+                                <configuration>
+                                    <additionalProperties>
+                                        <encoding.source>${project.build.sourceEncoding}</encoding.source>
+                                        <encoding.reporting>${project.reporting.outputEncoding}</encoding.reporting>
+                                        <java.source>${maven.compiler.source}</java.source>
+                                        <java.target>${maven.compiler.target}</java.target>
+                                    </additionalProperties>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- Spring Boot Actuator displays build-related information if a META-INF/build-info.properties file is present -->
+                    <plugin>
+                        <groupId>pl.project13.maven</groupId>
+                        <artifactId>git-commit-id-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>revision</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <!-- https://github.com/git-commit-id/git-commit-id-maven-plugin/blob/master/docs/using-the-plugin.md -->
+                            <excludeProperties>
+                                <excludeProperty>git.user.*</excludeProperty>
+                                <excludeProperty>git.build.user.*</excludeProperty>
+                                <excludeProperty>git.commit.user.*</excludeProperty>
+                            </excludeProperties>
+                            <verbose>true</verbose>
+                            <dateFormat>yyyy-MM-dd'T'HH:mm:ssZ</dateFormat>
+                            <generateGitPropertiesFile>true</generateGitPropertiesFile>
+                            <generateGitPropertiesFilename>${project.build.outputDirectory}/git.properties</generateGitPropertiesFilename>
+                            <failOnNoGitDirectory>false</failOnNoGitDirectory>
+                            <failOnUnableToExtractRepoInfo>false</failOnUnableToExtractRepoInfo>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-deploy-plugin</artifactId>
+                        <version>3.0.0-M2</version>
+                    </plugin>                    
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-apache-maven-registry
+        <profile>
+            <id>github-aks</id>
+            <repositories>
+                <repository>
+                    <id>central</id>
+                    <url>https://repo1.maven.org/maven2</url>
+                </repository>
+                <repository>
+                    <id>github-aks</id>
+                    <url>https://github.com/ezYakaEagle442/java-petclinic-mic-srv/</url>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>true</enabled>
+                    </snapshots>                    
+                </repository>
+            </repositories>
+        </profile>
+        -->      
+    </profiles>
+
+    <!-- 
+    <activeProfiles>
+        <activeProfile>github</activeProfile>
+    </activeProfiles>
+    -->
+
+    <!--
+    <servers>
+        <server>
+            <id>github-aks</id>
+            <username>ezYakaEagle442</username>
+            <password>${env.GITHUB_TOKEN}</password>
+        </server>
+    </servers>
+    -->
+
+    <!--
+    <repositories>
+        <repository>
+            <id>spring-milestones</id>
+            <name>Spring Milestones</name>
+            <url>https://repo.spring.io/milestone</url>
+        </repository>
+        <repository>
+            <id>gh</id>
+            <name>gh-snapshot</name>
+            
+            <url>http://localhost:8081/repository/maven-snapshots/</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+        </repository>        
+    </repositories>
+    -->
+
+    <!--
+    https://www.baeldung.com/maven-snapshot-release-repository
+    <distributionManagement>
+        <repository>
+            <id>github-asa</id>
+            <name>GitHub OWNER Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/ezYakaEagle442/java-petclinic-mic-srv</url>
+            <layout>default</layout>
+        </repository>    
+        <snapshotRepository>
+            <id>gh</id>
+            <name>gh-snapshot</name>
+            <url>http://localhost:8081/repository/maven-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <snapshots>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+    </snapshots>    
+
+    <servers>
+        <server>
+        <id>github</id>
+        <username>USERNAME</username>
+        <password>TOKEN</password>
+        </server>
+    </servers>    
+    -->
+
+</project>
