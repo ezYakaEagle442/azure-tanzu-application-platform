@@ -251,12 +251,7 @@ jobs:
       run: |
             echo TODO
       shell: bash
-
-
-  logout:
-    needs: [call-maven-build-workflow, call-maven-build-ui-workflow, deploy-iac, call-tap-setup-workflow]
-    runs-on: ubuntu-latest
-    steps:    
+ 
     - name: Azure Logout security hardening
       run: |
           az logout
