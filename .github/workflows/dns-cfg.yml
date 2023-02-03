@@ -16,22 +16,10 @@ env:
   AKS_CLUSTER_NAME: aks-tap42
   VNET_NAME: vnet-aks
 
-  DNS_PREFIX: appinnojava # customize this
+  DNS_PREFIX: tanzu-tap42 # customize this
   ING_NS: ingress # Namespace to use for the Ingress Controller
   AKS_IDENTITY_NAME: id-tap-cluster-dev-westeurope-101 # customize this
 
-  # ==== APPS ====
-  CLOUD_PROVIDER_ENV: azure
-  PRJ_PREFIX: spring-petclinic
-
-  API_GATEWAY: api-gateway
-  ADMIN_SERVER: admin-server
-  CUSTOMERS_SERVICE: customers-service
-  VETS_SERVICE: vets-service
-  VISITS_SERVICE: visits-service
-
-  CONFIG_SERVER: config-server
-  DISCOVERY_SERVER: discovery-server
 
   # https://github.com/Azure/actions-workflow-samples/blob/master/assets/create-secrets-for-GitHub-workflows.md#consume-secrets-in-your-workflow
   # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#example-using-secrets
