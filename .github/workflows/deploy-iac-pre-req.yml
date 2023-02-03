@@ -237,6 +237,7 @@ jobs:
             -p vnetCidr=${{ env.VNET_CIDR }} \
             -p aksSubnetCidr=${{ env.AKS_SUBNET_CIDR }} \
             -p aksSubnetName=${{ env.AKS_SUBNET_NAME }} \
+            -p mySQLServerName=${{ env.MYSQL_SERVER_NAME }} \
             -p mySQLadministratorLoginPassword=${{ env.SPRING_DATASOURCE_PASSWORD }} \
             -p appDnsZone=${{ env.APP_DNS_ZONE }} \
             -p acrName=${{ env.ACR_NAME }} \

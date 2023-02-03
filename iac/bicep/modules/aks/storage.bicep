@@ -6,7 +6,7 @@ param appName string = 'tap${uniqueString(deployment().name)}'
 param location string = resourceGroup().location
 
 @description('The Storage Account name')
-param azureStorageName string = 'staks${appName}'
+param azureStorageName string = 'sta${appName}'
 
 @description('The BLOB Storage service name')
 param azureBlobServiceName string = 'default' // '${appName}-blob-svc'

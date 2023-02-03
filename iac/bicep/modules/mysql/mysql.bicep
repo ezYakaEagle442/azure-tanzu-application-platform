@@ -14,7 +14,7 @@ param mySQLadministratorLogin string = 'mys_adm'
 param mySQLadministratorLoginPassword string
 
 @description('The MySQL server name')
-param mySQLServerName string = 'petcliaks'
+param mySQLServerName string = 'tanzu${appName}'
 
 @description('AKS Outbound Public IP')
 param k8sOutboundPubIP string = '0.0.0.0'
