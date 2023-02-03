@@ -24,11 +24,6 @@ param authorizedIPRanges array = []
 @description('The AKS Cluster Admin Username')
 param aksAdminUserName string = '${appName}-admin'
 
-@maxLength(24)
-@description('The name of the KV, must be UNIQUE.  A vault name must be between 3-24 alphanumeric characters.')
-param kvName string // = 'kv-${appName}'
-
-
 resource vnet 'Microsoft.Network/virtualNetworks@2022-05-01' existing= {
   name: vnetName
 }

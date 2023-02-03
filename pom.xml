@@ -7,7 +7,13 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.7.8</version> <!-- /!\ Bug in Netty with Spring Boot 2.6.6, see https://github.com/netty/netty/issues/12343 -->
+        <version>2.7.8</version> 
+        <!-- 
+            the driver for MySQL, as been removed. Consider using r2dbc-mariadb as a replacement.
+            https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-2.7-Release-Notes#r2dbc-driver-changes
+            /!\ Bug in Netty with Spring Boot 2.6.6, see https://github.com/netty/netty/issues/12343 
+        
+        -->
     </parent>
 
     <groupId>org.springframework.samples</groupId>
