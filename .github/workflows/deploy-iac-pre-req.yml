@@ -127,7 +127,7 @@ jobs:
           ls -al
            echo "LOCAL_IP=$LOCAL_IP"
 
-          az deployment group create --name aks-petclinic-kv -f iac/bicep/modules/kv/kv.bicep -g ${{ env.RG_KV }} \
+          az deployment group create --name aks-tap-kv -f iac/bicep/modules/kv/kv.bicep -g ${{ env.RG_KV }} \
             -p appName=${{ env.APP_NAME }} \
             -p kvName=${{ env.KV_NAME }} \
             -p location=${{ env.LOCATION }}
@@ -142,7 +142,7 @@ jobs:
 
     - name: Create SPRING-DATASOURCE-PASSWORD secret in Azure Key Vault
       run: |
-          az deployment group create --name aks-petclinic-kv-db-pwd -f iac/bicep/modules/kv/kv_sec_key.bicep -g ${{ env.RG_KV }} \
+          az deployment group create --name aks-tap-kv-db-pwd -f iac/bicep/modules/kv/kv_sec_key.bicep -g ${{ env.RG_KV }} \
             -p appName=${{ env.APP_NAME }} \
             -p kvName=${{ env.KV_NAME }} \
             -p secretName="SPRING-DATASOURCE-PASSWORD" \
@@ -152,7 +152,7 @@ jobs:
 
     - name: Create SPRING-CLOUD-AZURE-TENANT-ID secret in Azure Key Vault
       run: |
-          az deployment group create --name aks-petclinic-kv-tenant -f iac/bicep/modules/kv/kv_sec_key.bicep -g ${{ env.RG_KV }} \
+          az deployment group create --name aks-tap-kv-tenant -f iac/bicep/modules/kv/kv_sec_key.bicep -g ${{ env.RG_KV }} \
             -p appName=${{ env.APP_NAME }} \
             -p kvName=${{ env.KV_NAME }} \
             -p secretName="SPRING-CLOUD-AZURE-TENANT-ID" \
@@ -160,22 +160,22 @@ jobs:
             -p secretExpiryDate=${{ env.SECRET_EXPIRY_DATE }} 
       shell: bash
 
-    - name: Create TANZU_NET_PASSWORD secret in Azure Key Vault
+    - name: Create TANZU-NET-PASSWORD secret in Azure Key Vault
       run: |
-          az deployment group create --name aks-petclinic-kv-vm-pwd -f iac/bicep/modules/kv/kv_sec_key.bicep -g ${{ env.RG_KV }} \
+          az deployment group create --name aks-tap-kv-tanzu-pwd -f iac/bicep/modules/kv/kv_sec_key.bicep -g ${{ env.RG_KV }} \
             -p appName=${{ env.APP_NAME }} \
             -p kvName=${{ env.KV_NAME }} \
-            -p secretName="TANZU_NET_PASSWORD" \
+            -p secretName="TANZU-NET-PASSWORD" \
             -p secretValue=${{ secrets.TANZU_NET_PASSWORD }} \
             -p secretExpiryDate=${{ env.SECRET_EXPIRY_DATE }}
       shell: bash
 
-    - name: Create TANZU_NET_USER secret in Azure Key Vault
+    - name: Create TANZU-NET-USER secret in Azure Key Vault
       run: |
-          az deployment group create --name aks-petclinic-kv-vm-pwd -f iac/bicep/modules/kv/kv_sec_key.bicep -g ${{ env.RG_KV }} \
+          az deployment group create --name aks-tap-kv-tanzu-usr -f iac/bicep/modules/kv/kv_sec_key.bicep -g ${{ env.RG_KV }} \
             -p appName=${{ env.APP_NAME }} \
             -p kvName=${{ env.KV_NAME }} \
-            -p secretName="TANZU_NET_USER" \
+            -p secretName="TANZU-NET-USER" \
             -p secretValue=${{ secrets.TANZU_NET_USER}} \
             -p secretExpiryDate=${{ env.SECRET_EXPIRY_DATE }}
       shell: bash
