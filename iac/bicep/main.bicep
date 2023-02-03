@@ -4,7 +4,7 @@ param appName string = 'tap${uniqueString(resourceGroup().id)}'
 
 param location string = 'westeurope'
 // param rgName string = 'rg-${appName}'
-param dnsPrefix string = 'appinnojava'
+param dnsPrefix string = 'tanzu-${appName}'
 param clusterName string = 'aks-${appName}'
 param aksVersion string = '1.24.6'
 param MCnodeRG string = 'rg-MC-${appName}'
