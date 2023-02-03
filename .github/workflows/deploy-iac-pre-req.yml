@@ -229,7 +229,7 @@ jobs:
           # --debug # --what-if to test like a dry-run
            echo "LOCAL_IP=$LOCAL_IP"
            
-          az deployment group create --name aks-petclinic-pre-req -f iac/bicep/pre-req.bicep -g ${{ env.RG_APP }} \
+          az deployment group create --name aks-tap-pre-req -f iac/bicep/pre-req.bicep -g ${{ env.RG_APP }} \
             -p appName=${{ env.APP_NAME }} \
             -p location=${{ env.LOCATION }} \
             -p ghRunnerSpnPrincipalId=${{ env.SPN_APP_ID }} \
