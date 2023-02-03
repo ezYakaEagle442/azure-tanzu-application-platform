@@ -10,11 +10,11 @@ env:
   RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
 
   # ==== Azure storage to store Artifacts , values must be consistent with the ones in storage.bicep ====:
-  AZ_STORAGE_NAME : stakspetcliaks # customize this
-  AZ_BLOB_CONTAINER_NAME: petcliaks-blob # customize this
+  AZ_STORAGE_NAME : statapaks # customize this
+  AZ_BLOB_CONTAINER_NAME: statapaks-blob # customize this
   # AZ_BLOB_SVC_NAME: default # MUST NOT BE MODIFIED
     
-  ACR_NAME: acrpetcliaks
+  ACR_NAME: tanzu42
 
   VNET_NAME: vnet-aks
   VNET_CIDR: 172.16.0.0/16
