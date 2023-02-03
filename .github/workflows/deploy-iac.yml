@@ -173,9 +173,6 @@ jobs:
           az deployment group create --name aks-petclinic-main -f iac/bicep/main.bicep -g ${{ env.RG_APP }} \
             -p appName=${{ env.APP_NAME }} \
             -p location=${{ env.LOCATION }} \
-            -p kvName=${{ env.KV_NAME }} \
-            -p kvRGName=${{ env.RG_KV }} \
-            -p publicNetworkAccess=enabled \
             -p vnetName=${{ env.VNET_NAME }} \
             -p aksIdentityName=${{ env.AKS_IDENTITY_NAME }} \
             -p mySQLServerName=${{ env.MYSQL_SERVER_NAME }} \
