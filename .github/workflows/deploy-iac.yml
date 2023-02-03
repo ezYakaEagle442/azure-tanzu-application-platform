@@ -429,7 +429,7 @@ jobs:
       packages: write  
       
   call-tap-setup-workflow:
-    name: Trigger Maven for the UI
+    name: Trigger TAP installation
     needs: deploy-iac
     uses: ./.github/workflows/tap-setup.yml
     secrets: inherit
