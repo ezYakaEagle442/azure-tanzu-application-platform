@@ -13,7 +13,7 @@ env:
   REPOSITORY: tap                  # set this to your ACR repository
   PROJECT_NAME: petclinic                # set this to your project's name
 
-  KV_NAME: kv-petcliaks33 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
+  KV_NAME: kv-tap42 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
   
   RG_KV: rg-kv-tanzu101 # RG where to deploy KV
   RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
