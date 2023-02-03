@@ -32,17 +32,13 @@ param mySQLadministratorLogin string = 'mys_adm'
 param mySQLadministratorLoginPassword string
 
 @description('The MySQL server name')
-param mySQLServerName string = 'petcliaks'
+param mySQLServerName string = appName
 
 @description('Should a MySQL Firewall be set to allow client workstation for local Dev/Test only')
 param setFwRuleClient bool = false
 
 @description('The Azure Active Directory tenant ID that should be used for authenticating requests to the Key Vault.')
 param tenantId string = subscription().tenantId
-
-
-@description('AKS Cluster UserAssigned Managed Identity name. Character limit: 3-128 Valid characters: Alphanumerics, hyphens, and underscores')
-param aksIdentityName string = 'id-aks-cluster-dev-westeurope-101'
 
 @description('The Storage Account name')
 param azureStorageName string = 'staks${appName}'
