@@ -419,13 +419,19 @@ jobs:
     uses: ./.github/workflows/maven-build.yml # .github/workflows/maven-build.yml@main ==> references to workflows must be prefixed with format 'owner/repository/' or './' for local workflows
     secrets: inherit # pass all secrets
       # envPAT: ${{ secrets.envPAT }} # pass just this secret
+    permissions: 
+      contents: read
+      packages: write        
 
   call-maven-build-ui-workflow:
     name: Trigger Maven for the UI
     needs: call-pre-req-workflow
     uses: ./.github/workflows/maven-build-ui.yml
     secrets: inherit
-
+    permissions: 
+      contents: read
+      packages: write  
+      
   call-tap-setup-workflow:
     name: Trigger Maven for the UI
     needs: deploy-iac
