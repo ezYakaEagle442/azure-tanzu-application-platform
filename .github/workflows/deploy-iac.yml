@@ -170,7 +170,7 @@ jobs:
           echo "*                                                                                      *"
           echo "****************************************************************************************"
 
-          az deployment group create --name aks-petclinic-main -f iac/bicep/main.bicep -g ${{ env.RG_APP }} \
+          az deployment group create --name aks-main -f iac/bicep/main.bicep -g ${{ env.RG_APP }} \
             -p appName=${{ env.APP_NAME }} \
             -p location=${{ env.LOCATION }} \
             -p vnetName=${{ env.VNET_NAME }} \
@@ -188,7 +188,7 @@ jobs:
             echo "About to configure AKS to be allowed to pull image from ACR"
 
             # aks_client_id=$(az aks show -n ${{ env.AKS_CLUSTER_NAME }} -g ${{ env.RG_APP }} --query identityProfile.kubeletidentity.clientId -o tsv)
-            aks_client_id=$(az deployment group show --name aks-petclinic-main -g ${{ env.RG_APP }} --query properties.outputs.kubeletIdentity.value)
+            aks_client_id=$(az deployment group show --name aks-main -g ${{ env.RG_APP }} --query properties.outputs.kubeletIdentity.value)
             echo "AKS Cluster Kubelet Identity " $aks_client_id
 
             acr_registry_id=$(az deployment group show --name ${{ env.ACR_NAME }} -g ${{ env.RG_APP }} --query properties.outputs.acrId.value -o tsv)
@@ -206,7 +206,7 @@ jobs:
 
             vNetRules=$(az deployment group show --name vnet-aks -g ${{ env.RG_APP }} --query properties.outputs.aksSubnetId.value)
 
-            aksOutboundIPResourceId=$(az deployment group show --name aks-petclinic-main -g ${{ env.RG_APP }} \
+            aksOutboundIPResourceId=$(az deployment group show --name aks-main -g ${{ env.RG_APP }} \
               --query properties.outputs.aksEffectiveOutboundIPs.value[0] | jq -r .id)
             
             aksOutboundIP=$(az network public-ip show --ids $aksOutboundIPResourceId --query ipAddress)
