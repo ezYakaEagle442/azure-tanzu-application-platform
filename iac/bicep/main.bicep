@@ -37,7 +37,7 @@ module aks './modules/aks/aks.bicep' = {
     clusterName: clusterName
     k8sVersion: aksVersion
     location: location
-    nodeRG:MCnodeRG
+    nodeRG: MCnodeRG
     subnetID: vnet.properties.subnets[0].id
     dnsPrefix: dnsPrefix
     logAnalyticsWorkspaceName: logAnalyticsWorkspaceName
