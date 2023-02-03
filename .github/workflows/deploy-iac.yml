@@ -175,9 +175,6 @@ jobs:
             -p location=${{ env.LOCATION }} \
             -p vnetName=${{ env.VNET_NAME }} \
             -p aksIdentityName=${{ env.AKS_IDENTITY_NAME }} \
-            -p mySQLServerName=${{ env.MYSQL_SERVER_NAME }} \
-            -p mySQLadministratorLogin=${{ env.MYSQL_ADM_USR }} \
-            -p mySQLadministratorLoginPassword=${{ env.SPRING_DATASOURCE_PASSWORD }} \
             -p sshPublicKey="${{ env.SSH_PUB_KEY }}"
  
             managed_rg=$(az aks show --resource-group ${{ env.RG_APP }} --name ${{ env.AKS_CLUSTER_NAME }} --query nodeResourceGroup -o tsv)
