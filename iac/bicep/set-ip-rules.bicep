@@ -68,6 +68,7 @@ module mysqlPub './modules/mysql/mysql.bicep' = {
   }
 }
 
+/* 
 module postgresqldb './modules/pg/postgresql.bicep' = {
   name: 'postgresqldb'
   params: {
@@ -79,3 +80,4 @@ module postgresqldb './modules/pg/postgresql.bicep' = {
     k8sOutboundPubIP: ipRules[0]
   }
 }
+*/

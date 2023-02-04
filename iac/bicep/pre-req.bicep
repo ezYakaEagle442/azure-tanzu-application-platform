@@ -148,26 +148,26 @@ module mysql './modules/mysql/mysql.bicep' = {
   params: {
     appName: appName
     location: location
+    mySQLServerName: mySQLServerName
     mySQLadministratorLogin: mySQLadministratorLogin
     mySQLadministratorLoginPassword: mySQLadministratorLoginPassword
     // The default number of managed outbound public IPs is 1.
     // https://learn.microsoft.com/en-us/azure/aks/load-balancer-standard#scale-the-number-of-managed-outbound-public-ips
-    mySQLServerName: mySQLServerName
   }
 }
 
+/* 
 module postgresqldb './modules/pg/postgresql.bicep' = {
   name: 'postgresqldb'
   params: {
     appName: appName
     location: location
+    postgreSQLServerName: postgreSQLServerName
     postgreSQLadministratorLogin: postgreSQLadministratorLogin 
     postgreSQLadministratorLoginPassword: postgreSQLadministratorLoginPassword
-    // The default number of managed outbound public IPs is 1.
-    // https://learn.microsoft.com/en-us/azure/aks/load-balancer-standard#scale-the-number-of-managed-outbound-public-ips
-    postgreSQLServerName: postgreSQLServerName
   }
 }
+*/
 
 module storage './modules/aks/storage.bicep' = {
   name: 'storage'

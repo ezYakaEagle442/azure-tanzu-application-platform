@@ -43,7 +43,7 @@ param databaseSkuTier string = 'GeneralPurpose'
   '12'
   '11'
 ])
-param postgreSQLVersion string = '14' // https://docs.microsoft.com/en-us/azure/PostgreSQL/concepts-supported-versions
+param postgreSQLVersion string = '13' // https://docs.microsoft.com/en-us/azure/PostgreSQL/concepts-supported-versions
 
 // https://learn.microsoft.com/en-us/azure/templates/microsoft.dbforpostgresql/flexibleservers?pivots=deployment-language-bicep
 resource PostgreSQLserver 'Microsoft.DBforPostgreSQL/flexibleServers@2022-03-08-preview' = {
@@ -61,7 +61,7 @@ resource PostgreSQLserver 'Microsoft.DBforPostgreSQL/flexibleServers@2022-03-08-
       backupRetentionDays: 7
       geoRedundantBackup: 'Disabled'
     }
-    createMode: 'Default'
+    //createMode: 'Default'
     highAvailability: {
       mode: 'Disabled'
     }
