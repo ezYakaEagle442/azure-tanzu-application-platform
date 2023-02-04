@@ -7,7 +7,7 @@ env:
 
   RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
   
-  MYSQL_DB_NAME: tap4242
+  MYSQL_DB_NAME: petclinic
   MYSQL_SERVER_NAME: tap4242
   MYSQL_ADM_USR: mys_adm
   MYSQL_TIME_ZONE: Europe/Paris
