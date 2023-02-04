@@ -291,7 +291,7 @@ jobs:
     # Otherwise, creating a workload, a Knative service or other Tanzu Application Platform packages fails.
     - name: Setup Developer namespaces
       run: |
-            tanzu secret registry add tbs-registry-credentials --server  ${{ env.AZURE_CONTAINER_REGISTRY}} --username REGISTRY-USERNAME --password REGISTRY-PASSWORD --export-to-all-namespaces --yes --namespace tap-install
+            # tanzu secret registry add tbs-registry-credentials --server ${{ env.AZURE_CONTAINER_REGISTRY}} --username REGISTRY-USERNAME --password REGISTRY-PASSWORD --export-to-all-namespaces --yes --namespace tap-install
             kubectl create namespace ${{ env.DEV_NAMESPACE}}
             kubectl label namespaces ${{ env.DEV_NAMESPACE}} apps.tanzu.vmware.com/tap-ns=""
             kubectl get secrets,serviceaccount,rolebinding,pods,workload,configmap -n ${{ env.DEV_NAMESPACE}}
