@@ -271,7 +271,6 @@ jobs:
             -p mySQLadministratorLoginPassword=${{ env.SPRING_DATASOURCE_PASSWORD }} \
             -p postgreSQLServerName=${{ env.PG_SERVER_NAME }} \
             -p postgreSQLadministratorLoginPassword=${{ env.PG_ADM_PWD }} \
-            -p appDnsZone=${{ env.APP_DNS_ZONE }} \
             -p acrName=${{ env.ACR_NAME }} \
             -p azureStorageName=${{ env.AZ_STORAGE_NAME }}  \
             -p blobContainerName=${{ env.AZ_BLOB_CONTAINER_NAME }} \
