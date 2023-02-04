@@ -149,7 +149,7 @@ jobs:
         pwd
         ls -al
 
-        mkdir ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}
+        # mkdir ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}
         ls -al ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}
 
         # TODO: need a workaround to resolve the network issues between GHA Runnr and Azure Storage
