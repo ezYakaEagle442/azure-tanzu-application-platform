@@ -231,7 +231,7 @@ jobs:
               -p mySQLadministratorLogin=${{ env.MYSQL_ADM_USR }} \
               -p mySQLServerName=${{ env.MYSQL_SERVER_NAME }} \
               -p postgreSQLadministratorLogin=${{ env.PG_ADM_USR }} \
-              -p postgreSQLServerName=${{ env.PG_SERVER_NAME }} \              
+              -p postgreSQLServerName=${{ env.PG_SERVER_NAME }} \
               -p vNetRules=[$vNetRules] \
               -p ipRules=$ipRules
 
