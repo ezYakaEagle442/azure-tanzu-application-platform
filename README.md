@@ -400,6 +400,53 @@ tanzu plugin install --local cli all
 tanzu plugin list
 ```
 
+troubleshoot namespace stuck in terminating-state read [this](https://www.ibm.com/docs/en/cloud-private/3.2.0?topic=console-namespace-is-stuck-in-terminating-state).
+```sh
+# 
+kubectl get namespaces
+
+i=0
+for ns in $(kubectl get ns -o=custom-columns=:.metadata.name)
+do
+  for status in $(kubectl get ns $ns -o=custom-columns=:status.phase)
+  do     
+    if [[ "$status" == "Terminating" ]]
+      then
+        echo "Verifying Namespace $ns with status $status"
+        kubectl get namespace $ns -o json > tmp-$i.json
+        i=$((i+1))
+        echo "i="$i
+    fi    
+  done
+done
+
+
+# Edit your tmp.json file. Remove the kubernetes value from the finalizers field and save the file. It should look like :
+#    "spec": {
+#    },
+
+i=0
+for ns in $(kubectl get ns -o=custom-columns=:.metadata.name)
+do
+  for status in $(kubectl get ns $ns -o=custom-columns=:status.phase)
+  do     
+    if [[ "$status" == "Terminating" ]]
+      then
+        echo "Verifying Namespace $ns with status $status"
+        curl -k -H "Content-Type: application/json" -X PUT --data-binary @tmp-$i.json http://127.0.0.1:8001/api/v1/namespaces/$ns/finalize
+        i=$((i+1))
+        echo "i="$i
+    fi    
+  done
+done
+
+# To set a temporary proxy IP and port, run the following command. Be sure to keep your terminal window open until you delete the stuck namespace
+kubectl proxy
+
+kubectl get namespaces
+
+```
+
 
 troubleshoot Git error :
 [https://docs.github.com/en/repositories/working-with-files/managing-large-files/removing-files-from-git-large-file-storage](https://docs.github.com/en/repositories/working-with-files/managing-large-files/removing-files-from-git-large-file-storage)
