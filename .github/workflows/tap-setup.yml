@@ -219,8 +219,8 @@ jobs:
             cd ${{ env.TANZU_INSTALL_DIR }}
             ./install.sh --yes
 
-            cp ./${{ env.TANZU_INSTALL_DIR }}/kapp /usr/local/bin/kapp
-            cp ./${{ env.TANZU_INSTALL_DIR }}/imgpkg /usr/local/bin/imgpkg
+            cp kapp /usr/local/bin/kapp
+            cp /imgpkg /usr/local/bin/imgpkg
 
       shell: bash
 
