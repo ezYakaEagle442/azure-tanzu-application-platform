@@ -441,14 +441,3 @@ jobs:
   #  needs: deploy-iac
   #  uses: ./.github/workflows/tap-setup.yml
   #  secrets: inherit
-
-  logout:
-    needs: [call-maven-build-workflow, call-maven-build-ui-workflow, deploy-iac]
-    runs-on: ubuntu-latest
-    steps:    
-    - name: Azure Logout security hardening
-      run: |
-          az logout
-          az cache purge
-          az account clear
-      shell: bash
