@@ -206,9 +206,11 @@ jobs:
             kubectl config get-contexts
             kubectl config use-context ${{ env.CONTEXT_NAME }}
             kubectl create namespace ${{ env.KAPP_NAMESPACE }}
-            kubectl create secret generic kapp-controller-config \
-              --namespace ${{ env.KAPP_NAMESPACE }} \
-              --from-file caCerts=ca.crt
+
+            # (Optional) If your registry needs a custom certificate, you must load that configuration into the cluster before installing kapp-controller. If your registry uses a public certificate, this step is not required.
+            #kubectl create secret generic kapp-controller-config \
+            #  --namespace ${{ env.KAPP_NAMESPACE }} \
+            #  --from-file caCerts=ca.crt
 
             export INSTALL_BUNDLE=${{ env.TANZU_REGISTRY}}/tanzu-cluster-essentials/cluster-essentials-bundle@sha256:5fd527dda8af0e4c25c427e5659559a2ff9b283f6655a335ae08357ff63b8e7f
             export INSTALL_REGISTRY_HOSTNAME=${{ env.TANZU_REGISTRY}}
