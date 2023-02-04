@@ -44,9 +44,6 @@ param postgreSQLadministratorLoginPassword string
 @description('The PostgreSQL server name')
 param postgreSQLServerName string = appName
 
-@description('Should a DB Firewall be set to allow client workstation for local Dev/Test only')
-param setFwRuleClient bool = false
-
 @description('The Azure Active Directory tenant ID that should be used for authenticating requests to the Key Vault.')
 param tenantId string = subscription().tenantId
 
@@ -61,11 +58,6 @@ param blobContainerName string = '${appName}-blob'
 
 @description('The GitHub Runner Service Principal Id')
 param ghRunnerSpnPrincipalId string
-
-param dnsZone string = 'cloudapp.azure.com'
-param appDnsZone string = 'tap.${location}.${dnsZone}'
-param customDns string = 'javaonazurehandsonlabs.com'
-param privateDnsZone string = 'privatelink.${location}.azmk8s.io'
 
 // https://docs.microsoft.com/en-us/azure/templates/microsoft.operationalinsights/workspaces?tabs=bicep
 resource logAnalyticsWorkspace  'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
@@ -161,7 +153,6 @@ module mysql './modules/mysql/mysql.bicep' = {
     // The default number of managed outbound public IPs is 1.
     // https://learn.microsoft.com/en-us/azure/aks/load-balancer-standard#scale-the-number-of-managed-outbound-public-ips
     mySQLServerName: mySQLServerName
-    setFwRuleClient: setFwRuleClient
   }
 }
 
@@ -175,7 +166,6 @@ module postgresqldb './modules/pg/postgresql.bicep' = {
     // The default number of managed outbound public IPs is 1.
     // https://learn.microsoft.com/en-us/azure/aks/load-balancer-standard#scale-the-number-of-managed-outbound-public-ips
     postgreSQLServerName: postgreSQLServerName
-    setFwRuleClient: setFwRuleClient
   }
 }
 
