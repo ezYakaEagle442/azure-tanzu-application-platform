@@ -138,6 +138,9 @@ az ad sp create-for-rbac --name $SPN_APP_NAME --skip-assignment --sdk-auth
 }
 ```
 
+Store the above "clientSecret" to SPN_PWD environment variable :
+SPN_PWD=XXXXXXXXXXXXXXXXXXXXXXXX
+
 Troubleshoot:
 If you hit _["Error: : No subscriptions found for ***."](https://learn.microsoft.com/en-us/answers/questions/738782/no-subscription-found-for-function-during-azure-cl.html)_ , this is related to an IAM privilege in the subscription.
 
@@ -305,7 +308,82 @@ tar -xvf azwi-v$AAD_WI_CLI_VERSION-linux-amd64.tar
 
 ```
 
-Install TAP CLI
+## Tanzu pre-reqlines
+
+
+Create a folder named "tanzu" on your workstattion / local git grepo.
+The here under folders are already excluded in the .gitignore :
+- tanzu/cli/*
+- tanzu/tanzu-framework-linux-amd64-v0.25.4.tar
+- tanzu/tanzu-cluster-essentials-linux-amd64-1.4.0.tgz
+
+Read [Tanzu docs](https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/prerequisites.html) to get the pre-req.
+You will get 3 files, and save them to the tanzu folder : 
+- tanzu/tanzu-framework-linux-amd64-v0.25.4.tar (the version name must match M.n.p like v0.25.4 NOT v0.25.4.1)
+- tanzu/tanzu-cluster-essentials-linux-amd64-1.4.0.tgz
+- tap-gui-blank-catalog.tgz
+
+Those files are too big to get pushed using git CLI, instead you will upload them during the IaC deployment as soon as the Storage account is created.
+Once the Storage account is created, run this CLI snippet from your workstation : 
+
+
+```sh
+# "/subscriptions/${SUBSCRIPTION_ID}/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe"
+# your subscription must have Role "Storage Blob Data Contributor" 
+USR_ID=$(az account show --query user.name -o tsv)
+USR_SPN_ID=$(az ad user show --id ${USR_ID} --query id -o tsv)
+
+AZ_STORAGE_NAME=statapaks
+az role assignment create --scope "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_APP}" --role "Storage Blob Data Contributor" --assignee-principal-type "User" --assignee-object-id "$USR_SPN_ID"
+
+# ==== Tanzu Tools ====
+TANZU_INSTALL_DIR=./tanzu
+TANZU_CLI=tanzu-framework-linux-amd64-v0.25.4.tar # /!\ the version name must match M.n.p like v0.25.4 NOT v0.25.4.1
+TANZU_ESSENTIALS=tanzu-cluster-essentials-linux-amd64-1.4.0.tgz
+TANZU_GUI_CAT=tap-gui-blank-catalog.tgz
+
+TANZU_BLOB_CLI=tanzu-cli
+TANZU_BLOB_ESSENTIALS=tanzu-essentials
+TANZU_BLOB_GUI_CAT=tanzu-catalog
+
+RG_APP=rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
+
+# ==== Azure storage , values must be consistent with the ones in iac/bicep/modules/aks/storage.bicep ====
+AZ_STORAGE_NAME=statapaks # customize this
+AZ_BLOB_CONTAINER_NAME=statapaks-blob # customize this
+# AZ_BLOB_SVC_NAME: default # MUST NOT BE MODIFIED
+
+# https://learn.microsoft.com/en-us/rest/api/storageservices/setting-timeouts-for-blob-service-operations
+AZ_BLOB_MAX_CONNECTIONS=10
+AZ_BLOB_MAXSIZE_CONDITION=440401920 # 420 Mb
+AZ_BLOB_TIMEOUT=600
+
+LOCAL_IP=$(curl whatismyip.akamai.com)
+echo "LOCAL_IP="$LOCAL_IP
+
+az config set extension.use_dynamic_install=yes_without_prompt
+echo "About to upload tools to Azure BLOB Storage. /!\ --overwrite' is in preview and under development"
+echo "AZ_BLOB_MAX_CONNECTIONS=$AZ_BLOB_MAX_CONNECTIONS"
+echo "AZ_BLOB_TIMEOUT=$AZ_BLOB_TIMEOUT "
+echo "AZ_BLOB_MAX_CONNECTIONS=$AZ_BLOB_MAX_CONNECTIONS"
+
+echo "About to ADD network-rule to ALLOW $LOCAL_IP to Azure BLOB Storage AZ_STORAGE_NAME"
+az storage account network-rule add --ip-address $LOCAL_IP --account-name  $AZ_STORAGE_NAME  --action "Allow" -g $RG_APP  --only-show-errors
+
+# https://learn.microsoft.com/en-us/rest/api/storageservices/setting-timeouts-for-blob-service-operations
+az storage blob upload --name $TANZU_GUI_CAT --file $TANZU_INSTALL_DIR/$TANZU_GUI_CAT --container-name $AZ_BLOB_CONTAINER_NAME --account-name $AZ_STORAGE_NAME --auth-mode login --overwrite --max-connections $AZ_BLOB_MAX_CONNECTIONS --timeout $AZ_BLOB_TIMEOUT
+
+az storage blob upload --name  $TANZU_BLOB_CLI --file $TANZU_INSTALL_DIR/$TANZU_CLI --container-name $AZ_BLOB_CONTAINER_NAME --account-name $AZ_STORAGE_NAME --auth-mode login --overwrite --max-connections $AZ_BLOB_MAX_CONNECTIONS --timeout $AZ_BLOB_TIMEOUT
+
+az storage blob upload --name  $TANZU_BLOB_ESSENTIALS --file $TANZU_INSTALL_DIR/$TANZU_ESSENTIALS --container-name $AZ_BLOB_CONTAINER_NAME --account-name $AZ_STORAGE_NAME --auth-mode login --overwrite --max-connections $AZ_BLOB_MAX_CONNECTIONS --timeout $AZ_BLOB_TIMEOUT
+
+echo "About to REMOVE network-rule ALLOWING $LOCAL_IP to Azure BLOB Storage $AZ_STORAGE_NAME"
+az storage account network-rule remove --ip-address $LOCAL_IP --account-name  $AZ_STORAGE_NAME-g $RG_APP --only-show-errors
+
+```
+
+
+Install TAP CLI on your workstation/WSL
 ```sh
 TANZU_INSTALL_DIR=tanzu
 TANZU_CLI_VERSION=v0.25.4.1
@@ -343,7 +421,7 @@ git commit --amend -CHEAD
 git push
 ```
 
-## Pipelines
+## Workflows
 
 See GitHub Actions :
 - [Deploy the Azure Infra services workflow](./.github/workflows/deploy-iac.yml)
@@ -538,18 +616,18 @@ If everything goes well, you can access the following services at given location
 The `main` branch uses an MS openjdk/jdk:11-mariner Docker base.
 
 ```sh
-#acr_usr=$(az deployment group show -g ${{ env.RG_APP }} -n ${{ env.AZURE_CONTAINER_REGISTRY }} --query properties.outputs.acrRegistryUsr.value | tr -d '"')
-#acr_pwd=$(az deployment group show -g ${{ env.RG_APP }} -n ${{ env.AZURE_CONTAINER_REGISTRY }} --query properties.outputs.acrRegistryPwd.value | tr -d '"')
-#az acr login --name ${{ env.REGISTRY_URL }} -u $acr_usr -p $acr_pwd
+#acr_usr=$(az deployment group show -g RG_APP }} -n AZURE_CONTAINER_REGISTRY }} --query properties.outputs.acrRegistryUsr.value | tr -d '"')
+#acr_pwd=$(az deployment group show -g RG_APP }} -n AZURE_CONTAINER_REGISTRY }} --query properties.outputs.acrRegistryPwd.value | tr -d '"')
+#az acr login --name REGISTRY_URL }} -u $acr_usr -p $acr_pwd
 
 set -euo pipefail
 access_token=$(az account get-access-token --query accessToken -o tsv)
 
-refresh_token=$(curl https://${{ env.REGISTRY_URL }}/oauth2/exchange -v -d "grant_type=access_token&service=${{ env.REGISTRY_URL }}&access_token=$access_token" | jq -r .refresh_token)
+refresh_token=$(curl https://REGISTRY_URL }}/oauth2/exchange -v -d "grant_type=access_token&service=REGISTRY_URL }}&access_token=$access_token" | jq -r .refresh_token)
 
 refresh_token=$(curl https://acrpetcliaks.azurecr.io/oauth2/exchange -v -d "grant_type=access_token&service=acrpetcliaks.azurecr.io&access_token=$access_token" | jq -r .refresh_token)
 
-# docker login ${{ env.REGISTRY_URL }} -u 00000000-0000-0000-0000-000000000000 --password-stdin <<< "$refresh_token"
+# docker login REGISTRY_URL }} -u 00000000-0000-0000-0000-000000000000 --password-stdin <<< "$refresh_token"
 
 docker build --build-arg --no-cache -t "petclinic-admin-server" -f "./docker/petclinic-admin-server/Dockerfile" .
 docker tag petclinic-admin-server acrpetcliaks.azurecr.io/petclinic/petclinic-admin-server
