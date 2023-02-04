@@ -57,6 +57,7 @@ env:
   # /!\ The Id is NOT the App Registration Object ID, but the Enterprise Registration Object ID"
   SPN_APP_ID: ${{ secrets.SPN_APP_ID }} # This the App clientID
   SPN_OBJECT_ID: ${{ secrets.SPN_OBJECT_ID }}  # A Service Principal required for GitHub Action Runner
+  SPN_PWD : ${{ secrets.SPN_PWD  }} # the Client secret
 
   # https://github.com/Azure/actions-workflow-samples/blob/master/assets/create-secrets-for-GitHub-workflows.md#consume-secrets-in-your-workflow
   # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#example-using-secrets
@@ -205,6 +206,27 @@ jobs:
           echo "${{ secrets.SSH_PUB_KEY }}" > ${{ env.SSH_KEY }}.pub
           ls -al ${{ env.SSH_KEY }}.pub
           az keyvault secret set --name "SSH-PUB-KEY" --vault-name ${{ env.KV_NAME }} --file ${{ env.SSH_KEY }}.pub
+      shell: bash
+
+
+    - name: Create SPN-PWD secret in Azure Key Vault
+      run: |
+          az deployment group create --name aks-tap-spn-pwd -f iac/bicep/modules/kv/kv_sec_key.bicep -g ${{ env.RG_KV }} \
+            -p appName=${{ env.APP_NAME }} \
+            -p kvName=${{ env.KV_NAME }} \
+            -p secretName="SPN-PWD" \
+            -p secretValue=${{ secrets.SPN_PWD}} \
+            -p secretExpiryDate=${{ env.SECRET_EXPIRY_DATE }}
+      shell: bash
+
+    - name: Create SPN-PWD secret in Azure Key Vault
+      run: |
+          az deployment group create --name aks-tap-pg-pwd -f iac/bicep/modules/kv/kv_sec_key.bicep -g ${{ env.RG_KV }} \
+            -p appName=${{ env.APP_NAME }} \
+            -p kvName=${{ env.KV_NAME }} \
+            -p secretName="PG-ADM-PWD" \
+            -p secretValue=${{ secrets.PG_ADM_PWD}} \
+            -p secretExpiryDate=${{ env.SECRET_EXPIRY_DATE }}
       shell: bash
 
     - name: Disable local IP access to the Key Vault

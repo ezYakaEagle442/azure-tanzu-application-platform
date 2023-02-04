@@ -47,6 +47,13 @@ env:
   MYSQL_CHARACTER_SET: utf8
   MYSQL_PORT: 3306
 
+  PG_SERVER_NAME: tap4242
+  PG_DB_NAME: tap4242
+  PG_ADM_USR: pg_adm
+  PG_TIME_ZONE: Europe/Paris
+  PG_CHARACTER_SET: utf8
+  PG_PORT: 5432
+
   DEPLOY_TO_VNET: false
 
   SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT: https://kv-tap42.vault.azure.net/
@@ -216,16 +223,17 @@ jobs:
 
             ipRules=[$aksOutboundIP]
 
-            az deployment group create --name aks-kv-mysql-set-ip-rules -f iac/bicep/set-ip-rules.bicep -g ${{ env.RG_APP }} \
+            az deployment group create --name aks-kv-db-set-ip-rules -f iac/bicep/set-ip-rules.bicep -g ${{ env.RG_APP }} \
               -p appName=${{ env.APP_NAME }} \
               -p location=${{ env.LOCATION }} \
               -p kvName=${{ env.KV_NAME }} \
               -p kvRGName=${{ env.RG_KV }} \
               -p mySQLadministratorLogin=${{ env.MYSQL_ADM_USR }} \
               -p mySQLServerName=${{ env.MYSQL_SERVER_NAME }} \
+              -p postgreSQLadministratorLogin=${{ env.PG_ADM_USR }} \
+              -p postgreSQLServerName=${{ env.PG_SERVER_NAME }} \              
               -p vNetRules=[$vNetRules] \
-              -p ipRules=$ipRules \
-              -p setFwRuleClient=false
+              -p ipRules=$ipRules
 
       shell: bash
 
