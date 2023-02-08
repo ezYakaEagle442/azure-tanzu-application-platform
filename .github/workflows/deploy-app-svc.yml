@@ -20,7 +20,7 @@ env:
   DNS_ZONE: cloudapp.azure.com
   APP_DNS_ZONE: tap.westeurope.cloudapp.azure.com
   CUSTOM_DNS: javaonazurehandsonlabs.com
-  AZURE_DNS_LABEL_NAME: tap
+  AZURE_DNS_LABEL_NAME: petclinic
   
   TAP_NAMESPACE: tanzu
   PETCLINIC_NAMESPACE: petclinic
