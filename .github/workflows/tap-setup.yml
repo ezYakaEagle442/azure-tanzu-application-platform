@@ -289,7 +289,7 @@ jobs:
 
 
     # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/install.html#full-profile
-    # Create a tap-values.yaml 
+    # Create a tap-values.yml  
     - name: Install TAP profile
       run: |
 
@@ -312,9 +312,10 @@ jobs:
             export REPOSITORY_USERNAME=$acr_usr
             export REPOSITORY_PASSWORD=$acr_pwd
 
-            envsubst < ${{ env.TANZU_INSTALL_DIR }}/tap-values.yaml > ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yaml 
+            ls -al ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}
+            envsubst < ${{ env.TANZU_INSTALL_DIR }}/tap-values.yml > ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml 
 
-            tanzu package install tap -p tap.tanzu.vmware.com -v $TAP_VERSION --values-file ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yaml -n ${{ env.TAP_INSTALL_NAMESPACE}}
+            tanzu package install tap -p tap.tanzu.vmware.com -v $TAP_VERSION --values-file ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml  -n ${{ env.TAP_INSTALL_NAMESPACE}}
             tanzu package installed get tap -n ${{ env.TAP_INSTALL_NAMESPACE}}
             tanzu package installed list -A
 
