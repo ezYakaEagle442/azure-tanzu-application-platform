@@ -120,8 +120,8 @@ jobs:
         acr_usr=${{ env.AZURE_CONTAINER_REGISTRY }} 
         acr_pwd=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .passwords[0].value)
         #az configure --defaults acr=${{ env.AZURE_CONTAINER_REGISTRY }}
-        echo "REPOSITORY_USERNAME=$acr_usr" >> $GITHUB_ENV
-        echo "REPOSITORY_PASSWORD=$acr_pwd" >> $GITHUB_ENV
+        echo "acr_usr=$acr_usr" >> $GITHUB_ENV
+        echo "acr_pwd=$acr_pwd" >> $GITHUB_ENV
 
       shell: bash
 
