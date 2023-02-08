@@ -161,7 +161,13 @@ jobs:
     - name: Cleanup TAP install
       run: |
 
-            tanzu package installed delete tap -n ${{ env.TAP_INSTALL_NAMESPACE }}
+            # kubectl get apps -n ${{ env.TAP_INSTALL_NAMESPACE }} 
+            # tanzu package installed list -n ${{ env.TAP_INSTALL_NAMESPACE }} -o=custom-columns=:.name
+            for package in $(kubectl get apps -n ${{ env.TAP_INSTALL_NAMESPACE }} -o=custom-columns=:.metadata.name)
+            do
+              echo "Verifying Package $package"
+              tanzu package installed delete $package -n ${{ env.TAP_INSTALL_NAMESPACE }} --yes
+            done
 
       shell: bash
 
