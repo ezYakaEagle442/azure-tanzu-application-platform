@@ -7,7 +7,10 @@ env:
   RG_KV: rg-kv-tanzu101 # RG where to deploy KV
   RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
   
-  ACR_NAME: tanzu42 # customize this
+  AZURE_CONTAINER_REGISTRY: tanzu42 # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
+  REGISTRY_URL: tanzu42.azurecr.io  # set this to the URL of your registry
+  REPOSITORY: tap                   # set this to your ACR repository
+  REPO_SUBFOLDER_APP_TAP: tanzu-app-tap
 
   # ==== Azure storage t, values must be consistent with the ones in iac/bicep/modules/aks/storage.bicep ====:
   AZ_STORAGE_NAME : statapaks # customize this
@@ -70,12 +73,19 @@ jobs:
 
     - name: Set Base environment variables
       run: |
+      
         echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
         echo "GH_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV # "/github/workspace"
 
         managed_rg=$(az aks show --resource-group ${{ env.RG_APP }} --name ${{ env.AKS_CLUSTER_NAME }} --query nodeResourceGroup -o tsv)
         echo "CLUSTER_RESOURCE_GROUP:" $managed_rg
         echo "managed_rg=$managed_rg" >> $GITHUB_ENV
+
+        acr_usr=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .username) # ${{ env.AZURE_CONTAINER_REGISTRY }} 
+        acr_pwd=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .passwords[0].value)
+
+        echo "acr_usr=$acr_usr" >> $GITHUB_ENV
+        echo "acr_pwd=$acr_pwd" >> $GITHUB_ENV
 
       shell: bash
 
@@ -168,6 +178,12 @@ jobs:
               echo "Verifying Package $package"
               tanzu package installed delete $package -n ${{ env.TAP_INSTALL_NAMESPACE }} --yes
             done
+
+            kubectl delete ns ${{ env.TAP_INSTALL_NAMESPACE}} --ignore-not-found=true
+            kubectl delete ns ${{ env.DEV_NAMESPACE}} --ignore-not-found=true
+            kubectl delete ns ${{ env.KAPP_NAMESPACE}} --ignore-not-found=true
+            az acr login --name ${{ env.REGISTRY_URL }} -u $acr_usr -p $acr_pwd
+            az acr repository delete --repository ${{ env.REPOSITORY }} --image ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.REPOSITORY }}/tap-packages -u $acr_usr -p $acr_pwd --yes
 
       shell: bash
 
