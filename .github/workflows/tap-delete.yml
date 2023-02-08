@@ -180,7 +180,7 @@ jobs:
             done
 
             az acr login --name ${{ env.REGISTRY_URL }} -u $acr_usr -p $acr_pwd
-            az acr repository delete --repository ${{ env.REPOSITORY }} --image ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.REPOSITORY }}/tap-packages -u $acr_usr -p $acr_pwd --yes
+            az acr repository delete --repository ${{ env.REPOSITORY }} --image ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.REPOSITORY }}/tap-packages --name ${{ env.AZURE_CONTAINER_REGISTRY }}-u $acr_usr -p $acr_pwd --yes
 
             kubectl delete ns ${{ env.TAP_INSTALL_NAMESPACE}} --ignore-not-found=true
             kubectl delete ns ${{ env.DEV_NAMESPACE}} --ignore-not-found=true
