@@ -179,11 +179,16 @@ jobs:
               tanzu package installed delete $package -n ${{ env.TAP_INSTALL_NAMESPACE }} --yes
             done
 
+            az acr login --name ${{ env.REGISTRY_URL }} -u $acr_usr -p $acr_pwd
+            az acr repository delete --repository ${{ env.REPOSITORY }} --image ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.REPOSITORY }}/tap-packages -u $acr_usr -p $acr_pwd --yes
+
             kubectl delete ns ${{ env.TAP_INSTALL_NAMESPACE}} --ignore-not-found=true
             kubectl delete ns ${{ env.DEV_NAMESPACE}} --ignore-not-found=true
             kubectl delete ns ${{ env.KAPP_NAMESPACE}} --ignore-not-found=true
-            az acr login --name ${{ env.REGISTRY_URL }} -u $acr_usr -p $acr_pwd
-            az acr repository delete --repository ${{ env.REPOSITORY }} --image ${{ env.AZURE_CONTAINER_REGISTRY }}/${{ env.REPOSITORY }}/tap-packages -u $acr_usr -p $acr_pwd --yes
+
+            kubectl delete ns tanzu-cluster-essentials --ignore-not-found=true
+            kubectl delete ns secretgen-controller --ignore-not-found=true
+            kubectl delete ns tanzu-package-repo-global --ignore-not-found=true
 
       shell: bash
 
