@@ -4,7 +4,7 @@ param appName string = 'tap${uniqueString(deployment().name)}'
 
 // https://docs.microsoft.com/en-us/rest/api/containerregistry/registries/check-name-availability
 @description('The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.')
-param acrName string = 'acr-${appName}'
+param acrName string = appName
 
 @description('The ACR location')
 param location string = resourceGroup().location
@@ -23,7 +23,7 @@ param networkRuleSetCidr string = '172.16.0.0/16'
 @description('The ACR SKU')
 param acrSkuName string = 'Basic'
 
-resource acr 'Microsoft.ContainerRegistry/registries@2022-02-01-preview' = {
+resource acr 'Microsoft.ContainerRegistry/registries@2023-01-01-preview' = {
   name: acrName
   location: location
   sku: {
@@ -35,7 +35,7 @@ resource acr 'Microsoft.ContainerRegistry/registries@2022-02-01-preview' = {
   properties: {
     adminUserEnabled: true // required for TAP,alternative required Premium SKU with scoped-permissions, see https://learn.microsoft.com/en-us/azure/container-registry/container-registry-repository-scoped-permissions
     dataEndpointEnabled: false // data endpoint rule is not supported for the SKU Basic
-  
+    anonymousPullEnabled: false // anonymousPullEnabled looks removed since API ⁠2021-09-01
     // VNet rule is not supported for the SKU Basic
     /*
     networkRuleSet: {
