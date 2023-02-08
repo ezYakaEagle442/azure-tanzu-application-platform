@@ -203,8 +203,15 @@ jobs:
       run: |
 
             tanzu package available list tap.tanzu.vmware.com --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
+            echo ""
 
             mkdir ${{ env.TANZU_INSTALL_DIR }}/deploy
+
+            export TAP_VERSION=${{ env.TAP_VERSION_NUMBER }}
+            export INSTALL_REPO=${{ env.REPOSITORY }}  
+            export INSTALL_REGISTRY_HOSTNAME=${{ env.REGISTRY_URL }}
+            export INSTALL_REGISTRY_USERNAME=$acr_usr
+            export INSTALL_REGISTRY_PASSWORD=$acr_pwd
 
             # need to substitute env var in the template file
             export TANZU_INSTALL_DIR=${{ env.TANZU_INSTALL_DIR }}
@@ -223,7 +230,6 @@ jobs:
 
             ls -al ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}
             envsubst < ${{ env.TANZU_INSTALL_DIR }}/tap-values.yml > ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml
-            echo ""
             echo ""
             ls -al ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml 
 
