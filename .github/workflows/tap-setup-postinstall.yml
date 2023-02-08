@@ -1,0 +1,311 @@
+# The prupose of this workflow is to avoid to 
+name: Continue TAP setup on AKS
+
+env:
+  APP_NAME: tap42
+  LOCATION: westeurope # francecentral
+  RG_KV: rg-kv-tanzu101 # RG where to deploy KV
+  RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
+  
+  DNS_ZONE: cloudapp.azure.com
+  APP_DNS_ZONE: tap.westeurope.cloudapp.azure.com
+  CUSTOM_DNS: javaonazurehandsonlabs.com
+  AZURE_DNS_LABEL_NAME: tap
+
+  # ==== Azure storage t, values must be consistent with the ones in iac/bicep/modules/aks/storage.bicep ====:
+  AZ_STORAGE_NAME : statapaks # customize this
+  AZ_BLOB_CONTAINER_NAME: statapaks-blob # customize this
+  # AZ_BLOB_SVC_NAME: default # MUST NOT BE MODIFIED
+
+  # https://learn.microsoft.com/en-us/rest/api/storageservices/setting-timeouts-for-blob-service-operations
+  AZ_BLOB_MAX_CONNECTIONS: 10
+  AZ_BLOB_MAXSIZE_CONDITION: 440401920 # 420 Mb
+  AZ_BLOB_TIMEOUT: 600
+
+  # ==== Tanzu Tools ====
+  TANZU_INSTALL_DIR: tanzu
+  TANZU_ESSENTIALS: tanzu-cluster-essentials-linux-amd64-1.4.0.tgz
+  TANZU_GUI_CAT: tap-gui-blank-catalog.tgz
+  TANZU_CLI: tanzu-framework-linux-amd64-v0.25.4.tar # /!\ the version name must match M.n.p like v0.25.4 NOT v0.25.4.1
+
+  TANZU_BLOB_CLI: tanzu-cli
+  TANZU_BLOB_ESSENTIALS: tanzu-essentials
+  TANZU_BLOB_GUI_CAT: tanzu-catalog
+
+  TANZU_CLI_VERSION: v0.25.4
+  TAP_VERSION_NUMBER: 1.4.0
+  TANZU_REGISTRY: registry.tanzu.vmware.com
+
+  AZURE_CONTAINER_REGISTRY: tanzu42 # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
+  REGISTRY_URL: tanzu42.azurecr.io  # set this to the URL of your registry
+  REPOSITORY: tap                   # set this to your ACR repository
+  REPO_SUBFOLDER_APP_TAP: tanzu-app-tap
+
+  CATALOG_URL: https://github.com/ezYakaEagle442/tap-catalog
+  TAP_NAMESPACE: tanzu
+  DEV_NAMESPACE: tap-dev
+  TAP_INSTALL_NAMESPACE: tap-install                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+  KAPP_NAMESPACE: kapp-controller
+  AKS_CLUSTER_NAME: aks-tap42  # set this to your AKS cluster name
+  CONTEXT_NAME: aks-tap42 # usuallythe conext is the same as the AKS cluster name
+
+  VNET_NAME: vnet-aks
+  VNET_CIDR: 172.16.0.0/16
+  AKS_SUBNET_CIDR: 172.16.1.0/24
+  AKS_SUBNET_NAME: snet-aks
+
+  DNS_PREFIX: tanzu-tap42 # customize this
+  ING_NS: tanzu-system-ingress # Namespace to use for the Ingress Controller
+  AKS_IDENTITY_NAME: id-tap-cluster-dev-westeurope-101 # customize this
+
+  # APPLICATION INSIGHTS
+  APPLICATIONINSIGHTS_CONFIGURATION_FILE: BOOT-INF/classes/applicationinsights.json
+
+  # ==== Identities ====:
+
+  SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT: https://kv-tap42.vault.azure.net/
+  KV_NAME: kv-tap42 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
+  SET_KV_ACCESS_POLICIES: false # let it to false
+
+  
+  # ==== APPS ====
+  CLOUD_PROVIDER_ENV: azure
+
+  # ==== Secrets ====
+
+  credentials: ${{ secrets.AZURE_CREDENTIALS }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+  TANZU_NET_USER: ${{ secrets.TANZU_NET_USER }}
+  TANZU_NET_PASSWORD: ${{ secrets.TANZU_NET_PASSWORD }}
+  GH_PAT: ${{ secrets.GH_PAT }}
+
+  # ==== Versions ====
+  DEPLOYMENT_VERSION: 2.6.13
+  AZ_CLI_VERSION: 2.44.1
+  JAVA_VERSION: 11
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+ 
+  post-install-tap:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Login with GHA Runner SP
+      uses: azure/login@v1 # https://github.com/marketplace/actions/azure-login
+      with:
+        creds: ${{ env.credentials }} # ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Checkout
+      uses: actions/checkout@v3 # https://github.com/actions/checkout
+
+    - name: Set Base environment variables
+      run: |
+
+        echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
+        echo "GH_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV # "/github/workspace"
+
+        managed_rg=$(az aks show --resource-group ${{ env.RG_APP }} --name ${{ env.AKS_CLUSTER_NAME }} --query nodeResourceGroup -o tsv)
+        echo "CLUSTER_RESOURCE_GROUP:" $managed_rg
+        echo "managed_rg=$managed_rg" >> $GITHUB_ENV
+
+        # Required Admin enabled on ACR
+        acr_usr=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .username) # ${{ env.AZURE_CONTAINER_REGISTRY }} 
+        acr_pwd=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .passwords[0].value)
+        echo "acr_usr=$acr_usr" >> $GITHUB_ENV
+        echo "acr_pwd=$acr_pwd" >> $GITHUB_ENV
+
+      shell: bash
+
+    - name: Display environment variables
+      run: |
+        echo "Checking GITHUB_ENV"
+        echo "LOCAL_IP=$LOCAL_IP"
+        echo "managed_rg=$managed_rg"
+        echo "GH_WORKSPACE=$GH_WORKSPACE"
+      shell: bash
+
+    # https://github.com/Azure/aks-set-context/tree/releases/v1
+    - name: AKS Set Context
+      uses: azure/aks-set-context@v1
+      with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}' # Azure credentials
+          resource-group: ${{ env.RG_APP }} 
+          cluster-name: ${{ env.AKS_CLUSTER_NAME }}
+      id: akslogin
+
+    - name: Authorize local IP access to the Azure BLOB Storage 
+      if: ${{ always() }}
+      run: |
+        LOCAL_IP=$(curl whatismyip.akamai.com)
+        echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
+        echo "About to ADD network-rule to ALLOW $LOCAL_IP to Azure BLOB Storage ${{ env.AZ_STORAGE_NAME }}"
+        az storage account network-rule add --ip-address $LOCAL_IP --account-name  ${{ env.AZ_STORAGE_NAME }}  --action "Allow" -g ${{ env.RG_APP }}  --only-show-errors
+        sleep 30        
+      shell: bash
+
+    - name: Download Tanzu Tools from Azure BLOB Storage
+      id: blob_download
+      run: | 
+        # https://learn.microsoft.com/en-us/azure/storage/blobs/blob-cli
+
+        pwd
+        ls -al
+
+        # mkdir ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}
+        ls -al ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}
+
+        # TODO: need a workaround to resolve the network issues between GHA Runnr and Azure Storage
+        # https://github.com/actions/runner-images/blob/main/images/linux/scripts/helpers/install.sh
+
+        echo "About to download Tanzu tools from Azure BLOB Storage"
+        az storage blob download --name ${{ env.TANZU_BLOB_CLI }} --file ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_CLI }} --container-name ${{ env.AZ_BLOB_CONTAINER_NAME }} --account-name ${{ env.AZ_STORAGE_NAME }} --auth-mode login --max-connections ${{ env.AZ_BLOB_MAX_CONNECTIONS }}
+        az storage blob download --name ${{ env.TANZU_BLOB_ESSENTIALS }} --file ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_ESSENTIALS }} --container-name ${{ env.AZ_BLOB_CONTAINER_NAME }} --account-name ${{ env.AZ_STORAGE_NAME }} --auth-mode login --max-connections ${{ env.AZ_BLOB_MAX_CONNECTIONS }}
+        az storage blob download --name ${{ env.TANZU_GUI_CAT }} --file ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_GUI_CAT }} --container-name ${{ env.AZ_BLOB_CONTAINER_NAME }} --account-name ${{ env.AZ_STORAGE_NAME }} --auth-mode login --max-connections ${{ env.AZ_BLOB_MAX_CONNECTIONS }}
+
+        ls -al ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}
+        ls -al ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_CLI }} 
+        ls -al ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_ESSENTIALS }} 
+        ls -al ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_GUI_CAT }}
+
+      shell: bash
+
+    - name: Disable local IP access to the Azure BLOB Storage 
+      if: ${{ always() }}
+      run: |
+        echo "About to REMOVE network-rule ALLOWING $LOCAL_IP to Azure BLOB Storage ${{ env.AZ_STORAGE_NAME }}"
+        az storage account network-rule remove --ip-address $LOCAL_IP --account-name  ${{ env.AZ_STORAGE_NAME }} -g ${{ env.RG_APP }} --only-show-errors
+      shell: bash
+
+    - name: Install CLI & Plugins
+      run: |
+            tar -xvf ${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_CLI }} -C ${{ env.TANZU_INSTALL_DIR }}
+            export TANZU_CLI_NO_INIT=true
+
+            cd ${{ env.TANZU_INSTALL_DIR }}
+            export VERSION=${{ env.TANZU_CLI_VERSION }}
+            install cli/core/$VERSION/tanzu-core-linux_amd64 /usr/local/bin/tanzu
+
+            tanzu version
+            tanzu plugin install --local cli all
+            tanzu plugin list
+
+      shell: bash
+
+    # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/install.html#full-profile
+    # Create a tap-values.yml  
+    - name: Install TAP profile
+      run: |
+
+            tanzu package available list tap.tanzu.vmware.com --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
+
+            mkdir ${{ env.TANZU_INSTALL_DIR }}/deploy
+
+            # need to substiture env var in the template file
+            export TANZU_INSTALL_DIR=${{ env.TANZU_INSTALL_DIR }}
+            export DEV_NAMESPACE=${{ env.DEV_NAMESPACE }}
+            export APP_DNS_ZONE=${{ env.APP_DNS_ZONE }}
+            export TANZU_NET_USER=${{ env.TANZU_NET_USER }}
+            export TANZU_NET_PASSWORD=${{ env.TANZU_NET_PASSWORD }}
+            export AZURE_CONTAINER_REGISTRY=${{ env.AZURE_CONTAINER_REGISTRY }}
+            export REGISTRY_URL=${{ env.REGISTRY_URL }}
+            export REPOSITORY=${{ env.REPOSITORY }}
+            export REPO_SUBFOLDER_APP_TAP=${{ env.REPO_SUBFOLDER_APP_TAP }}
+            export GH_PAT=${{ env.GH_PAT }}
+
+            export REPOSITORY_USERNAME=$acr_usr
+            export REPOSITORY_PASSWORD=$acr_pwd
+
+            ls -al ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}
+            envsubst < ${{ env.TANZU_INSTALL_DIR }}/tap-values.yml > ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml 
+            ls -al ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml 
+
+            tanzu package install tap -p tap.tanzu.vmware.com -v $TAP_VERSION --values-file ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml -n ${{ env.TAP_INSTALL_NAMESPACE}}
+            echo "1. tanzu package is now INSTALLED"
+            tanzu package installed get tap -n ${{ env.TAP_INSTALL_NAMESPACE}}
+            echo "2. Get tap package checked in the NS"
+            tanzu package installed list -A
+            echo "3. Get tap package checked in ALL NS"
+
+            tanzu package available list buildservice.tanzu.vmware.com --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
+            echo "4. tbs package listed"
+            imgpkg copy --concurrency 1 -b ${{ env.TANZU_REGISTRY}}/tanzu-application-platform/full-tbs-deps-package-repo:${TAP_VERSION} \
+              --to-repo ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tbs-full-deps
+            
+            echo "5. package copied to ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tbs-full-deps"
+
+            tanzu package repository add tbs-full-deps-repository \
+              --url ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tbs-full-deps:${TAP_VERSION} \
+              --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
+
+            echo "5. repo added ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tbs-full-deps:${TAP_VERSION} "
+
+            tanzu package install full-tbs-deps -p full-tbs-deps.tanzu.vmware.com -v ${TAP_VERSION} -n ${{ env.TAP_INSTALL_NAMESPACE}}
+            echo "5. full-tbs-depspackage installed"
+
+      shell: bash
+
+    # After installing the full profile on your cluster, you must set up developer namespaces. 
+    # Otherwise, creating a workload, a Knative service or other Tanzu Application Platform packages fails.
+    - name: Setup Developer namespaces
+      run: |
+
+            tanzu secret registry add tbs-registry-credentials --server ${{ env.AZURE_CONTAINER_REGISTRY}} --username $acr_usr --password $acr_pwd --export-to-all-namespaces --yes --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
+            kubectl create namespace ${{ env.DEV_NAMESPACE }} --dry-run=client -o yaml > ns-dev.yaml
+            kubectl apply -f ns-dev.yaml            
+            kubectl label namespaces ${{ env.DEV_NAMESPACE}} apps.tanzu.vmware.com/tap-ns=""
+            kubectl get secrets,serviceaccount,rolebinding,pods,workload,configmap -n ${{ env.DEV_NAMESPACE}}
+
+      shell: bash
+
+    # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/namespace-provisioner-how-tos.html#control-desired-namespaces
+    - name: Configure GitOps
+      run: |
+            echo TODO ...
+
+      shell: bash
+
+    - name: Get Ingress Controller IP
+      run: |
+
+            # helm ls --namespace ${{ env.ING_NS }}
+            # sleep 15
+            kubectl get deployments -n ${{ env.ING_NS }} -l app=contour
+            kubectl get svc contour n ${{ env.ING_NS }}
+            kubectl describe svc envoy -n ${{ env.ING_NS }}
+
+            ingress_controller_ip=$(kubectl get svc envoy -n ${{ env.ING_NS }} -o jsonpath="{.status.loadBalancer.ingress[*].ip}")
+            echo "ING_CTL_IP:" $ingress_controller_ip
+            echo "ING_CTL_IP=$ingress_controller_ip" >> $GITHUB_ENV
+
+      shell: bash
+
+    - name: Setup DNS
+      run: |
+            echo "ING_CTL_IP:" $ING_CTL_IP
+            az deployment group create --name aks-dns -f iac/bicep/modules/aks/dns.bicep -g ${{ env.RG_APP }} \
+            -p dnsZoneType=custom \
+            -p customDns=${{ env.CUSTOM_DNS }} \     
+            -p location=${{ env.LOCATION }} \
+            -p vnetName=${{ env.VNET_NAME }} \
+            -p aksSvcIp=$ING_CTL_IP
+
+            echo "CLUSTER_RESOURCE_GROUP:" $managed_rg
+            ingControllerPublicIpId=$(az network public-ip list -g $managed_rg --query "[?ipAddress!=null]|[?contains(ipAddress, '$ING_CTL_IP')].[id]" --output tsv)
+            echo $ingControllerPublicIpId
+            
+            az network public-ip update --ids $ingControllerPublicIpId --dns-name ${{ env.AZURE_DNS_LABEL_NAME }} -g $managed_rg
+
+      shell: bash
+
+    - name: Azure Logout security hardening
+      run: |
+          az logout
+          az cache purge
+          az account clear
+      shell: bash
