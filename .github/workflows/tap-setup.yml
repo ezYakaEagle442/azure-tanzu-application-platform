@@ -240,6 +240,7 @@ jobs:
     - name: Relocate images to ACR
       run: |
 
+            echo "This step can take up to 35 minutes ..."
             set -euo pipefail
             #access_token=$(az account get-access-token --query accessToken -o tsv)
             #acr_token=$(curl https://${{ env.REGISTRY_URL }}/oauth2/exchange -v -d "grant_type=access_token&service=${{ env.REGISTRY_URL }}&access_token=$access_token" | jq -r .acr_token)
@@ -315,8 +316,9 @@ jobs:
 
             ls -al ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}
             envsubst < ${{ env.TANZU_INSTALL_DIR }}/tap-values.yml > ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml 
+            ls -al ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml 
 
-            tanzu package install tap -p tap.tanzu.vmware.com -v $TAP_VERSION --values-file ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml  -n ${{ env.TAP_INSTALL_NAMESPACE}}
+            tanzu package install tap -p tap.tanzu.vmware.com -v $TAP_VERSION --values-file ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml -n ${{ env.TAP_INSTALL_NAMESPACE}}
             tanzu package installed get tap -n ${{ env.TAP_INSTALL_NAMESPACE}}
             tanzu package installed list -A
 
