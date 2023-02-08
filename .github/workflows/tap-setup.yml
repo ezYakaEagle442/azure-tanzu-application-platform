@@ -107,12 +107,20 @@ jobs:
 
     - name: Set Base environment variables
       run: |
+
         echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
         echo "GH_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV # "/github/workspace"
 
         managed_rg=$(az aks show --resource-group ${{ env.RG_APP }} --name ${{ env.AKS_CLUSTER_NAME }} --query nodeResourceGroup -o tsv)
         echo "CLUSTER_RESOURCE_GROUP:" $managed_rg
         echo "managed_rg=$managed_rg" >> $GITHUB_ENV
+
+        # Required Admin enabled on ACR
+        acr_usr=$(az deployment group show -g ${{ env.RG_APP }} -n ${{ env.AZURE_CONTAINER_REGISTRY }} --query properties.outputs.acrRegistryUsr.value | tr -d '"')
+        acr_pwd=$(az deployment group show -g ${{ env.RG_APP }} -n ${{ env.AZURE_CONTAINER_REGISTRY }} --query properties.outputs.acrRegistryPwd.value | tr -d '"')
+        #az configure --defaults acr=${{ env.AZURE_CONTAINER_REGISTRY }}
+        echo "REPOSITORY_USERNAME=$acr_usr" >> $GITHUB_ENV
+        echo "REPOSITORY_PASSWORD=$acr_pwd" >> $GITHUB_ENV
 
       shell: bash
 
@@ -205,7 +213,6 @@ jobs:
       run: |
             tar -xvf ${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_ESSENTIALS }} -C ./${{ env.TANZU_INSTALL_DIR }}
 
-
             kubectl config get-contexts
             kubectl config use-context ${{ env.CONTEXT_NAME }}
             kubectl create namespace ${{ env.KAPP_NAMESPACE }} --dry-run=client -o yaml > ns-kapp-controller.yaml
@@ -233,16 +240,28 @@ jobs:
       run: |
 
             set -euo pipefail
-            access_token=$(az account get-access-token --query accessToken -o tsv)
-            refresh_token=$(curl https://${{ env.REGISTRY_URL }}/oauth2/exchange -v -d "grant_type=access_token&service=${{ env.REGISTRY_URL }}&access_token=$access_token" | jq -r .refresh_token)
-            docker login ${{ env.REGISTRY_URL }} -u 00000000-0000-0000-0000-000000000000 --password-stdin <<< "$refresh_token"
+            #access_token=$(az account get-access-token --query accessToken -o tsv)
+            #acr_token=$(curl https://${{ env.REGISTRY_URL }}/oauth2/exchange -v -d "grant_type=access_token&service=${{ env.REGISTRY_URL }}&access_token=$access_token" | jq -r .acr_token)
+
+            # https://learn.microsoft.com/en-us/azure/container-registry/container-registry-repository-scoped-permissions
+            # This feature is available in the Premium container registry service tier
+            #az acr scope-map create --name TapAcrScopeMap --registry ${{ env.AZURE_CONTAINER_REGISTRY }} \
+            #  --repository samples/hello-world \
+            #  content/write content/read \
+            #  --description "TAP ACR Push scope map"
+
+            #acr_token=$(az acr token create --name TapAcrToken --scope-map TapAcrScopeMap --registry ${{ env.AZURE_CONTAINER_REGISTRY }} | jq -r .credentials.passwords[0].value)
+              
+            # az acr login --name ${{ env.REGISTRY_URL }} --expose-token
+            # docker login ${{ env.REGISTRY_URL }} -u 00000000-0000-0000-0000-000000000000 --password-stdin <<< "$acr_token"
             # az configure --defaults acr=${{ env.AZURE_CONTAINER_REGISTRY }}
+            az acr login --name ${{ env.REGISTRY_URL }} -u $acr_usr -p $acr_pwd
 
             docker login ${{ env.TANZU_REGISTRY}} -u ${{ env.TANZU_NET_USER }} -p ${{ env.TANZU_NET_PASSWORD }}
 
             export INSTALL_REGISTRY_HOSTNAME=${{ env.REGISTRY_URL }}
-            export INSTALL_REGISTRY_USERNAME=00000000-0000-0000-0000-000000000000
-            export INSTALL_REGISTRY_PASSWORD="$refresh_token"
+            export INSTALL_REGISTRY_USERNAME=$acr_usr # 00000000-0000-0000-0000-000000000000
+            export INSTALL_REGISTRY_PASSWORD=$acr_pwd # "$acr_token"
 
             export TAP_VERSION=${{ env.TAP_VERSION_NUMBER }}
             export INSTALL_REPO=${{ env.REPOSITORY }}  
@@ -288,14 +307,6 @@ jobs:
             export REPO_SUBFOLDER_APP_TAP=${{ env.REPO_SUBFOLDER_APP_TAP }}
             export GH_PAT=${{ env.GH_PAT }}
 
-            acr_usr=$(az deployment group show -g ${{ env.RG_APP }} -n ${{ env.AZURE_CONTAINER_REGISTRY }} --query properties.outputs.acrRegistryUsr.value | tr -d '"')
-            acr_pwd=$(az deployment group show -g ${{ env.RG_APP }} -n ${{ env.AZURE_CONTAINER_REGISTRY }} --query properties.outputs.acrRegistryPwd.value | tr -d '"')
-            # az acr login --name ${{ env.REGISTRY_URL }} -u $acr_usr -p $acr_pwd
-            # az acr login --name ${{ env.REGISTRY_URL }} --expose-token
-            #az configure --defaults acr=${{ env.AZURE_CONTAINER_REGISTRY }}
-            echo "REPOSITORY_USERNAME=$acr_usr" >> $GITHUB_ENV
-            echo "REPOSITORY_PASSWORD=$acr_pwd" >> $GITHUB_ENV
-
             export REPOSITORY_USERNAME=$acr_usr
             export REPOSITORY_PASSWORD=$acr_pwd
 
@@ -322,7 +333,7 @@ jobs:
     - name: Setup Developer namespaces
       run: |
 
-            tanzu secret registry add tbs-registry-credentials --server ${{ env.AZURE_CONTAINER_REGISTRY}} --username $acr_usr --password $acr_pwd-PASSWORD --export-to-all-namespaces --yes --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
+            tanzu secret registry add tbs-registry-credentials --server ${{ env.AZURE_CONTAINER_REGISTRY}} --username $acr_usr --password $acr_pwd --export-to-all-namespaces --yes --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
             kubectl create namespace ${{ env.DEV_NAMESPACE }} --dry-run=client -o yaml > ns-dev.yaml
             kubectl apply -f ns-dev.yaml            
             kubectl label namespaces ${{ env.DEV_NAMESPACE}} apps.tanzu.vmware.com/tap-ns=""
@@ -340,12 +351,13 @@ jobs:
     - name: Get Ingress Controller IP
       run: |
 
-            helm ls --namespace ${{ env.ING_NS }}
+            # helm ls --namespace ${{ env.ING_NS }}
             # sleep 15
-            kubectl get deployments -n ${{ env.ING_NS }} -l app.kubernetes.io/name=ingress-nginx
-            kubectl describe svc ingress-nginx-controller -n  ${{ env.ING_NS }}
+            kubectl get deployments -n ${{ env.ING_NS }} -l app=contour
+            kubectl get svc contour n ${{ env.ING_NS }}
+            kubectl describe svc envoy -n ${{ env.ING_NS }}
 
-            ingress_controller_ip=$(kubectl get svc -n ${{ env.ING_NS }} ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[*].ip}")
+            ingress_controller_ip=$(kubectl get svc envoy -n ${{ env.ING_NS }} -o jsonpath="{.status.loadBalancer.ingress[*].ip}")
             echo "ING_CTL_IP:" $ingress_controller_ip
             echo "ING_CTL_IP=$ingress_controller_ip" >> $GITHUB_ENV
 
