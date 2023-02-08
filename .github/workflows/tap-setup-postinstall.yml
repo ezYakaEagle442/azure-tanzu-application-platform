@@ -206,7 +206,7 @@ jobs:
 
             mkdir ${{ env.TANZU_INSTALL_DIR }}/deploy
 
-            # need to substiture env var in the template file
+            # need to substitute env var in the template file
             export TANZU_INSTALL_DIR=${{ env.TANZU_INSTALL_DIR }}
             export DEV_NAMESPACE=${{ env.DEV_NAMESPACE }}
             export APP_DNS_ZONE=${{ env.APP_DNS_ZONE }}
@@ -222,10 +222,12 @@ jobs:
             export REPOSITORY_PASSWORD=$acr_pwd
 
             ls -al ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}
-            envsubst < ${{ env.TANZU_INSTALL_DIR }}/tap-values.yml > ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml 
+            envsubst < ${{ env.TANZU_INSTALL_DIR }}/tap-values.yml > ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml
+            echo ""
+            echo ""
             ls -al ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml 
 
-            tanzu package install tap -p tap.tanzu.vmware.com -v $TAP_VERSION --values-file ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml -n ${{ env.TAP_INSTALL_NAMESPACE}}
+            tanzu package install tap -p tap.tanzu.vmware.com -v $TAP_VERSION --values-file "${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml" -n ${{ env.TAP_INSTALL_NAMESPACE}} --verbose 9
             echo "1. tanzu package is now INSTALLED"
             tanzu package installed get tap -n ${{ env.TAP_INSTALL_NAMESPACE}}
             echo "2. Get tap package checked in the NS"
@@ -243,7 +245,7 @@ jobs:
               --url ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tbs-full-deps:${TAP_VERSION} \
               --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
 
-            echo "5. repo added ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tbs-full-deps:${TAP_VERSION} "
+            echo "5. repo added ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tbs-full-deps:${TAP_VERSION}"
 
             tanzu package install full-tbs-deps -p full-tbs-deps.tanzu.vmware.com -v ${TAP_VERSION} -n ${{ env.TAP_INSTALL_NAMESPACE}}
             echo "5. full-tbs-depspackage installed"
