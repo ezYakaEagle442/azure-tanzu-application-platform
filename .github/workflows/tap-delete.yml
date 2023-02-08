@@ -145,11 +145,6 @@ jobs:
 
     - name: Get Tanzu Application Platform CLI
       run: |
-
-      shell: bash
-
-    - name: Install CLI
-      run: |
             tar -xvf ${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_CLI }} -C ${{ env.TANZU_INSTALL_DIR }}
             export TANZU_CLI_NO_INIT=true
 
