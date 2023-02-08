@@ -13,18 +13,27 @@ param location string = resourceGroup().location
 @description('The AKS cluster CIDR')
 param networkRuleSetCidr string = '172.16.0.0/16'
 
+// https://learn.microsoft.com/en-us/azure/templates/microsoft.containerregistry/registries?pivots=deployment-language-bicep#sku
+@allowed([
+  'Basic'
+  'Premium'
+  'Standard'
+  'Classic'
+])
+@description('The ACR SKU')
+param acrSkuName string = 'Basic'
 
 resource acr 'Microsoft.ContainerRegistry/registries@2022-02-01-preview' = {
   name: acrName
   location: location
   sku: {
-    name: 'Basic'
+    name: acrSkuName
   }
   identity: {
     type: 'SystemAssigned'
   }
   properties: {
-    adminUserEnabled: false
+    adminUserEnabled: true // required for TAP,alternative required Premium SKU with scoped-permissions, see https://learn.microsoft.com/en-us/azure/container-registry/container-registry-repository-scoped-permissions
     dataEndpointEnabled: false // data endpoint rule is not supported for the SKU Basic
   
     // VNet rule is not supported for the SKU Basic
