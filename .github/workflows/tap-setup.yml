@@ -223,7 +223,7 @@ jobs:
             ./install.sh --yes
 
             cp kapp /usr/local/bin/kapp
-            cp /imgpkg /usr/local/bin/imgpkg
+            cp imgpkg /usr/local/bin/imgpkg
 
       shell: bash
 
