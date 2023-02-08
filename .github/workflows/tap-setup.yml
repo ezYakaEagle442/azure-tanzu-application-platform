@@ -302,7 +302,7 @@ jobs:
             export DEV_NAMESPACE=${{ env.DEV_NAMESPACE }}
             export APP_DNS_ZONE=${{ env.APP_DNS_ZONE }}
             export TANZU_NET_USER=${{ env.TANZU_NET_USER }}
-            export TANZU_NET_PASSWORD=${{ env.TANZU_NET_PASSWORDXX }}
+            export TANZU_NET_PASSWORD=${{ env.TANZU_NET_PASSWORD }}
             export AZURE_CONTAINER_REGISTRY=${{ env.AZURE_CONTAINER_REGISTRY }}
             export REGISTRY_URL=${{ env.REGISTRY_URL }}
             export REPOSITORY=${{ env.REPOSITORY }}
