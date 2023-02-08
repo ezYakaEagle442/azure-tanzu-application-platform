@@ -233,6 +233,7 @@ jobs:
             echo ""
             ls -al ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml 
 
+            # tanzu package installed update tap -v $TAP_VERSION --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
             tanzu package install tap -p tap.tanzu.vmware.com -v $TAP_VERSION --values-file "${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml" -n ${{ env.TAP_INSTALL_NAMESPACE}} --verbose 9
             echo "1. tanzu package is now INSTALLED"
             tanzu package installed get tap -n ${{ env.TAP_INSTALL_NAMESPACE}}
