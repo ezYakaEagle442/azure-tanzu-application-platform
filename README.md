@@ -398,7 +398,26 @@ sudo install cli/core/$VERSION/tanzu-core-linux_amd64 /usr/local/bin/tanzu
 tanzu version
 tanzu plugin install --local cli all
 tanzu plugin list
+cd ..
 ```
+
+### Prepare Tanzu Template file
+
+Check & modify the file .env or setenv.bat :
+```sh
+export $(cat .env | xargs)
+
+pwd
+mkdir ./$TANZU_INSTALL_DIR/deploy
+envsubst < ./$TANZU_INSTALL_DIR/tap-values.yml > ./$TANZU_INSTALL_DIR/deploy/tap-values.yml
+echo "Cheking folder " ./$TANZU_INSTALL_DIR/deploy
+ls -al ./$TANZU_INSTALL_DIR/deploy
+cat ./$TANZU_INSTALL_DIR/deploy/tap-values.yml
+
+```
+
+
+### Troubleshoot
 
 troubleshoot namespace stuck in terminating-state read [this](https://www.ibm.com/docs/en/cloud-private/3.2.0?topic=console-namespace-is-stuck-in-terminating-state).
 ```sh
@@ -514,6 +533,7 @@ The Workflow run the steps in this in this order :
 │           ├── Deploy Backend services calling ./.github/workflows/deploy-app-svc.yml
 │           ├── Deploy the UI calling ./.github/workflows/deploy-app-ui.yml
 ```
+
 
 You need to set your own param values in :
 

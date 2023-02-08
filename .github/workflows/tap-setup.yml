@@ -40,7 +40,9 @@ env:
   AZURE_CONTAINER_REGISTRY: tanzu42 # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
   REGISTRY_URL: tanzu42.azurecr.io  # set this to the URL of your registry
   REPOSITORY: tap                   # set this to your ACR repository
+  REPO_SUBFOLDER_APP_TAP: tanzu-app-tap
 
+  CATALOG_URL: https://github.com/ezYakaEagle442/tap-catalog
   TAP_NAMESPACE: tanzu
   DEV_NAMESPACE: tap-dev
   TAP_INSTALL_NAMESPACE: tap-install                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
@@ -54,7 +56,7 @@ env:
   AKS_SUBNET_NAME: snet-aks
 
   DNS_PREFIX: tanzu-tap42 # customize this
-  ING_NS: ingress # Namespace to use for the Ingress Controller
+  ING_NS: tanzu-system-ingress # Namespace to use for the Ingress Controller
   AKS_IDENTITY_NAME: id-tap-cluster-dev-westeurope-101 # customize this
 
   # APPLICATION INSIGHTS
@@ -78,10 +80,11 @@ env:
 
   TANZU_NET_USER: ${{ secrets.TANZU_NET_USER }}
   TANZU_NET_PASSWORD: ${{ secrets.TANZU_NET_PASSWORD }}
+  GH_PAT: ${{ secrets.GH_PAT }}
 
   # ==== Versions ====
   DEPLOYMENT_VERSION: 2.6.13
-  AZ_CLI_VERSION: 2.42.0
+  AZ_CLI_VERSION: 2.44.1
   JAVA_VERSION: 11
 
 on:
@@ -227,6 +230,7 @@ jobs:
     # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/install.html
     - name: Relocate images to ACR
       run: |
+
             set -euo pipefail
             access_token=$(az account get-access-token --query accessToken -o tsv)
             refresh_token=$(curl https://${{ env.REGISTRY_URL }}/oauth2/exchange -v -d "grant_type=access_token&service=${{ env.REGISTRY_URL }}&access_token=$access_token" | jq -r .refresh_token)
@@ -266,9 +270,34 @@ jobs:
     # Create a tap-values.yaml 
     - name: Install TAP profile
       run: |
+
             tanzu package available list tap.tanzu.vmware.com --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
 
             mkdir ${{ env.TANZU_INSTALL_DIR }}/deploy
+
+            # need to substiture env var in the template file
+            export TANZU_INSTALL_DIR=${{ env.TANZU_INSTALL_DIR }}
+            export DEV_NAMESPACE=${{ env.DEV_NAMESPACE }}
+            export APP_DNS_ZONE=${{ env.APP_DNS_ZONE }}
+            export TANZU_NET_USER=${{ env.TANZU_NET_USER }}
+            export TANZU_NET_PASSWORD=${{ env.TANZU_NET_PASSWORDXX }}
+            export AZURE_CONTAINER_REGISTRY=${{ env.AZURE_CONTAINER_REGISTRY }}
+            export REGISTRY_URL=${{ env.REGISTRY_URL }}
+            export REPOSITORY=${{ env.REPOSITORY }}
+            export REPO_SUBFOLDER_APP_TAP=${{ env.REPO_SUBFOLDER_APP_TAP }}
+            export GH_PAT=${{ env.GH_PAT }}
+
+            acr_usr=$(az deployment group show -g ${{ env.RG_APP }} -n ${{ env.AZURE_CONTAINER_REGISTRY }} --query properties.outputs.acrRegistryUsr.value | tr -d '"')
+            acr_pwd=$(az deployment group show -g ${{ env.RG_APP }} -n ${{ env.AZURE_CONTAINER_REGISTRY }} --query properties.outputs.acrRegistryPwd.value | tr -d '"')
+            # az acr login --name ${{ env.REGISTRY_URL }} -u $acr_usr -p $acr_pwd
+            # az acr login --name ${{ env.REGISTRY_URL }} --expose-token
+            #az configure --defaults acr=${{ env.AZURE_CONTAINER_REGISTRY }}
+            echo "REPOSITORY_USERNAME=$acr_usr" >> $GITHUB_ENV
+            echo "REPOSITORY_PASSWORD=$acr_pwd" >> $GITHUB_ENV
+
+            export REPOSITORY_USERNAME=$acr_usr
+            export REPOSITORY_PASSWORD=$acr_pwd
+
             envsubst < ${{ env.TANZU_INSTALL_DIR }}/tap-values.yaml > ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yaml 
 
             tanzu package install tap -p tap.tanzu.vmware.com -v $TAP_VERSION --values-file ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yaml -n ${{ env.TAP_INSTALL_NAMESPACE}}
@@ -291,7 +320,8 @@ jobs:
     # Otherwise, creating a workload, a Knative service or other Tanzu Application Platform packages fails.
     - name: Setup Developer namespaces
       run: |
-            # tanzu secret registry add tbs-registry-credentials --server ${{ env.AZURE_CONTAINER_REGISTRY}} --username REGISTRY-USERNAME --password REGISTRY-PASSWORD --export-to-all-namespaces --yes --namespace tap-install
+
+            tanzu secret registry add tbs-registry-credentials --server ${{ env.AZURE_CONTAINER_REGISTRY}} --username $acr_usr --password $acr_pwd-PASSWORD --export-to-all-namespaces --yes --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
             kubectl create namespace ${{ env.DEV_NAMESPACE}}
             kubectl label namespaces ${{ env.DEV_NAMESPACE}} apps.tanzu.vmware.com/tap-ns=""
             kubectl get secrets,serviceaccount,rolebinding,pods,workload,configmap -n ${{ env.DEV_NAMESPACE}}
@@ -305,11 +335,38 @@ jobs:
 
       shell: bash
 
-    - name: Configure DNS
+    - name: Get Ingress Controller IP
       run: |
-            echo TODO
+
+            helm ls --namespace ${{ env.ING_NS }}
+            # sleep 15
+            kubectl get deployments -n ${{ env.ING_NS }} -l app.kubernetes.io/name=ingress-nginx
+            kubectl describe svc ingress-nginx-controller -n  ${{ env.ING_NS }}
+
+            ingress_controller_ip=$(kubectl get svc -n ${{ env.ING_NS }} ingress-nginx-controller -o jsonpath="{.status.loadBalancer.ingress[*].ip}")
+            echo "ING_CTL_IP:" $ingress_controller_ip
+            echo "ING_CTL_IP=$ingress_controller_ip" >> $GITHUB_ENV
+
       shell: bash
- 
+
+    - name: Setup DNS
+      run: |
+            echo "ING_CTL_IP:" $ING_CTL_IP
+            az deployment group create --name aks-dns -f iac/bicep/modules/aks/dns.bicep -g ${{ env.RG_APP }} \
+            -p dnsZoneType=custom \
+            -p customDns=${{ env.CUSTOM_DNS }} \     
+            -p location=${{ env.LOCATION }} \
+            -p vnetName=${{ env.VNET_NAME }} \
+            -p aksSvcIp=$ING_CTL_IP
+
+            echo "CLUSTER_RESOURCE_GROUP:" $managed_rg
+            ingControllerPublicIpId=$(az network public-ip list -g $managed_rg --query "[?ipAddress!=null]|[?contains(ipAddress, '$ING_CTL_IP')].[id]" --output tsv)
+            echo $ingControllerPublicIpId
+            
+            az network public-ip update --ids $ingControllerPublicIpId --dns-name ${{ env.AZURE_DNS_LABEL_NAME }} -g $managed_rg
+
+      shell: bash
+
     - name: Azure Logout security hardening
       run: |
           az logout

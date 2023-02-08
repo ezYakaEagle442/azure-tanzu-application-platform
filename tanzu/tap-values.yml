@@ -1,7 +1,13 @@
+# https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/install.html#full-profile
 profile: full
 
 shared:
-  ingress_domain: tap.westeurope.cloudapp.azure.com
+  ingress_domain: $APP_DNS_ZONE
+  image_registry:
+    project_path: "$REGISTRY_URL/$REPOSITORY/supply-chain"
+    username: $REPOSITORY_USERNAME # TODO: ask RFE  NOT to use it
+    password: $REPOSITORY_PASSWORD
+
 appliveview:
   ingressEnabled: "true"
 appliveview_connector:
@@ -9,24 +15,31 @@ appliveview_connector:
     sslDisabled: "true"
 
 # Installation fails if this is not set to true
+# Tanzu Application Platform is part of VMware’s CEIP program where data is collected to help improve the customer experience.
+#  By setting ceip_policy_disclosed to true (not a string), you acknowledge the program is disclosed to you and you are aware
+# data collection is happening. This field must be set for the installation to be completed.
 ceip_policy_disclosed: true
+
 excluded_packages:
   - learningcenter.tanzu.vmware.com
   - workshops.learningcenter.tanzu.vmware.com
+  - policy.apps.tanzu.vmware.com
+  - image-policy-webhook.signing.apps.tanzu.vmware.com  
 
 buildservice:
-  kp_default_repository: 'FILL_IT'
-  kp_default_repository_username: "FILL_IT"
-  kp_default_repository_password: "FILL_IT"
-  tanzunet_username: "FILL_IT"
-  tanzunet_password: "FILL_IT"
+  kp_default_repository: $REGISTRY_URL/$REPOSITORY/build-service/
+  REPOSITORY_USERNAME: $REPOSITORY_USERNAME # TODO: ask RFE  NOT to use it
+  REPOSITORY_PASSWORD: $REPOSITORY_PASSWORD
+  tanzunet_username: $TANZU_NET_USER
+  tanzunet_password: $TANZU_NET_PASSWORD
 
 supply_chain: basic
 
+# OOTB : Out Of The Box
 ootb_supply_chain_basic:
   registry:
-    server: 'FILL_IT'
-    repository: 'FILL_IT'
+    server: $REGISTRY_URL
+    repository: $REPOSITORY/$REPO_SUBFOLDER_APP_TAP
   gitops:
     # Leave empty for public repos, add a secret for private repos.
     ssh_secret: ""
@@ -35,38 +48,55 @@ tap_gui:
   service_type: ClusterIP
   app_config:
     app:
-        baseUrl: http://tap-gui.tap.westeurope.cloudapp.azure.com
+        baseUrl: http://tap-gui.$APP_DNS_ZONE
     integrations:
       github: 
         - host: github.com
-          token: FILL_IT
+          token: $GH_PAT # For GitOps or Accelerators
+    proxy:
+      /metadata-store:
+        target: https://metadata-store-app.metadata-store:8443/api/v1
+        changeOrigin: true
+        secure: false
+        headers:
+          Authorization: "Bearer REPLACE_ME" # TODO: need to get a Bearer TOKEN AFTER the TAP installation ...
+          X-Custom-Source: project-star
     catalog:
       locations:
         - type: url
           # Catalog repository
-          target: https://github.com/beeNotice/tap-catalog/blob/main/catalog-info.yaml
+          target: $CATALOG_URL/blob/main/catalog-info.yaml
     backend:
-        baseUrl: http://tap-gui.tap.westeurope.cloudapp.azure.com
+        baseUrl: http://tap-gui.$APP_DNS_ZONE
         cors:
-            origin: http://tap-gui.tap.westeurope.cloudapp.azure.com
+            origin: http://tap-gui.$APP_DNS_ZONE
 
 grype:
-  namespace: "dev"
+  namespace: "$DEV_NAMESPACE"
   targetImagePullSecret: "registry-credentials"
+
+policy:
+  tuf_enabled: false # By default, TUF initialization and keyless verification are deactivated.
+
+#tap_telemetry:
+#  customer_entitlement_account_number: "CUSTOMER-ENTITLEMENT-ACCOUNT-NUMBER" # (Optional) Identify data for creating Tanzu Application Platform usage reports.
 
 contour:
   envoy:
     service:
       type: LoadBalancer
+      annotations: 
+        controller.service.annotations."service\.beta\.kubernetes\.io/azure-dns-label-name": $AZURE_DNS_LABEL_NAME # RFE: need to add annotations
 
+# Cloud Native Runtime Services
 cnrs:
   provider: local
-  domain_name: "tap.westeurope.cloudapp.azure.com"
+  domain_name: "$APP_DNS_ZONE"
   # Fix domain template for TSL certficates
   domain_template: "{{.Name}}-{{.Namespace}}.{{.Domain}}"
 
 metadata_store:
-  ns_for_export_app_cert: "dev"
+  ns_for_export_app_cert: "$DEV_NAMESPACE"
   app_service_type: ClusterIP
 
 scanning:
@@ -75,10 +105,4 @@ scanning:
 
 api_portal:
   apiPortalServer:
-    sourceUrls: "https://petstore.swagger.io/v2/swagger.json,https://petstore3.swagger.io/api/v3/openapi.json,http://tanzu-app-deploy-dev.tap.westeurope.cloudapp.azure.com/v3/api-docs"
-
-# Temporay fix for 1.2
-#package_overlays:
-#- name: tap-gui
-#  secrets:
-#  - name: k8s-reader-overlay
+    sourceUrls: "https://petstore.swagger.io/v2/swagger.json,https://petstore3.swagger.io/api/v3/openapi.json"
