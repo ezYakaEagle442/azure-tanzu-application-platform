@@ -208,7 +208,8 @@ jobs:
 
             kubectl config get-contexts
             kubectl config use-context ${{ env.CONTEXT_NAME }}
-            kubectl create namespace ${{ env.KAPP_NAMESPACE }}
+            kubectl create namespace ${{ env.KAPP_NAMESPACE }} --dry-run=client -o yaml > ns-kapp-controller.yaml
+            kubectl apply -f ns-kapp-controller.yaml
 
             # (Optional) If your registry needs a custom certificate, you must load that configuration into the cluster before installing kapp-controller. If your registry uses a public certificate, this step is not required.
             #kubectl create secret generic kapp-controller-config \
@@ -322,7 +323,8 @@ jobs:
       run: |
 
             tanzu secret registry add tbs-registry-credentials --server ${{ env.AZURE_CONTAINER_REGISTRY}} --username $acr_usr --password $acr_pwd-PASSWORD --export-to-all-namespaces --yes --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
-            kubectl create namespace ${{ env.DEV_NAMESPACE}}
+            kubectl create namespace ${{ env.DEV_NAMESPACE }} --dry-run=client -o yaml > ns-dev.yaml
+            kubectl apply -f ns-dev.yaml            
             kubectl label namespaces ${{ env.DEV_NAMESPACE}} apps.tanzu.vmware.com/tap-ns=""
             kubectl get secrets,serviceaccount,rolebinding,pods,workload,configmap -n ${{ env.DEV_NAMESPACE}}
 
