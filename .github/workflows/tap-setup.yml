@@ -269,9 +269,10 @@ jobs:
             
             imgpkg tag list -i ${{ env.TANZU_REGISTRY}}/tanzu-application-platform/tap-packages | grep -v sha | sort -V
             echo "Tag list displayed, about to copy packages using Tag ${TAP_VERSION} to ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tap-packages"
-            imgpkg copy -b ${{ env.TANZU_REGISTRY}}/tanzu-application-platform/tap-packages:${TAP_VERSION} --to-repo ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tap-packages
+            imgpkg copy --concurrency 1 -b ${{ env.TANZU_REGISTRY}}/tanzu-application-platform/tap-packages:${TAP_VERSION} --to-repo ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tap-packages
 
-            kubectl create ns ${{ env.TAP_INSTALL_NAMESPACE}}
+            kubectl create namespace ${{ env.TAP_INSTALL_NAMESPACE }} --dry-run=client -o yaml > ns-install.yaml
+            kubectl apply -f ns-install.yaml  
 
             tanzu secret registry add tap-registry \
               --username ${INSTALL_REGISTRY_USERNAME} --password ${INSTALL_REGISTRY_PASSWORD} \
@@ -320,7 +321,7 @@ jobs:
             tanzu package installed list -A
 
             tanzu package available list buildservice.tanzu.vmware.com --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
-            imgpkg copy -b ${{ env.TANZU_REGISTRY}}/tanzu-application-platform/full-tbs-deps-package-repo:${TAP_VERSION} \
+            imgpkg copy --concurrency 1 -b ${{ env.TANZU_REGISTRY}}/tanzu-application-platform/full-tbs-deps-package-repo:${TAP_VERSION} \
               --to-repo ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tbs-full-deps
 
             tanzu package repository add tbs-full-deps-repository \
