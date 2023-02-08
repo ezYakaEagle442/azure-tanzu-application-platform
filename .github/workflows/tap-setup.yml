@@ -117,7 +117,7 @@ jobs:
         # Required Admin enabled on ACR
         #acr_usr=$(az deployment group show -g ${{ env.RG_APP }} -n ${{ env.AZURE_CONTAINER_REGISTRY }} --query properties.outputs.acrRegistryUsr.value | tr -d '"')
         #acr_pwd=$(az deployment group show -g ${{ env.RG_APP }} -n ${{ env.AZURE_CONTAINER_REGISTRY }} --query properties.outputs.acrRegistryPwd.value | tr -d '"')
-        acr_usr=${{ env.AZURE_CONTAINER_REGISTRY }} 
+        acr_usr=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .username) # ${{ env.AZURE_CONTAINER_REGISTRY }} 
         acr_pwd=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .passwords[0].value)
         #az configure --defaults acr=${{ env.AZURE_CONTAINER_REGISTRY }}
         echo "acr_usr=$acr_usr" >> $GITHUB_ENV
