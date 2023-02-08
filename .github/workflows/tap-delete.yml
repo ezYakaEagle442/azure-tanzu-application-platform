@@ -1,0 +1,179 @@
+# This workflow will DELETE TAP on AKS
+name: Delete TAP from AKS
+
+env:
+  APP_NAME: tap42
+  LOCATION: westeurope # francecentral
+  RG_KV: rg-kv-tanzu101 # RG where to deploy KV
+  RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
+  
+  ACR_NAME: tanzu42 # customize this
+
+  # ==== Azure storage t, values must be consistent with the ones in iac/bicep/modules/aks/storage.bicep ====:
+  AZ_STORAGE_NAME : statapaks # customize this
+  AZ_BLOB_CONTAINER_NAME: statapaks-blob # customize this
+  # AZ_BLOB_SVC_NAME: default # MUST NOT BE MODIFIED
+
+  # https://learn.microsoft.com/en-us/rest/api/storageservices/setting-timeouts-for-blob-service-operations
+  AZ_BLOB_MAX_CONNECTIONS: 10
+  AZ_BLOB_MAXSIZE_CONDITION: 440401920 # 420 Mb
+  AZ_BLOB_TIMEOUT: 600
+
+  # ==== Tanzu Tools ====
+  TANZU_INSTALL_DIR: tanzu
+  TANZU_ESSENTIALS: tanzu-cluster-essentials-linux-amd64-1.4.0.tgz
+  TANZU_GUI_CAT: tap-gui-blank-catalog.tgz
+  TANZU_CLI: tanzu-framework-linux-amd64-v0.25.4.tar # /!\ the version name must match M.n.p like v0.25.4 NOT v0.25.4.1
+
+  TANZU_BLOB_CLI: tanzu-cli
+  TANZU_BLOB_ESSENTIALS: tanzu-essentials
+  TANZU_BLOB_GUI_CAT: tanzu-catalog
+
+  TANZU_CLI_VERSION: v0.25.4
+  TAP_VERSION_NUMBER: 1.4.0
+  TANZU_REGISTRY: registry.tanzu.vmware.com
+
+  TAP_NAMESPACE: tanzu
+  DEV_NAMESPACE: tap-dev
+  TAP_INSTALL_NAMESPACE: tap-install                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+  KAPP_NAMESPACE: kapp-controller
+  AKS_CLUSTER_NAME: aks-tap42  # set this to your AKS cluster name
+  CONTEXT_NAME: aks-tap42 # usuallythe conext is the same as the AKS cluster name
+
+  # ==== Secrets ====
+
+  credentials: ${{ secrets.AZURE_CREDENTIALS }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+
+  # ==== Versions ====
+  AZ_CLI_VERSION: 2.44.1
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+ 
+  delete-tap:
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Login with GHA Runner SP
+      uses: azure/login@v1 # https://github.com/marketplace/actions/azure-login
+      with:
+        creds: ${{ env.credentials }} # ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Checkout
+      uses: actions/checkout@v3 # https://github.com/actions/checkout
+
+    - name: Set Base environment variables
+      run: |
+        echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
+        echo "GH_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV # "/github/workspace"
+
+        managed_rg=$(az aks show --resource-group ${{ env.RG_APP }} --name ${{ env.AKS_CLUSTER_NAME }} --query nodeResourceGroup -o tsv)
+        echo "CLUSTER_RESOURCE_GROUP:" $managed_rg
+        echo "managed_rg=$managed_rg" >> $GITHUB_ENV
+
+      shell: bash
+
+    - name: Display environment variables
+      run: |
+        echo "Checking GITHUB_ENV"
+        echo "LOCAL_IP=$LOCAL_IP"
+        echo "managed_rg=$managed_rg"
+        echo "GH_WORKSPACE=$GH_WORKSPACE"
+      shell: bash
+
+    # https://github.com/Azure/aks-set-context/tree/releases/v1
+    - name: AKS Set Context
+      uses: azure/aks-set-context@v1
+      with:
+          creds: '${{ secrets.AZURE_CREDENTIALS }}' # Azure credentials
+          resource-group: ${{ env.RG_APP }} 
+          cluster-name: ${{ env.AKS_CLUSTER_NAME }}
+      id: akslogin
+
+
+    - name: Authorize local IP access to the Azure BLOB Storage 
+      if: ${{ always() }}
+      run: |
+        LOCAL_IP=$(curl whatismyip.akamai.com)
+        echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
+        echo "About to ADD network-rule to ALLOW $LOCAL_IP to Azure BLOB Storage ${{ env.AZ_STORAGE_NAME }}"
+        az storage account network-rule add --ip-address $LOCAL_IP --account-name  ${{ env.AZ_STORAGE_NAME }}  --action "Allow" -g ${{ env.RG_APP }}  --only-show-errors
+        sleep 30        
+      shell: bash
+
+    - name: Download Tanzu Tools from Azure BLOB Storage
+      id: blob_download
+      run: | 
+        # https://learn.microsoft.com/en-us/azure/storage/blobs/blob-cli
+
+        pwd
+        ls -al
+
+        # mkdir ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}
+        ls -al ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}
+
+        # TODO: need a workaround to resolve the network issues between GHA Runnr and Azure Storage
+        # https://github.com/actions/runner-images/blob/main/images/linux/scripts/helpers/install.sh
+
+        echo "About to download Tanzu tools from Azure BLOB Storage"
+        az storage blob download --name ${{ env.TANZU_BLOB_CLI }} --file ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_CLI }} --container-name ${{ env.AZ_BLOB_CONTAINER_NAME }} --account-name ${{ env.AZ_STORAGE_NAME }} --auth-mode login --max-connections ${{ env.AZ_BLOB_MAX_CONNECTIONS }}
+        az storage blob download --name ${{ env.TANZU_BLOB_ESSENTIALS }} --file ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_ESSENTIALS }} --container-name ${{ env.AZ_BLOB_CONTAINER_NAME }} --account-name ${{ env.AZ_STORAGE_NAME }} --auth-mode login --max-connections ${{ env.AZ_BLOB_MAX_CONNECTIONS }}
+        az storage blob download --name ${{ env.TANZU_GUI_CAT }} --file ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_GUI_CAT }} --container-name ${{ env.AZ_BLOB_CONTAINER_NAME }} --account-name ${{ env.AZ_STORAGE_NAME }} --auth-mode login --max-connections ${{ env.AZ_BLOB_MAX_CONNECTIONS }}
+
+        ls -al ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}
+        ls -al ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_CLI }} 
+        ls -al ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_ESSENTIALS }} 
+        ls -al ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_GUI_CAT }}
+
+      shell: bash
+
+    - name: Disable local IP access to the Azure BLOB Storage 
+      if: ${{ always() }}
+      run: |
+        echo "About to REMOVE network-rule ALLOWING $LOCAL_IP to Azure BLOB Storage ${{ env.AZ_STORAGE_NAME }}"
+        az storage account network-rule remove --ip-address $LOCAL_IP --account-name  ${{ env.AZ_STORAGE_NAME }} -g ${{ env.RG_APP }} --only-show-errors
+      shell: bash
+
+    # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/prerequisites.html
+    # https://github.com/beeNotice/tanzu-tools/tree/main/tap
+
+    - name: Get Tanzu Application Platform CLI
+      run: |
+
+      shell: bash
+
+    - name: Install CLI
+      run: |
+            tar -xvf ${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_CLI }} -C ${{ env.TANZU_INSTALL_DIR }}
+            export TANZU_CLI_NO_INIT=true
+
+            cd ${{ env.TANZU_INSTALL_DIR }}
+            export VERSION=${{ env.TANZU_CLI_VERSION }}
+            install cli/core/$VERSION/tanzu-core-linux_amd64 /usr/local/bin/tanzu
+
+            tanzu version
+            tanzu plugin install --local cli all
+            tanzu plugin list
+
+      shell: bash
+
+    - name: Cleanup TAP install
+      run: |
+
+            tanzu package installed delete tap -n ${{ env.TAP_INSTALL_NAMESPACE }}
+
+      shell: bash
+
+
+    - name: Azure Logout security hardening
+      run: |
+          az logout
+          az cache purge
+          az account clear
+      shell: bash
