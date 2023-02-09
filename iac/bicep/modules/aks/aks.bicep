@@ -131,7 +131,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-10-02-preview' = {
         count: agentCount
         minCount: 4
         maxCount: 12
-        maxPods: 30
+        maxPods: 142 // 250 Pods max with CNI https://learn.microsoft.com/en-us/azure/aks/configure-azure-cni#configure-maximum---new-clusters
         vmSize: agentVMSize
         osType: 'Linux'
         mode: 'System'
