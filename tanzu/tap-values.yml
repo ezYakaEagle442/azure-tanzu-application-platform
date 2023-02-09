@@ -28,8 +28,8 @@ excluded_packages:
 
 buildservice:
   kp_default_repository: $REGISTRY_URL/$REPOSITORY/build-service/
-  REPOSITORY_USERNAME: $REPOSITORY_USERNAME # TODO: ask RFE  NOT to use it
-  REPOSITORY_PASSWORD: $REPOSITORY_PASSWORD
+  kp_default_repository_username: $REPOSITORY_USERNAME # TODO: ask RFE  NOT to use it
+  kp_default_repository_password: $REPOSITORY_PASSWORD
   tanzunet_username: $TANZU_NET_USER
   tanzunet_password: $TANZU_NET_PASSWORD
 
@@ -59,7 +59,7 @@ tap_gui:
         changeOrigin: true
         secure: false
         headers:
-          Authorization: "Bearer REPLACE_ME" # TODO: need to get a Bearer TOKEN AFTER the TAP installation ...
+          Authorization: "Bearer $METADATA_STORE_ACCESS_TOKEN" # TODO: need to get a Bearer TOKEN AFTER the TAP installation ...
           X-Custom-Source: project-star
     catalog:
       locations:
@@ -73,7 +73,7 @@ tap_gui:
 
 grype:
   namespace: "$DEV_NAMESPACE"
-  targetImagePullSecret: "registry-credentials"
+  targetImagePullSecret: "acr-registry-credentials" # TARGET-REGISTRY-CREDENTIALS-SECRET is the name of the secret that contains the credentials to pull an image from the registry for scanning
 
 policy:
   tuf_enabled: false # By default, TUF initialization and keyless verification are deactivated.
@@ -82,11 +82,12 @@ policy:
 #  customer_entitlement_account_number: "CUSTOMER-ENTITLEMENT-ACCOUNT-NUMBER" # (Optional) Identify data for creating Tanzu Application Platform usage reports.
 
 contour:
+  infrastructure_provider: azure
   envoy:
     service:
       type: LoadBalancer
       annotations: 
-        controller.service.annotations."service\.beta\.kubernetes\.io/azure-dns-label-name": $AZURE_DNS_LABEL_NAME # RFE: need to add annotations
+        service.beta.kubernetes.io/azure-dns-label-name: $AZURE_DNS_LABEL_NAME # RFE: need to add annotations
 
 # Cloud Native Runtime Services
 cnrs:
