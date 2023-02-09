@@ -256,15 +256,18 @@ jobs:
             tanzu package installed get tap -n ${{ env.TAP_INSTALL_NAMESPACE}}
             tanzu package installed list -A
 
-            tanzu package available list buildservice.tanzu.vmware.com --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
-            imgpkg copy --concurrency ${{ env.IMG_PKG_CONCURRENCY}} -b ${{ env.TANZU_REGISTRY}}/tanzu-application-platform/full-tbs-deps-package-repo:${TAP_VERSION} \
+            # Get the tanzu package available list buildservice.tanzu.vmware.com --namespace tap-install
+            tbsVersion=$(tanzu package available list buildservice.tanzu.vmware.com --namespace ${{ env.TAP_INSTALL_NAMESPACE}} -o json | jq '.[] | .version')
+            echo "Found Tanzu buildservice Package Version " $tbsVersion
+
+            imgpkg copy --concurrency ${{ env.IMG_PKG_CONCURRENCY}} -b ${{ env.TANZU_REGISTRY}}/tanzu-application-platform/full-tbs-deps-package-repo:$tbsVersion \
               --to-repo ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tbs-full-deps
 
             tanzu package repository add tbs-full-deps-repository \
-              --url ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tbs-full-deps:${TAP_VERSION} \
+              --url ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tbs-full-deps:$tbsVersion \
               --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
 
-            tanzu package install full-tbs-deps -p full-tbs-deps.tanzu.vmware.com -v ${TAP_VERSION} -n ${{ env.TAP_INSTALL_NAMESPACE}}
+            tanzu package install full-tbs-deps -p full-tbs-deps.tanzu.vmware.com -v $tbsVersion -n ${{ env.TAP_INSTALL_NAMESPACE}}
 
       shell: bash
 
