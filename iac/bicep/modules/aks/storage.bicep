@@ -37,7 +37,7 @@ param tags object = {
 }
 
 @description('The Azure Strorage Identity name, see Character limit: 3-128 Valid characters: Alphanumerics, hyphens, and underscores')
-param storageIdentityName string = 'id-aks-petclinic-strorage-dev-westeurope-101'
+param storageIdentityName string = 'id-aks-${appName}-strorage-dev-${location}-101'
 
 
 // https://learn.microsoft.com/en-us/azure/templates/microsoft.managedidentity/userassignedidentities?pivots=deployment-language-bicep
