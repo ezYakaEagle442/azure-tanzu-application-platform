@@ -294,12 +294,19 @@ jobs:
 
             mkdir ${{ env.TANZU_INSTALL_DIR }}/deploy
 
+            # https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+            # https://tanzu.vmware.com/developer/guides/platform-security-secrets-sa-what-is/
+
             kubectl apply -f ${{ env.TANZU_INSTALL_DIR }}/metadata-store-ready-only.yaml
-            export METADATA_STORE_ACCESS_TOKEN=$(kubectl get secret \
-              $(kubectl get sa metadata-store-read-client -n metadata-store -o json \
-              | jq -r '.secrets[0].name') -n metadata-store -o json \
-              | jq -r '.data.token' \
-              | base64 -d)
+            export METADATA_STORE_ACCESS_TOKEN=$(kubectl create token metadata-store-read-client -n metadata-store)
+            #export METADATA_STORE_ACCESS_TOKEN=$(kubectl get secret \
+            #  $(kubectl get sa metadata-store-read-client -n metadata-store -o json \
+            #  | jq -r '.secrets[0].name') -n metadata-store -o json \
+            #  | jq -r '.data.token' \
+            #  | base64 -d)
+
+            # sa_secret_name=$(kubectl get sa metadata-store-read-client -n metadata-store -o json | jq -Mr '.secrets[].name')
+            # sa_secret_value=$(kubectl get secrets  $sa_secret_name -o json | jq -Mr '.items[1].data.token' | base64 -d)
 
             acr_usr=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .username) # ${{ env.AZURE_CONTAINER_REGISTRY }} 
             acr_pwd=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .passwords[0].value)
