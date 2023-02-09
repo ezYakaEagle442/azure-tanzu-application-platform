@@ -245,7 +245,12 @@ jobs:
 
             ls -al ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}
             envsubst < ${{ env.TANZU_INSTALL_DIR }}/tap-values.yml > ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml 
+            echo ""
             ls -al ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml 
+            echo ""
+
+            az acr login --name ${{ env.REGISTRY_URL }} -u $acr_usr -p $acr_pwd
+            docker login ${{ env.TANZU_REGISTRY}} -u ${{ env.TANZU_NET_USER }} -p ${{ env.TANZU_NET_PASSWORD }}
 
             tanzu package install tap -p tap.tanzu.vmware.com -v $TAP_VERSION --values-file ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml -n ${{ env.TAP_INSTALL_NAMESPACE}}
             tanzu package installed get tap -n ${{ env.TAP_INSTALL_NAMESPACE}}
