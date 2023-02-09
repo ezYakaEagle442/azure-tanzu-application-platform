@@ -110,6 +110,7 @@ module identities './modules/aks/identity.bicep' = {
   name: 'aks-identities'
   params: {
     location: location
+    appName: appName
   }
 }
 
