@@ -179,8 +179,10 @@ jobs:
             do
               echo "Verifying Package $package"
               # tanzu package installed delete $package -n ${{ env.TAP_INSTALL_NAMESPACE }} --yes
-              tanzu package installed delete tap -n ${{ env.TAP_INSTALL_NAMESPACE }} --yes
             done
+
+            # Deleting just the tap package is enough to delete correctly all its dependencies
+            tanzu package installed delete tap -n ${{ env.TAP_INSTALL_NAMESPACE }} --yes
 
             az acr login --name ${{ env.REGISTRY_URL }} -u $acr_usr -p $acr_pwd
             az acr repository list --name ${{ env.AZURE_CONTAINER_REGISTRY }} 
