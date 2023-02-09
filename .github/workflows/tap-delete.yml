@@ -172,11 +172,14 @@ jobs:
       run: |
 
             # kubectl get apps -n ${{ env.TAP_INSTALL_NAMESPACE }} 
+            # tanzu package available list -n tap-install
             # tanzu package installed list -n ${{ env.TAP_INSTALL_NAMESPACE }} -o=custom-columns=:.name
+            # kubectl describe app buildservice -n tap-install
             for package in $(kubectl get apps -n ${{ env.TAP_INSTALL_NAMESPACE }} -o=custom-columns=:.metadata.name)
             do
               echo "Verifying Package $package"
-              tanzu package installed delete $package -n ${{ env.TAP_INSTALL_NAMESPACE }} --yes
+              # tanzu package installed delete $package -n ${{ env.TAP_INSTALL_NAMESPACE }} --yes
+              tanzu package installed delete tap -n ${{ env.TAP_INSTALL_NAMESPACE }} --yes
             done
 
             az acr login --name ${{ env.REGISTRY_URL }} -u $acr_usr -p $acr_pwd
