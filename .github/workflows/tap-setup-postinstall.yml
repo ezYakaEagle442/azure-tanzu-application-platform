@@ -163,6 +163,12 @@ jobs:
 
     - name: Install CLI & Plugins
       run: |
+            ls -al ${{ env.TANZU_INSTALL_DIR }}
+
+            tar -xvf ${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_ESSENTIALS }} -C ${{ env.TANZU_INSTALL_DIR }}
+            cp kapp /usr/local/bin/kapp
+            cp imgpkg /usr/local/bin/imgpkg
+
             tar -xvf ${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_CLI }} -C ${{ env.TANZU_INSTALL_DIR }}
             export TANZU_CLI_NO_INIT=true
 
@@ -173,10 +179,6 @@ jobs:
             tanzu version
             tanzu plugin install --local cli all
             tanzu plugin list
-
-            tar -xvf ${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_ESSENTIALS }} -C ${{ env.TANZU_INSTALL_DIR }}
-            cp kapp /usr/local/bin/kapp
-            cp imgpkg /usr/local/bin/imgpkg
 
       shell: bash
 
