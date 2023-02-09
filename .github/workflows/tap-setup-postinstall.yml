@@ -228,7 +228,7 @@ jobs:
             export INSTALL_REPO=${{ env.REPOSITORY }}
             export TAP_VERSION=${{ env.TAP_VERSION_NUMBER }}
 
-            # need to substiture env var in the template file
+            # need to substitute env var in the template file
             export TANZU_INSTALL_DIR=${{ env.TANZU_INSTALL_DIR }}
             export DEV_NAMESPACE=${{ env.DEV_NAMESPACE }}
             export APP_DNS_ZONE=${{ env.APP_DNS_ZONE }}

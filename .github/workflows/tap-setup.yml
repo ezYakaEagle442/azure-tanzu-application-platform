@@ -311,13 +311,14 @@ jobs:
             acr_usr=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .username) # ${{ env.AZURE_CONTAINER_REGISTRY }} 
             acr_pwd=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .passwords[0].value)
 
+            export INSTALL_REGISTRY_HOSTNAME=${{ env.REGISTRY_URL }}
             export INSTALL_REGISTRY_USERNAME=$acr_usr
             export INSTALL_REGISTRY_PASSWORD=$acr_pwd
-
-            export TAP_VERSION=${{ env.TAP_VERSION_NUMBER }}
             export INSTALL_REPO=${{ env.REPOSITORY }}
 
-            # need to substiture env var in the template file
+            export TAP_VERSION=${{ env.TAP_VERSION_NUMBER }}
+
+            # need to substitute env var in the template file
             export TANZU_INSTALL_DIR=${{ env.TANZU_INSTALL_DIR }}
             export DEV_NAMESPACE=${{ env.DEV_NAMESPACE }}
             export APP_DNS_ZONE=${{ env.APP_DNS_ZONE }}
