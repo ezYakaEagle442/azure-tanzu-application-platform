@@ -205,7 +205,7 @@ jobs:
             kubectl create namespace ${{ env.DEV_NAMESPACE }} --dry-run=client -o yaml > ns-dev.yaml
             kubectl apply -f ns-dev.yaml            
             kubectl label namespaces ${{ env.DEV_NAMESPACE}} apps.tanzu.vmware.com/tap-ns=""
-            kubectl get secrets,serviceaccount,rolebinding,pods,workload,configmap -n ${{ env.DEV_NAMESPACE}}
+            kubectl get secrets,serviceaccount,rolebinding,pods,deploy,configmap -n ${{ env.DEV_NAMESPACE}}
 
       shell: bash
 
