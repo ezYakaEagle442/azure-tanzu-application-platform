@@ -138,7 +138,27 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-10-02-preview' = {
         // spotMaxPrice: json('0.0229')
         vnetSubnetID: subnetID
         osSKU: 'CBLMariner'
-      }  
+      }
+      {
+        availabilityZones: [
+          '1'
+          '2'
+          '3'
+        ]        
+        name: 'tappool'
+        osDiskSizeGB: osDiskSizeGB
+        enableAutoScaling: true
+        count: agentCount
+        minCount: 4
+        maxCount: 12
+        maxPods: 142 // 250 Pods max with CNI https://learn.microsoft.com/en-us/azure/aks/configure-azure-cni#configure-maximum---new-clusters
+        vmSize: agentVMSize
+        osType: 'Linux'
+        mode: 'User'
+        // spotMaxPrice: json('0.0229')
+        vnetSubnetID: subnetID
+        osSKU: 'CBLMariner'
+      }       
     ]
     linuxProfile: {
       adminUsername: aksAdminUserName
