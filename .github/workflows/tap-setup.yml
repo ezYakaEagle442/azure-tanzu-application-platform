@@ -23,6 +23,8 @@ env:
   AZ_BLOB_TIMEOUT: 600
 
   # ==== Tanzu Tools ====
+  IMG_PKG_CONCURRENCY: 2 # 1 or 2 ONLY for GitHub pulic Runners /!\ not more. Test with value 42 on Self-Hosted Runners deployed to AKS
+
   TANZU_INSTALL_DIR: tanzu
   TANZU_ESSENTIALS: tanzu-cluster-essentials-linux-amd64-1.4.0.tgz
   TANZU_GUI_CAT: tap-gui-blank-catalog.tgz
@@ -66,7 +68,6 @@ env:
   SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT: https://kv-tap42.vault.azure.net/
   KV_NAME: kv-tap42 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
   SET_KV_ACCESS_POLICIES: false # let it to false
-
   
   # ==== APPS ====
   CLOUD_PROVIDER_ENV: azure
@@ -114,15 +115,6 @@ jobs:
         echo "CLUSTER_RESOURCE_GROUP:" $managed_rg
         echo "managed_rg=$managed_rg" >> $GITHUB_ENV
 
-        # Required Admin enabled on ACR
-        #acr_usr=$(az deployment group show -g ${{ env.RG_APP }} -n ${{ env.AZURE_CONTAINER_REGISTRY }} --query properties.outputs.acrRegistryUsr.value | tr -d '"')
-        #acr_pwd=$(az deployment group show -g ${{ env.RG_APP }} -n ${{ env.AZURE_CONTAINER_REGISTRY }} --query properties.outputs.acrRegistryPwd.value | tr -d '"')
-        acr_usr=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .username) # ${{ env.AZURE_CONTAINER_REGISTRY }} 
-        acr_pwd=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .passwords[0].value)
-        #az configure --defaults acr=${{ env.AZURE_CONTAINER_REGISTRY }}
-        echo "acr_usr=$acr_usr" >> $GITHUB_ENV
-        echo "acr_pwd=$acr_pwd" >> $GITHUB_ENV
-
       shell: bash
 
     - name: Display environment variables
@@ -141,7 +133,6 @@ jobs:
           resource-group: ${{ env.RG_APP }} 
           cluster-name: ${{ env.AKS_CLUSTER_NAME }}
       id: akslogin
-
 
     - name: Authorize local IP access to the Azure BLOB Storage 
       if: ${{ always() }}
@@ -257,6 +248,8 @@ jobs:
             # az acr login --name ${{ env.REGISTRY_URL }} --expose-token
             # docker login ${{ env.REGISTRY_URL }} -u 00000000-0000-0000-0000-000000000000 --password-stdin <<< "$acr_token"
             # az configure --defaults acr=${{ env.AZURE_CONTAINER_REGISTRY }}
+            acr_usr=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .username) # ${{ env.AZURE_CONTAINER_REGISTRY }} 
+            acr_pwd=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .passwords[0].value)
             az acr login --name ${{ env.REGISTRY_URL }} -u $acr_usr -p $acr_pwd
 
             docker login ${{ env.TANZU_REGISTRY}} -u ${{ env.TANZU_NET_USER }} -p ${{ env.TANZU_NET_PASSWORD }}
@@ -268,9 +261,12 @@ jobs:
             export TAP_VERSION=${{ env.TAP_VERSION_NUMBER }}
             export INSTALL_REPO=${{ env.REPOSITORY }}  
             
+            imgpkg --help
+            imgpkg copy --help
+
             imgpkg tag list -i ${{ env.TANZU_REGISTRY}}/tanzu-application-platform/tap-packages | grep -v sha | sort -V
             echo "Tag list displayed, about to copy packages using Tag ${TAP_VERSION} to ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tap-packages"
-            imgpkg copy --concurrency 1 -b ${{ env.TANZU_REGISTRY}}/tanzu-application-platform/tap-packages:${TAP_VERSION} --to-repo ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tap-packages
+            imgpkg copy --concurrency ${{ env.IMG_PKG_CONCURRENCY}} -b ${{ env.TANZU_REGISTRY}}/tanzu-application-platform/tap-packages:${TAP_VERSION} --to-repo ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tap-packages
 
             kubectl create namespace ${{ env.TAP_INSTALL_NAMESPACE }} --dry-run=client -o yaml > ns-install.yaml
             kubectl apply -f ns-install.yaml  
@@ -289,6 +285,21 @@ jobs:
 
       shell: bash
 
+    # After installing the full profile on your cluster, you must set up developer namespaces. 
+    # Otherwise, creating a workload, a Knative service or other Tanzu Application Platform packages fails.
+    - name: Setup Developer namespaces
+      run: |
+
+            acr_usr=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .username) # ${{ env.AZURE_CONTAINER_REGISTRY }} 
+            acr_pwd=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .passwords[0].value)
+
+            tanzu secret registry add acr-registry-credentials --server ${{ env.AZURE_CONTAINER_REGISTRY}} --username $acr_usr --password $acr_pwd --export-to-all-namespaces --yes --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
+            kubectl create namespace ${{ env.DEV_NAMESPACE }} --dry-run=client -o yaml > ns-dev.yaml
+            kubectl apply -f ns-dev.yaml            
+            kubectl label namespaces ${{ env.DEV_NAMESPACE}} apps.tanzu.vmware.com/tap-ns=""
+            kubectl get secrets,serviceaccount,rolebinding,pods,workload,configmap -n ${{ env.DEV_NAMESPACE}}
+
+      shell: bash
 
     # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/install.html#full-profile
     # Create a tap-values.yml  
@@ -299,10 +310,21 @@ jobs:
 
             mkdir ${{ env.TANZU_INSTALL_DIR }}/deploy
 
-            export TAP_VERSION=${{ env.TAP_VERSION_NUMBER }}
-            export INSTALL_REPO=${{ env.REPOSITORY }}
+            kubectl apply -f ${{ env.TANZU_INSTALL_DIR }}/metadata-store-ready-only.yaml
+            export METADATA_STORE_ACCESS_TOKEN=$(kubectl get secret \
+              $(kubectl get sa metadata-store-read-client -n metadata-store -o json \
+              | jq -r '.secrets[0].name') -n metadata-store -o json \
+              | jq -r '.data.token' \
+              | base64 -d)
+
+            acr_usr=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .username) # ${{ env.AZURE_CONTAINER_REGISTRY }} 
+            acr_pwd=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .passwords[0].value)
+
             export INSTALL_REGISTRY_USERNAME=$acr_usr
             export INSTALL_REGISTRY_PASSWORD=$acr_pwd
+
+            export TAP_VERSION=${{ env.TAP_VERSION_NUMBER }}
+            export INSTALL_REPO=${{ env.REPOSITORY }}
 
             # need to substiture env var in the template file
             export TANZU_INSTALL_DIR=${{ env.TANZU_INSTALL_DIR }}
@@ -328,7 +350,7 @@ jobs:
             tanzu package installed list -A
 
             tanzu package available list buildservice.tanzu.vmware.com --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
-            imgpkg copy --concurrency 1 -b ${{ env.TANZU_REGISTRY}}/tanzu-application-platform/full-tbs-deps-package-repo:${TAP_VERSION} \
+            imgpkg copy --concurrency ${{ env.IMG_PKG_CONCURRENCY}} -b ${{ env.TANZU_REGISTRY}}/tanzu-application-platform/full-tbs-deps-package-repo:${TAP_VERSION} \
               --to-repo ${INSTALL_REGISTRY_HOSTNAME}/${INSTALL_REPO}/tbs-full-deps
 
             tanzu package repository add tbs-full-deps-repository \
@@ -336,19 +358,6 @@ jobs:
               --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
 
             tanzu package install full-tbs-deps -p full-tbs-deps.tanzu.vmware.com -v ${TAP_VERSION} -n ${{ env.TAP_INSTALL_NAMESPACE}}
-
-      shell: bash
-
-    # After installing the full profile on your cluster, you must set up developer namespaces. 
-    # Otherwise, creating a workload, a Knative service or other Tanzu Application Platform packages fails.
-    - name: Setup Developer namespaces
-      run: |
-
-            tanzu secret registry add tbs-registry-credentials --server ${{ env.AZURE_CONTAINER_REGISTRY}} --username $acr_usr --password $acr_pwd --export-to-all-namespaces --yes --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
-            kubectl create namespace ${{ env.DEV_NAMESPACE }} --dry-run=client -o yaml > ns-dev.yaml
-            kubectl apply -f ns-dev.yaml            
-            kubectl label namespaces ${{ env.DEV_NAMESPACE}} apps.tanzu.vmware.com/tap-ns=""
-            kubectl get secrets,serviceaccount,rolebinding,pods,workload,configmap -n ${{ env.DEV_NAMESPACE}}
 
       shell: bash
 
