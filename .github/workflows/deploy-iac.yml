@@ -20,9 +20,6 @@ env:
   AKS_CLUSTER_NAME: aks-tap42
 
   VNET_NAME: vnet-aks
-  VNET_CIDR: 172.16.0.0/16
-  AKS_SUBNET_CIDR: 172.16.1.0/24
-  AKS_SUBNET_NAME: snet-aks
 
   DNS_PREFIX: tanzu-tap42 # customize this param
   ING_NS: ingress # Namespace to use for the Ingress Controller
@@ -36,9 +33,6 @@ env:
   VETS_SVC_APP_ID_NAME: id-tap-petclinic-vets-service-dev-westeurope-101 # customize this
   VISITS_SVC_APP_ID_NAME: id-tap-petclinic-visits-service-dev-westeurope-101 # customize this
   CONFIG_SERVER_APP_ID_NAME: id-tap-petclinic-config-server-dev-westeurope-101 # customize this
-
-  START_IP_ADDRESS: 172.16.1.0
-  END_IP_ADDRESS: 172.16.1.255
  
   MYSQL_SERVER_NAME: tap4242
   MYSQL_DB_NAME: tap4242
@@ -54,13 +48,8 @@ env:
   PG_CHARACTER_SET: utf8
   PG_PORT: 5432
 
-  DEPLOY_TO_VNET: false
-
   SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT: https://kv-tap42.vault.azure.net/
   KV_NAME: kv-tap42 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
-  SET_KV_ACCESS_POLICIES: false # let it to false
-
-  # GIT_CFG_URI: https://github.com/ezYakaEagle442/aks-cfg-srv
 
   VM_ADMIN_USER_NAME: adm_aks
   
@@ -108,7 +97,7 @@ env:
 
   # ==== Versions ====
   DEPLOYMENT_VERSION: 2.6.13
-  AZ_CLI_VERSION: 2.42.0
+  AZ_CLI_VERSION: 2.44.1
   JAVA_VERSION: 11
 
 on:

@@ -52,9 +52,6 @@ env:
   CONTEXT_NAME: aks-tap42 # usuallythe conext is the same as the AKS cluster name
 
   VNET_NAME: vnet-aks
-  VNET_CIDR: 172.16.0.0/16
-  AKS_SUBNET_CIDR: 172.16.1.0/24
-  AKS_SUBNET_NAME: snet-aks
 
   DNS_PREFIX: tanzu-tap42 # customize this
   ING_NS: tanzu-system-ingress # Namespace to use for the Ingress Controller

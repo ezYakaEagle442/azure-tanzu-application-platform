@@ -24,7 +24,7 @@ param authorizedIPRanges array = []
 @description('The AKS Cluster Admin Username')
 param aksAdminUserName string = '${appName}-admin'
 
-resource vnet 'Microsoft.Network/virtualNetworks@2022-05-01' existing= {
+resource vnet 'Microsoft.Network/virtualNetworks@2022-07-01' existing= {
   name: vnetName
 }
 

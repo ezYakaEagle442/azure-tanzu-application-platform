@@ -3,13 +3,10 @@ name: Deploy Config-Server
 env:
   APP_NAME: tap42
   LOCATION: westeurope # francecentral
-  RG_KV: rg-kv-tanzu101 # RG where to deploy KV
   RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
   
-  DEPLOY_TO_VNET: false
-
+  RG_KV: rg-kv-tanzu101 # RG where to deploy KV
   KV_NAME: kv-tap42 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
-  SET_KV_ACCESS_POLICIES: false # let it to false
 
   DNS_ZONE: cloudapp.azure.com
   APP_DNS_ZONE: tap.westeurope.cloudapp.azure.com
@@ -57,7 +54,7 @@ env:
 
   # ==== Versions ====
   DEPLOYMENT_VERSION: 2.6.13
-  AZ_CLI_VERSION: 2.40.0
+  AZ_CLI_VERSION: 2.44.1
   JAVA_VERSION: 11
   WI_VERSION: 0.15.0 # Azure AD Workload Identity version: https://github.com/Azure/azure-workload-identity/releases
 

@@ -18,12 +18,11 @@ env:
 
   VNET_NAME: vnet-aks
   VNET_CIDR: 172.16.0.0/16
-  AKS_SUBNET_CIDR: 172.16.1.0/24
+  AKS_SUBNET_CIDR: 172.16.1.0/21
   AKS_SUBNET_NAME: snet-aks
 
   START_IP_ADDRESS: 172.16.1.0
-  END_IP_ADDRESS: 172.16.1.255
-  CLIENT_IP_ADDRESS: 42.42.42.42 #  not used
+  END_IP_ADDRESS: 172.16.7.255
 
   DNS_ZONE: cloudapp.azure.com
   APP_DNS_ZONE: tap.westeurope.cloudapp.azure.com
