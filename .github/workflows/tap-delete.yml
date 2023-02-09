@@ -197,6 +197,63 @@ jobs:
             kubectl delete ns secretgen-controller --ignore-not-found=true --force=true --wait=false
             kubectl delete ns tanzu-package-repo-global --ignore-not-found=true --force=true --wait=false
 
+            kubectl get crd -o wide
+
+            kubectl get crd apps.kappctrl.k14s.io -o=json > crd.json
+            # Edit your tmp.json file. Remove the kubernetes value from the finalizers field and save the file. It should look like :
+            # "finalizers": [
+            # ],
+            kubectl patch crd/apps.kappctrl.k14s.io -p '{"metadata":{"finalizers":[]}}' --type=merge
+
+            kubectl delete crd apps.kappctrl.k14s.io --wait=false --force=true --ignore-not-found=true 
+            kubectl delete crd certificates.secretgen.k14s.io --wait=false --ignore-not-found=true --force=true 
+            kubectl delete crd internalpackagemetadatas.internal.packaging.carvel.dev --wait=false --ignore-not-found=true --force=true
+            kubectl delete crd internalpackages.internal.packaging.carvel.dev --wait=false --ignore-not-found=true --force=true
+            kubectl delete crd packageinstalls.packaging.carvel.dev --wait=false --ignore-not-found=true --force=true
+            kubectl delete crd packagerepositories.packaging.carvel.dev --wait=false --ignore-not-found=true --force=true
+            kubectl delete crd passwords.secretgen.k14s.io --wait=false --ignore-not-found=true --force=true
+            kubectl delete crd rsakeys.secretgen.k14s.io --wait=false --ignore-not-found=true --force=true
+            kubectl delete crd secretexports.secretgen.carvel.dev --wait=false --ignore-not-found=true --force=true   
+            kubectl delete crd secretimports.secretgen.carvel.dev --wait=false --ignore-not-found=true --force=true
+            kubectl delete crd secrettemplates.secretgen.carvel.dev --wait=false --ignore-not-found=true --force=true
+            kubectl delete crd sshkeys.secretgen.k14s.io --wait=false --ignore-not-found=true --force=true
+
+            for tanzuCRD in $(kubectl api-resources --api-group='kappctrl.k14s.io/v1alpha1' -o=name)
+            do
+              echo "Verifying CRD $tanzuCRD"
+              kubectl describe crd $tanzuCRD
+            done
+
+            for tanzuCRD in $(kubectl api-resources --api-group='packaging.carvel.dev/v1alpha1' -o=name)
+            do
+              echo "Verifying CRD $tanzuCRD"
+              kubectl describe crd $tanzuCRD
+            done
+
+            for tanzuCRD in $(kubectl api-resources --api-group='secretgen.carvel.dev/v1alpha1' -o=name)
+            do
+              echo "Verifying CRD $tanzuCRD"
+              kubectl describe crd $tanzuCRD
+            done
+
+            for tanzuCRD in $(kubectl api-resources --api-group='secretgen.k14s.io/v1alpha1' -o=name)
+            do
+              echo "Verifying CRD $tanzuCRD"
+              kubectl describe crd $tanzuCRD
+            done
+
+            for tanzuCRD in $(kubectl api-resources --api-group='internal.packaging.carvel.dev/v1alpha1' -o=name)
+            do
+              echo "Verifying CRD $tanzuCRD"
+              kubectl describe crd $tanzuCRD
+            done
+
+            for tanzuCRD in $(kubectl api-resources --api-group='storage.k8s.io/v1' -o=name)
+            do
+              echo "Verifying CRD $tanzuCRD"
+              kubectl describe crd $tanzuCRD
+            done
+
       shell: bash
 
 
