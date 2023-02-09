@@ -32,10 +32,10 @@ param aksSvcIp string
   'azure'
   'custom'
 ])
-param dnsZoneType string = 'azure'
+param dnsZoneType string = 'custom'
 
 param recordSetA string = '@'
-param cloudappDnsZone string = 'cloudapp.azure.com'
+param cloudappDnsZone string = 'cloudapp.azure.com' // This DNS Zone is already managed by Azure and can not be changed
 param appDnsZone string = 'tap.${location}.${cloudappDnsZone}'
 param customDns string = 'javaonazurehandsonlabs.com'
 param privateDnsZone string = 'privatelink.${location}.azmk8s.io' // API-server URL ex for public clusters: appinnojava-478b2e1b.hcp.westeurope.azmk8s.io
