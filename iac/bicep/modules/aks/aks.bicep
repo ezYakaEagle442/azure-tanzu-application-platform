@@ -46,8 +46,14 @@ param logAnalyticsWorkspaceName string = 'log-${appName}'
 @maxValue(12)
 param agentCount int = 3
 
-@description('The size of the Virtual Machine.')
-param agentVMSize string = 'Standard_D2s_v3'
+@description('The size of the Virtual Machine. 8 GB of RAM available per node , 16 vCPUs available across all nodes. See TAP pre-req https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/prerequisites.html')
+@allowed([
+  'Standard_D8_v3'
+  'Standard_D16_v3'
+  'Standard_DS4_v2 '
+  'Standard_DS5_v2'
+])
+param agentVMSize string = 'Standard_D8_v3'
 
 @description('The AKS cluster Managed ResourceGroup')
 param nodeRG string = 'rg-MC-${appName}'
@@ -123,7 +129,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-10-02-preview' = {
         osDiskSizeGB: osDiskSizeGB
         enableAutoScaling: true
         count: agentCount
-        minCount: 6
+        minCount: 4
         maxCount: 12
         maxPods: 30
         vmSize: agentVMSize
