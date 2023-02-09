@@ -60,19 +60,6 @@ env:
   ING_NS: tanzu-system-ingress # Namespace to use for the Ingress Controller
   AKS_IDENTITY_NAME: id-tap-cluster-dev-westeurope-101 # customize this
 
-  # APPLICATION INSIGHTS
-  APPLICATIONINSIGHTS_CONFIGURATION_FILE: BOOT-INF/classes/applicationinsights.json
-
-  # ==== Identities ====:
-
-  SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT: https://kv-tap42.vault.azure.net/
-  KV_NAME: kv-tap42 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
-  SET_KV_ACCESS_POLICIES: false # let it to false
-
-  
-  # ==== APPS ====
-  CLOUD_PROVIDER_ENV: azure
-
   # ==== Secrets ====
 
   credentials: ${{ secrets.AZURE_CREDENTIALS }}
@@ -153,7 +140,6 @@ jobs:
         pwd
         ls -al
 
-        # mkdir ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}
         ls -al ${{ github.workspace }}/${{ env.TANZU_INSTALL_DIR }}
 
         # TODO: need a workaround to resolve the network issues between GHA Runnr and Azure Storage
@@ -190,6 +176,10 @@ jobs:
             tanzu version
             tanzu plugin install --local cli all
             tanzu plugin list
+
+            tar -xvf ${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_ESSENTIALS }} -C ./${{ env.TANZU_INSTALL_DIR }}
+            cp kapp /usr/local/bin/kapp
+            cp imgpkg /usr/local/bin/imgpkg
 
       shell: bash
 
@@ -305,7 +295,7 @@ jobs:
             ingControllerPublicIpId=$(az network public-ip list -g $managed_rg --query "[?ipAddress!=null]|[?contains(ipAddress, '$ING_CTL_IP')].[id]" --output tsv)
             echo $ingControllerPublicIpId
             
-            az network public-ip update --ids $ingControllerPublicIpId --dns-name ${{ env.AZURE_DNS_LABEL_NAME }} -g $managed_rg
+            # az network public-ip update --ids $ingControllerPublicIpId --dns-name ${{ env.AZURE_DNS_LABEL_NAME }} -g $managed_rg
 
       shell: bash
 
