@@ -166,15 +166,16 @@ jobs:
             ls -al ${{ env.TANZU_INSTALL_DIR }}
 
             tar -xvf ${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_ESSENTIALS }} -C ${{ env.TANZU_INSTALL_DIR }}
-            cp kapp /usr/local/bin/kapp
-            cp imgpkg /usr/local/bin/imgpkg
-
             tar -xvf ${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_CLI }} -C ${{ env.TANZU_INSTALL_DIR }}
+            ls -al ${{ env.TANZU_INSTALL_DIR }}
             export TANZU_CLI_NO_INIT=true
+            export VERSION=${{ env.TANZU_CLI_VERSION }}
 
             cd ${{ env.TANZU_INSTALL_DIR }}
-            export VERSION=${{ env.TANZU_CLI_VERSION }}
+            ls -al 
             install cli/core/$VERSION/tanzu-core-linux_amd64 /usr/local/bin/tanzu
+            cp kapp /usr/local/bin/kapp
+            cp imgpkg /usr/local/bin/imgpkg
 
             tanzu version
             tanzu plugin install --local cli all
