@@ -9,8 +9,8 @@ param aksClusterPrincipalId string
 @description('VNet Built-in role to assign')
 param networkRoleType string
 
-param vnetName string
-param subnetName string
+param vnetName string = 'vnet-aks'
+param subnetName string = 'snet-aks'
 
 resource aksSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-07-01' existing = {
   name: '${vnetName}/${subnetName}'
