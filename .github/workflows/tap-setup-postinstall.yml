@@ -174,7 +174,7 @@ jobs:
             tanzu plugin install --local cli all
             tanzu plugin list
 
-            tar -xvf ${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_ESSENTIALS }} -C ./${{ env.TANZU_INSTALL_DIR }}
+            tar -xvf ${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_ESSENTIALS }} -C ${{ env.TANZU_INSTALL_DIR }}
             cp kapp /usr/local/bin/kapp
             cp imgpkg /usr/local/bin/imgpkg
 
