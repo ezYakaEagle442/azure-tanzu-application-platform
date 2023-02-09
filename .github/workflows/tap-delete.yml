@@ -199,6 +199,21 @@ jobs:
 
             kubectl get crd -o wide
 
+            kubectl get crd packageinstalls.packaging.carvel.dev -o=json > crd.json
+            kubectl patch crd/packageinstalls.packaging.carvel.dev -p '{"metadata":{"finalizers":[]}}' --type=merge
+
+            kubectl get rolebinding pkgserver-auth-reader -n kube-system -o=json > crd.json
+            kubectl delete rolebinding pkgserver-auth-reader -n kube-system
+
+            kubectl get apiservice v1alpha1.data.packaging.carvel.dev -o=json > crd.json
+            kubectl delete apiservice v1alpha1.data.packaging.carvel.dev
+
+            kubectl delete clusterrole kapp-controller-user-role 
+            kubectl delete clusterrole kapp-controller-cluster-role
+
+            kubectl delete clusterrolebinding pkg-apiserver:system:auth-delegator
+            kubectl delete clusterrolebinding kapp-controller-cluster-role-binding
+
             kubectl get crd apps.kappctrl.k14s.io -o=json > crd.json
             # Edit your tmp.json file. Remove the kubernetes value from the finalizers field and save the file. It should look like :
             # "finalizers": [
