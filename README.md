@@ -24,7 +24,9 @@ urlFragment: "tap"
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 
-Se also this [repo from VMWare](https://github.com/pacphi/gha-workflows-with-gitops-for-tanzu-application-platform/blob/main/docs/AZURE.md)
+Se also :
+-  [repo from VMWare](https://github.com/pacphi/gha-workflows-with-gitops-for-tanzu-application-platform/blob/main/docs/AZURE.md)
+- [https://tap-gui.demo-aks.spuchol.me](https://tap-gui.demo-aks.spuchol.me)
 
 This microservices branch was initially derived from [AngularJS version](https://github.com/spring-petclinic/spring-petclinic-angular1) to demonstrate how to split sample Spring application into [microservices](http://www.martinfowler.com/articles/microservices.html).
 To achieve that goal we use IaC with Azure Bicep, MS build of OpenJDK 11, GitHub Actions, Azure AD Workload Identity, Azure Key Vault,  Azure Container Registry, Azure Database for MySQL
@@ -388,10 +390,13 @@ az storage account network-rule remove --ip-address $LOCAL_IP --account-name  $A
 Install TAP CLI on your workstation/WSL
 ```sh
 TANZU_INSTALL_DIR=tanzu
-TANZU_CLI_VERSION=v0.25.4.1
+TANZU_CLI_VERSION=v0.25.4 # file name must have version with v0.25.4 NOT v0.25.4.1
 
 tar -xvf $TANZU_INSTALL_DIR/tanzu-framework-linux-amd64-$TANZU_CLI_VERSION.tar -C $TANZU_INSTALL_DIR
 export TANZU_CLI_NO_INIT=true
+
+TANZU_ESSENTIALS=tanzu-cluster-essentials-linux-amd64-1.4.0.tgz
+tar -xvf $TANZU_INSTALL_DIR/$TANZU_ESSENTIALS -C $TANZU_INSTALL_DIR
 
 cd $TANZU_INSTALL_DIR
 export VERSION=$TANZU_CLI_VERSION
@@ -400,6 +405,13 @@ sudo install cli/core/$VERSION/tanzu-core-linux_amd64 /usr/local/bin/tanzu
 tanzu version
 tanzu plugin install --local cli all
 tanzu plugin list
+
+sudo cp kapp /usr/local/bin/kapp
+sudo cp imgpkg /usr/local/bin/imgpkg
+
+kapp --help
+imgpkg copy --help
+
 cd ..
 ```
 
