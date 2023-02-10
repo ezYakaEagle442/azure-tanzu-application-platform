@@ -63,6 +63,7 @@ env:
   AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
   AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+  CERT_ADMIN_EMAIL: ${{ secrets.TANZU_NET_USER }}
   TANZU_NET_USER: ${{ secrets.TANZU_NET_USER }}
   TANZU_NET_PASSWORD: ${{ secrets.TANZU_NET_PASSWORD }}
   GH_PAT: ${{ secrets.GH_PAT }}
@@ -199,6 +200,25 @@ jobs:
 
       shell: bash
 
+      # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/authn-authz-azure-ad.html
+    - name: Integrate with AAD
+      run: |
+
+            echo "You must be Admin of your AAD Tenant, and you need a minimum version of helm 3.3."
+            echo "See https://learn.microsoft.com/en-us/azure/aks/managed-aad"
+            echo "Read https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/authn-authz-azure-ad.html"
+            echo ""
+
+      shell: bash   
+
+    - name: Prepare Contour TLS pre-req
+      run: |
+
+            # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/contour-install.html
+            # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/tap-gui-tls-cert-mngr-ext-clusterissuer.html
+
+      shell: bash     
+
     # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/install.html#full-profile
     # Create a tap-values.yml  
     - name: Install TAP profile
@@ -284,7 +304,7 @@ jobs:
             # helm ls --namespace ${{ env.ING_NS }}
             # sleep 15
             kubectl get deployments -n ${{ env.ING_NS }} -l app=contour
-            kubectl get svc contour n ${{ env.ING_NS }}
+            kubectl get svc contour -n ${{ env.ING_NS }}
             kubectl describe svc envoy -n ${{ env.ING_NS }}
 
             ingress_controller_ip=$(kubectl get svc envoy -n ${{ env.ING_NS }} -o jsonpath="{.status.loadBalancer.ingress[*].ip}")

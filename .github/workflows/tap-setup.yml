@@ -63,6 +63,7 @@ env:
   AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
   AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+  CERT_ADMIN_EMAIL: ${{ secrets.TANZU_NET_USER }}
   TANZU_NET_USER: ${{ secrets.TANZU_NET_USER }}
   TANZU_NET_PASSWORD: ${{ secrets.TANZU_NET_PASSWORD }}
   GH_PAT: ${{ secrets.GH_PAT }}
@@ -132,6 +133,7 @@ jobs:
     - name: Download Tanzu Tools from Azure BLOB Storage
       id: blob_download
       run: | 
+
         # https://learn.microsoft.com/en-us/azure/storage/blobs/blob-cli
 
         pwd
@@ -171,6 +173,7 @@ jobs:
 
     - name: Install CLI & Plugins
       run: |
+
             tar -xvf ${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_CLI }} -C ${{ env.TANZU_INSTALL_DIR }}
             export TANZU_CLI_NO_INIT=true
 
@@ -187,6 +190,7 @@ jobs:
     # https://docs.vmware.com/en/Cluster-Essentials-for-VMware-Tanzu/1.4/cluster-essentials/deploy.html
     - name: Deploy Cluster Cluster Essentials
       run: |
+
             tar -xvf ${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_ESSENTIALS }} -C ./${{ env.TANZU_INSTALL_DIR }}
 
             kubectl config get-contexts
@@ -338,7 +342,7 @@ jobs:
             echo ""
             ls -al ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml 
             echo ""
-            
+
             tanzu package install tap -p tap.tanzu.vmware.com -v $TAP_VERSION --values-file ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml -n ${{ env.TAP_INSTALL_NAMESPACE}}
             tanzu package installed get tap -n ${{ env.TAP_INSTALL_NAMESPACE}}
             tanzu package installed list -A
@@ -371,7 +375,7 @@ jobs:
             # helm ls --namespace ${{ env.ING_NS }}
             # sleep 15
             kubectl get deployments -n ${{ env.ING_NS }} -l app=contour
-            kubectl get svc contour n ${{ env.ING_NS }}
+            kubectl get svc contour -n ${{ env.ING_NS }}
             kubectl describe svc envoy -n ${{ env.ING_NS }}
 
             ingress_controller_ip=$(kubectl get svc envoy -n ${{ env.ING_NS }} -o jsonpath="{.status.loadBalancer.ingress[*].ip}")
