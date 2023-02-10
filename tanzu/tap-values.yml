@@ -3,6 +3,7 @@ profile: full
 
 shared:
   ingress_domain: $APP_DNS_ZONE
+  ingress_issuer: letsencrypt-production # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/security-and-compliance-ingress-certificates.html
   image_registry:
     project_path: "$REGISTRY_URL/$REPOSITORY/supply-chain"
     username: $REPOSITORY_USERNAME # TODO: ask RFE  NOT to use it
@@ -33,6 +34,7 @@ buildservice:
   tanzunet_username: $TANZU_NET_USER
   tanzunet_password: $TANZU_NET_PASSWORD
   exclude_dependencies: true # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/install.html#tap-install-full-deps
+  #   enable_automatic_dependency_updates: false
 
 supply_chain: basic
 
@@ -45,11 +47,12 @@ ootb_supply_chain_basic:
     # Leave empty for public repos, add a secret for private repos.
     ssh_secret: ""
 
+# https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/tap-gui-accessing-tap-gui.html
 tap_gui:
-  service_type: ClusterIP
+  service_type: ClusterIP # default to LoadBalancer , other option: ClusterIP
   app_config:
     app:
-        baseUrl: http://tap-gui.$APP_DNS_ZONE
+      baseUrl: http://tap-gui.$APP_DNS_ZONE
     integrations:
       github: 
         - host: github.com
@@ -71,6 +74,15 @@ tap_gui:
         baseUrl: http://tap-gui.$APP_DNS_ZONE
         cors:
             origin: http://tap-gui.$APP_DNS_ZONE
+        # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/tap-gui-database.html
+        #database:
+        #client: pg
+        #connection:
+        #  host: $PG_SQL_HOSTNAME
+        #  port: 5432
+        #  user: $PG_SQL_USERNAME
+        #  password: $PG_SQL_PASSWORD
+        #  ssl: {rejectUnauthorized: false} # Set to true if using SSL
 
 grype:
   namespace: "$DEV_NAMESPACE"
