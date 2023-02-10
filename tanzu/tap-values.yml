@@ -32,6 +32,7 @@ buildservice:
   kp_default_repository_password: $REPOSITORY_PASSWORD
   tanzunet_username: $TANZU_NET_USER
   tanzunet_password: $TANZU_NET_PASSWORD
+  exclude_dependencies: true # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/install.html#tap-install-full-deps
 
 supply_chain: basic
 
@@ -87,7 +88,7 @@ contour:
     service:
       type: LoadBalancer
       annotations: 
-        service.beta.kubernetes.io/azure-dns-label-name: $AZURE_DNS_LABEL_NAME # RFE: need to add annotations
+        service.beta.kubernetes.io/azure-dns-label-name: $AZURE_DNS_LABEL_NAME # RFE: need to add Azure annotations in the docs
 
 # Cloud Native Runtime Services
 cnrs:
