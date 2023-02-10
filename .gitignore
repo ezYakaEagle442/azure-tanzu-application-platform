@@ -8,6 +8,7 @@ tanzu/tanzu-framework-linux-amd64-*.tar
 tanzu/tanzu-cluster-essentials-linux-amd64-*.tgz
 tanzu/tap-gui-blank-catalog.tgz
 tanzu/deploy
+tanzu/k8s/deploy
 
 # Maven
 target/
