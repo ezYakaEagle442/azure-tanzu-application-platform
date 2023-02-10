@@ -110,16 +110,19 @@ jobs:
     - name: Authorize local IP access to the Azure BLOB Storage 
       if: ${{ always() }}
       run: |
+
         LOCAL_IP=$(curl whatismyip.akamai.com)
         echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
         echo "About to ADD network-rule to ALLOW $LOCAL_IP to Azure BLOB Storage ${{ env.AZ_STORAGE_NAME }}"
         az storage account network-rule add --ip-address $LOCAL_IP --account-name  ${{ env.AZ_STORAGE_NAME }}  --action "Allow" -g ${{ env.RG_APP }}  --only-show-errors
-        sleep 30        
+        sleep 30
+
       shell: bash
 
     - name: Download Tanzu Tools from Azure BLOB Storage
       id: blob_download
       run: | 
+
         # https://learn.microsoft.com/en-us/azure/storage/blobs/blob-cli
 
         pwd
@@ -155,6 +158,7 @@ jobs:
 
     - name: Get Tanzu Application Platform CLI
       run: |
+
             tar -xvf ${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_CLI }} -C ${{ env.TANZU_INSTALL_DIR }}
             export TANZU_CLI_NO_INIT=true
 
@@ -171,8 +175,15 @@ jobs:
     - name: Cleanup TAP install
       run: |
 
+            echo "To troubleshoot, read https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/troubleshooting-tap-troubleshoot-install-tap.html"
+            # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/tap-gui-install-tap-gui.html
+
             # kubectl get apps -n ${{ env.TAP_INSTALL_NAMESPACE }} 
             # tanzu package available list -n tap-install
+
+            # tbsVersion=$(tanzu package available list buildservice.tanzu.vmware.com -n tap-install -o json | jq '.[] | .version' | tr -d '"')
+            # tanzu package installed update full-tbs-deps -v $tbsVersion -n tap-install --values-file XXXX/deploy/tap-values.yml
+
             # tanzu package installed list -n ${{ env.TAP_INSTALL_NAMESPACE }} -o=custom-columns=:.name
             # kubectl describe app buildservice -n tap-install
             for package in $(kubectl get apps -n ${{ env.TAP_INSTALL_NAMESPACE }} -o=custom-columns=:.metadata.name)
@@ -210,9 +221,12 @@ jobs:
 
             kubectl delete clusterrole kapp-controller-user-role 
             kubectl delete clusterrole kapp-controller-cluster-role
+            kubectl delete clusterrole secretgen-controller-cluster-role 
 
             kubectl delete clusterrolebinding pkg-apiserver:system:auth-delegator
             kubectl delete clusterrolebinding kapp-controller-cluster-role-binding
+
+            kubectl delete clusterrolebinding secretgen-controller-cluster-role-binding
 
             kubectl get crd apps.kappctrl.k14s.io -o=json > crd.json
             # Edit your tmp.json file. Remove the kubernetes value from the finalizers field and save the file. It should look like :
