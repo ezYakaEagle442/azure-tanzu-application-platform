@@ -132,7 +132,7 @@ jobs:
         kubelogin-version: 'latest'
       id: kubelogin
 
-    - name: Test CLI
+    - name: K8S Test with AAD
       run: |
 
             kubectl config get-contexts
