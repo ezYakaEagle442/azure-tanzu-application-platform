@@ -9,7 +9,7 @@ env:
   ACR_NAME: tanzu42 # customize this
   DNS_ZONE: cloudapp.azure.com
   APP_DNS_ZONE: tap.westeurope.cloudapp.azure.com
-  CUSTOM_DNS: javaonazurehandsonlabs.com
+  CUSTOM_DNS: appinnohandsonlab.com # set here your own domain name
   AZURE_DNS_LABEL_NAME: petclinictapsaks
 
   PETCLINIC_NAMESPACE: petclinic
@@ -61,11 +61,12 @@ jobs:
           creds: '${{ secrets.AZURE_CREDENTIALS }}' # Azure credentials
           resource-group: ${{ env.RG_APP }} 
           cluster-name: ${{ env.AKS_CLUSTER_NAME }}
-      id: akslogin
+      id: akslsetakscontextogin
 
     # https://github.com/marketplace/actions/helm-tool-installer
     - name: HELM Install
       run: |
+
             # https://github.com/kubernetes/ingress-nginx
             # https://artifacthub.io/packages/helm/ingress-nginx/ingress-nginx
             # https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-helm/
@@ -97,8 +98,9 @@ jobs:
 
       shell: bash
 
-    - name: setup DNS
+    - name: Setup DNS
       run: |
+
             echo "ING_CTL_IP:" $ING_CTL_IP
             az deployment group create --name aks-dns -f iac/bicep/modules/aks/dns.bicep -g ${{ env.RG_APP }} \
             -p dnsZoneType=custom \
@@ -111,7 +113,15 @@ jobs:
             ingControllerPublicIpId=$(az network public-ip list -g $managed_rg --query "[?ipAddress!=null]|[?contains(ipAddress, '$ING_CTL_IP')].[id]" --output tsv)
             echo $ingControllerPublicIpId
             
-            az network public-ip update --ids $ingControllerPublicIpId --dns-name ${{ env.AZURE_DNS_LABEL_NAME }} -g $managed_rg
+            # az network public-ip update --ids $ingControllerPublicIpId --dns-name ${{ env.AZURE_DNS_LABEL_NAME }} -g $managed_rg
+
+            ns_server=$(az network dns record-set ns show --zone-name ${{ env.CUSTOM_DNS }} --name @ -g ${{ env.RG_APP }} --query nsRecords[0] --output tsv)
+            ns_server_length=$(echo -n $ns_server | wc -c)
+            ns_server="${ns_server:0:$ns_server_length-1}"
+            echo "Name Server " $ns_server
+
+            echo "In the registrar's DNS management page, edit the NS records and replace the NS records with the Azure DNS name servers.""
+            nslookup ${{ env.CUSTOM_DNS }} $ns_server
 
       shell: bash
 

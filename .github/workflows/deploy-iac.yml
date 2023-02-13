@@ -12,7 +12,7 @@ env:
   ACR_NAME: tanzu42 # customize this
   DNS_ZONE: cloudapp.azure.com
   APP_DNS_ZONE: tap.westeurope.cloudapp.azure.com
-  CUSTOM_DNS: javaonazurehandsonlabs.com
+  CUSTOM_DNS: appinnohandsonlab.com # set here your own domain name
   AZURE_DNS_LABEL_NAME: petclinic
 
   TAP_NAMESPACE: tanzu

@@ -742,6 +742,29 @@ Once you commit, then push your code update to your repo, it will trigger a Mave
 Note: the GH Hosted Runner / [Ubuntu latest image has already Azure CLI installed](https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#cli-tools)
 
 
+# DNS Management
+
+cloudapp.azure.com DNZ zone can not be used because child zone *.tap.<DOMAIN-NAME> is required, ex: tap-gui.tap.mydomain.com.
+You must therefote use your own custom domain, once the IaC workflows has sucessfully deployed AKS and the Azure DNS zone,  
+
+[https://docs.microsoft.com/en-us/azure/dns/dns-delegate-domain-azure-dns#delegate-the-domain](https://docs.microsoft.com/en-us/azure/dns/dns-delegate-domain-azure-dns#delegate-the-domain)
+
+```sh
+LOCATION="westeurope"
+RG_APP="rg-aks-tap-apps"
+DNS_ZONE="appinnohandsonlab.com" # set here your own domain name
+
+ns_server=$(az network dns record-set ns show --zone-name $DNS_ZONE --name @ -g $RG_APP --query nsRecords[0] --output tsv)
+ns_server_length=$(echo -n $ns_server | wc -c)
+ns_server="${ns_server:0:$ns_server_length-1}"
+echo "Name Server" $ns_server
+```
+In the registrar's DNS management page, edit the NS records and replace the NS records with the Azure DNS name servers.
+
+```sh
+nslookup $DNS_ZONE $ns_server
+```
+
 
 # Cost savings - Green-IT
 ```sh
