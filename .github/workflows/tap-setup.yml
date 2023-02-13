@@ -35,8 +35,6 @@ env:
   TANZU_BLOB_ESSENTIALS: tanzu-essentials
   TANZU_BLOB_GUI_CAT: tanzu-catalog
 
-  TANZU_CLI_VERSION: v0.25.4
-  TAP_VERSION_NUMBER: 1.4.0
   TANZU_REGISTRY: registry.tanzu.vmware.com
 
   AZURE_CONTAINER_REGISTRY: tanzu42 # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
@@ -69,9 +67,10 @@ env:
   GH_PAT: ${{ secrets.GH_PAT }}
 
   # ==== Versions ====
-  DEPLOYMENT_VERSION: 2.6.13
+  TANZU_CLI_VERSION: v0.25.4
+  TAP_VERSION_NUMBER: 1.4.0
+  CERT_MANAGER_VERSION: v1.11.0
   AZ_CLI_VERSION: 2.44.1
-  JAVA_VERSION: 11
 
 on:
   workflow_dispatch:
@@ -328,6 +327,17 @@ jobs:
 
             export ING_HOST=${{ env.TANZU_DNS_CHILD_ZONE }}
             export CERT_ADMIN_EMAIL=${{ env.CERT_ADMIN_EMAIL }}
+
+            # https://cert-manager.io/docs/installation/helm/
+            helm repo add jetstack https://charts.jetstack.io
+            helm repo update
+            # kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/${{ env.CERT_MANAGER_VERSION}}/cert-manager.crds.yaml
+            helm install \
+              cert-manager jetstack/cert-manager \
+              --namespace cert-manager \
+              --create-namespace \
+              --version ${{ env.CERT_MANAGER_VERSION}} \
+              --set installCRDs=true
 
             # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/contour-install.html
             # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/tap-gui-tls-cert-mngr-ext-clusterissuer.html
