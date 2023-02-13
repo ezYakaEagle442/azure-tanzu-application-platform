@@ -315,7 +315,7 @@ jobs:
 
             mkdir ${{ env.TANZU_INSTALL_DIR }}/deploy
             wget https://raw.githubusercontent.com/ezYakaEagle442/tanzu-tools/main/tap/data/api-portal-ingress.yaml -q --no-cache -O ${{ env.TANZU_INSTALL_DIR }}/k8s/api-portal-ingress.yaml
-            export ING_HOST= ${{ env.TANZU_DNS_CHILD_ZONE }}
+            export ING_HOST=${{ env.TANZU_DNS_CHILD_ZONE }}
             echo "INGRESS HOST " $ING_HOST
             mkdir ${{ env.TANZU_INSTALL_DIR }}/k8s/deploy
 
@@ -326,7 +326,7 @@ jobs:
             kubectl get ingress -A
 
             wget https://raw.githubusercontent.com/ezYakaEagle442/tanzu-tools/main/tap/data/workload.yaml -q --no-cache -O ${{ env.TANZU_INSTALL_DIR }}/k8s/workload.yaml
-            export NS= ${{ env.DEV_NAMESPACE }}
+            export NS=${{ env.DEV_NAMESPACE }}
             echo "DEV_NAMESPACE " $NS
 
             envsubst < ${{ env.TANZU_INSTALL_DIR }}/k8s/workload.yaml > ${{ env.TANZU_INSTALL_DIR }}/k8s/deploy/workload.yaml
