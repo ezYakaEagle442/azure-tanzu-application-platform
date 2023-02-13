@@ -473,10 +473,40 @@ do
   done
 done
 
+# cat bad.json | jq '. | setpath(["metadata","finalizers"]; [])' | curl -kD- -H "Content-Type: application/json" -X PUT --#data-binary @- "127.0.0.1:8001$(cat bad.json | jq -r '.metadata.selfLink')"
+
 # To set a temporary proxy IP and port, run the following command. Be sure to keep your terminal window open until you delete the stuck namespace
 kubectl proxy
 
 kubectl get namespaces
+
+
+# To add a dummy Pod to connect to it : 
+kubectl run dummy --image=nginx --restart=Never --port=80 -n tap-gui
+
+kubectl exec -it dummy -n tap-gui -- bash
+  curl http://server:7000
+
+# https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/tap-gui-install-tap-gui.html
+export ING_HOST=tap.westeurope.cloudapp.azure.com
+echo "INGRESS HOST " $ING_HOST
+mkdir $TANZU_INSTALL_DIR/k8s/deploy
+envsubst < $TANZU_INSTALL_DIR/k8s/contour-ingress.yaml > $TANZU_INSTALL_DIR/k8s/deploy/contour-ingress.yaml
+cat $TANZU_INSTALL_DIR/k8s/deploy/contour-ingress.yaml
+kubectl apply -f $TANZU_INSTALL_DIR/k8s/deploy/contour-ingress.yaml -n tap-gui
+
+kubectl get ing -n tap-gui
+kubectl get httpproxy -n tap-gui
+
+# https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/tap-gui-tls-cert-mngr-ext-clusterissuer.html
+envsubst < $TANZU_INSTALL_DIR/k8s/letsencrypt-prod-cluster-issuer.yaml > $TANZU_INSTALL_DIR/k8s/deploy/letsencrypt-prod-cluster-issuer.yaml
+cat $TANZU_INSTALL_DIR/k8s/deploy/letsencrypt-prod-cluster-issuer.yaml
+kubectl apply -f $TANZU_INSTALL_DIR/k8s/deploy/letsencrypt-prod-cluster-issuer.yaml -n cert-manager
+kubectl get clusterissuer -A -o wide
+kubectl describe clusterissuer letsencrypt-production
+kubectl get certs -n cert-manager
+
+tanzu package installed update tap -p tap.tanzu.vmware.com -v TAP-VERSION  --values-file tap-values.yaml -n tap-install
 
 ```
 
@@ -1014,7 +1044,7 @@ If you face this error :
 Caused by: java.sql.SQLException: Connections using insecure transport are prohibited while --require_secure_transport=ON.
 ```
 
-It might be related to the Spring Config configured at [https://github.com/Azure-Samples/spring-petclinic-microservices-config/blob/master/application.yml](https://github.com/Azure-Samples/spring-petclinic-microservices-config/blob/master/application.yml) which on-profile: mysql is set with datasource url :
+It might be related to the Spring Config configured at [https://github.com/ezYakaEagle442/aks-cfg-srv/blob/master/application.yml](https://github.com/ezYakaEagle442/aks-cfg-srv/blob/master/application.yml) which on-profile: mysql is set with datasource url :
 jdbc:mysql://${MYSQL_SERVER_FULL_NAME}:3306/${MYSQL_DATABASE_NAME}?**useSSL=false**
 
 Check the [MySQL connector doc](https://dev.mysql.com/doc/connector-j/5.1/en/connector-j-reference-using-ssl.html)
@@ -1136,6 +1166,19 @@ spring:
 ```
 
 
+# Cost savings - Green-IT
+```sh
+LOCATION="westeurope"
+AKS_CLUSTER_NAME="aks-tap42"
+RG_APP="rg-aks-tap-apps"
+
+az aks nodepool stop --nodepool-name tapnodepool  --cluster-name $AKS_CLUSTER_NAMEKSCluster -g $RG_APP
+az aks nodepool start --nodepool-name tapnodepool  --cluster-name $AKS_CLUSTER_NAMEKSCluster -g $RG_APP
+
+az aks stop --cluster-name $AKS_CLUSTER_NAMEKSCluster -g $RG_APP
+az aks start --cluster-name $AKS_CLUSTER_NAMEKSCluster -g $RG_APP
+
+```
 
 # Contributing
 
@@ -1145,7 +1188,7 @@ For pull requests, editor preferences are available in the [editor config](.edit
 
 
 # Credits
-[https://github.com/ezYakaEagle442/azure-spring-apps-petclinic-mic-srv](https://github.com/Azure-Samples/spring-petclinic-microservices) has been forked from [https://github.com/Azure-Samples/spring-petclinic-microservices](https://github.com/Azure-Samples/spring-petclinic-microservices), itself already forked from [https://github.com/spring-petclinic/spring-petclinic-microservices](https://github.com/spring-petclinic/spring-petclinic-microservices)
+[https://github.com/ezYakaEagle442/azure-tanzu-application-platform](https://github.com/ezYakaEagle442/azure-tanzu-application-platform) has been forked from [https://github.com/ezYakaEagle442/aks-java-petclinic-mic-srv](https://github.com/ezYakaEagle442/aks-java-petclinic-mic-srv), itself already forked from [https://github.com/spring-petclinic/spring-petclinic-microservices](https://github.com/spring-petclinic/spring-petclinic-microservices)
 
 ## Note regarding GitHub Forks
 It is not possible to [fork twice a repository using the same user account.](https://github.community/t/alternatives-to-forking-into-the-same-account/10200)
