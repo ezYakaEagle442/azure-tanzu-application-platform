@@ -84,7 +84,7 @@ jobs:
               --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz            
             
             helm ls --namespace ${{ env.ING_NS }}
-            sleep 15
+            sleep 45
             kubectl get deployments -n ${{ env.ING_NS }} -l app.kubernetes.io/name=ingress-nginx
             kubectl describe svc ingress-nginx-controller -n  ${{ env.ING_NS }}
 
