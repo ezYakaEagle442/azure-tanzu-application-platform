@@ -20,8 +20,11 @@ param networkRuleSetCidr string = '172.16.0.0/16'
   'Standard'
   'Classic'
 ])
-@description('The ACR SKU')
+@description('The ACR SKU, either Basic with admin user enabled, or Premium with scoped-permissions')
 param acrSkuName string = 'Basic'
+
+@description('Admin user muste be enabled ONLY when acrSkuName is Basic')
+param adminUserEnabled bool = true
 
 resource acr 'Microsoft.ContainerRegistry/registries@2023-01-01-preview' = {
   name: acrName
@@ -33,7 +36,7 @@ resource acr 'Microsoft.ContainerRegistry/registries@2023-01-01-preview' = {
     type: 'SystemAssigned'
   }
   properties: {
-    adminUserEnabled: true // required for TAP,alternative required Premium SKU with scoped-permissions, see https://learn.microsoft.com/en-us/azure/container-registry/container-registry-repository-scoped-permissions
+    adminUserEnabled: adminUserEnabled // required for TAP,alternative required Premium SKU with scoped-permissions, see https://learn.microsoft.com/en-us/azure/container-registry/container-registry-repository-scoped-permissions
     dataEndpointEnabled: false // data endpoint rule is not supported for the SKU Basic
     anonymousPullEnabled: false // anonymousPullEnabled looks removed since API ⁠2021-09-01
     // VNet rule is not supported for the SKU Basic
@@ -63,3 +66,22 @@ output acrRegistryUrl string = acr.properties.loginServer
 // outputs-should-not-contain-secrets
 // output acrRegistryUsr string = acr.listCredentials().username
 //output acrRegistryPwd string = acr.listCredentials().passwords[0].value
+
+// https://learn.microsoft.com/en-us/azure/templates/microsoft.containerregistry/registries/scopemaps?pivots=deployment-language-bicep
+/*
+resource tapAcrScopeMap 'Microsoft.ContainerRegistry/registries/scopeMaps@2023-01-01-preview' = if(acrSkuName=='Premium') {
+  name: 'TapAcrScopeMap'
+  parent: acr
+  properties:{
+    actions:[
+      'repositories/tap/tap-packages/content/write'
+      'repositories/tap/tap-packages/content/read'
+      'repositories/tap/tbs-full-deps/content/write'
+      'repositories/tap/tbs-full-deps/content/read'      
+    ]
+    description: 'TAP ACR Push scope map'
+  }
+}
+
+output string xxx = tapAcrScopeMap.id
+*/
