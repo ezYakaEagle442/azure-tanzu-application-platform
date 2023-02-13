@@ -68,7 +68,7 @@ output acrRegistryUrl string = acr.properties.loginServer
 //output acrRegistryPwd string = acr.listCredentials().passwords[0].value
 
 // https://learn.microsoft.com/en-us/azure/templates/microsoft.containerregistry/registries/scopemaps?pivots=deployment-language-bicep
-/*
+
 resource tapAcrScopeMap 'Microsoft.ContainerRegistry/registries/scopeMaps@2023-01-01-preview' = if(acrSkuName=='Premium') {
   name: 'TapAcrScopeMap'
   parent: acr
@@ -83,5 +83,5 @@ resource tapAcrScopeMap 'Microsoft.ContainerRegistry/registries/scopeMaps@2023-0
   }
 }
 
-output string xxx = tapAcrScopeMap.id
-*/
+output tapAcrScopeMapId string= tapAcrScopeMap.id
+
