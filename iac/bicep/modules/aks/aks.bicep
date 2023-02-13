@@ -30,15 +30,16 @@ param tenantId string = subscription().tenantId
 @description('The Admin Group Object IDs to use for AAD Integration.')
 param adminGroupObjectIDs array = [] 
 
+/*
 @description('The Azure AD Server App ID to use for AAD Integration.')
-param aadServerAppID string
+param aadServerAppID string = '4242-4242-4242-4242'
 
 @secure()
 @description('The Azure AD Server App Secret to use for AAD Integration.')
 param aadServerAppSecret string
 
 @description('The Azure AD Client App ID to use for AAD Integration.')
-param aadClientAppID string
+param aadClientAppID string = '4242-4242-4242-4242'
 
 @secure()
 @description('The Azure AD Client App Secret to use for AAD Integration.')
@@ -46,6 +47,7 @@ param aadClientAppSecret string
 
 @description('Is Azure AD RBAC enabled ?')
 param aadEnableRBAC bool = false
+*/
 
 @description('The SubnetID to deploy the AKS Cluster')
 param subnetID string
@@ -303,16 +305,17 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-10-02-preview' = {
         }
       }
     }
+    // https://github.com/MicrosoftDocs/azure-docs/issues/105168
     // https://learn.microsoft.com/en-us/azure/aks/managed-aad
     // https://learn.microsoft.com/en-us/azure/templates/microsoft.containerservice/managedclusters?pivots=deployment-language-bicep#managedclusteraadprofile
     aadProfile: {
       managed: true
       adminGroupObjectIDs: adminGroupObjectIDs
       tenantID: tenantId
-      serverAppID: aadServerAppID
-      serverAppSecret: aadServerAppSecret
-      clientAppID: aadClientAppID      
-      enableAzureRBAC: aadEnableRBAC
+      //serverAppID: aadServerAppID
+      //serverAppSecret: aadServerAppSecret
+      //clientAppID: aadClientAppID      
+      //enableAzureRBAC: aadEnableRBAC
     }
   }  
 }
