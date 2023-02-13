@@ -9,7 +9,7 @@ spec:
   - host: $ING_HOST
     http:
       paths:
-      - path: /gui
+      - path: /
         pathType: "Prefix"      
         backend:
           service:
