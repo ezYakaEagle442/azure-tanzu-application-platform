@@ -16,9 +16,7 @@ env:
   AKS_CLUSTER_NAME: aks-tap42
   VNET_NAME: vnet-aks
 
-  DNS_PREFIX: tanzu-tap42 # customize this
   ING_NS: ingress # Namespace to use for the Ingress Controller
-  AKS_IDENTITY_NAME: id-tap-cluster-dev-westeurope-101 # customize this
 
 
   # https://github.com/Azure/actions-workflow-samples/blob/master/assets/create-secrets-for-GitHub-workflows.md#consume-secrets-in-your-workflow
@@ -31,9 +29,7 @@ env:
   AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
   # ==== Versions ====
-  DEPLOYMENT_VERSION: 2.6.13
-  AZ_CLI_VERSION: 2.42.0
-  JAVA_VERSION: 11
+  AZ_CLI_VERSION: 2.44.1
 
 on:
   workflow_dispatch:
@@ -47,7 +43,7 @@ jobs:
     steps:
 
     - name: Login with GHA Runner SP
-      uses: azure/login@v1.4.6 # https://github.com/marketplace/actions/azure-login
+      uses: azure/login@v1 # https://github.com/marketplace/actions/azure-login
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }} # ${{ env.credentials }}
 
