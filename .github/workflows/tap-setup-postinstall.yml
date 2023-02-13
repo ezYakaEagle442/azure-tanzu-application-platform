@@ -9,8 +9,9 @@ env:
   
   DNS_ZONE: cloudapp.azure.com
   APP_DNS_ZONE: tap.westeurope.cloudapp.azure.com
-  CUSTOM_DNS: javaonazurehandsonlabs.com
+  CUSTOM_DNS: appinnohandsonlab.com
   AZURE_DNS_LABEL_NAME: tap
+  TANZU_DNS_CHILD_ZONE: tap.appinnohandsonlab.com
 
   # ==== Azure storage t, values must be consistent with the ones in iac/bicep/modules/aks/storage.bicep ====:
   AZ_STORAGE_NAME : statapaks # customize this
@@ -164,6 +165,7 @@ jobs:
 
     - name: Install CLI & Plugins
       run: |
+      
             ls -al ${{ env.TANZU_INSTALL_DIR }}
 
             tar -xvf ${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_ESSENTIALS }} -C ${{ env.TANZU_INSTALL_DIR }}
@@ -251,7 +253,7 @@ jobs:
             # need to substitute env var in the template file
             export TANZU_INSTALL_DIR=${{ env.TANZU_INSTALL_DIR }}
             export DEV_NAMESPACE=${{ env.DEV_NAMESPACE }}
-            export APP_DNS_ZONE=${{ env.APP_DNS_ZONE }}
+            export APP_DNS_ZONE=${{ env.TANZU_DNS_CHILD_ZONE }}
             export TANZU_NET_USER=${{ env.TANZU_NET_USER }}
             export TANZU_NET_PASSWORD=${{ env.TANZU_NET_PASSWORD }}
             export AZURE_CONTAINER_REGISTRY=${{ env.AZURE_CONTAINER_REGISTRY }}
