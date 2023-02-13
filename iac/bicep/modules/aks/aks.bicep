@@ -4,6 +4,9 @@
 @maxLength(20)
 param appName string = 'tap${uniqueString(deployment().name)}'
 
+@description('The location of the Managed Cluster resource.')
+param location string = resourceGroup().location
+
 @description('The name of the Managed Cluster resource.')
 param clusterName string = 'aks-${appName}'
 
@@ -21,11 +24,31 @@ param aksAdminUserName string = '${appName}-admin'
 @description('The AKS Cluster alias version')
 param k8sVersion string = '1.24.6' //1.25.2 Alias in Preview
 
+@description('The TenantID to use for AAD Integration.')
+param tenantId string = subscription().tenantId
+
+@description('The Admin Group Object IDs to use for AAD Integration.')
+param adminGroupObjectIDs array = [] 
+
+@description('The Azure AD Server App ID to use for AAD Integration.')
+param aadServerAppID string
+
+@secure()
+@description('The Azure AD Server App Secret to use for AAD Integration.')
+param aadServerAppSecret string
+
+@description('The Azure AD Client App ID to use for AAD Integration.')
+param aadClientAppID string
+
+@secure()
+@description('The Azure AD Client App Secret to use for AAD Integration.')
+param aadClientAppSecret string
+
+@description('Is Azure AD RBAC enabled ?')
+param aadEnableRBAC bool = false
+
 @description('The SubnetID to deploy the AKS Cluster')
 param subnetID string
-
-@description('The location of the Managed Cluster resource.')
-param location string = resourceGroup().location
 
 @description('Optional DNS prefix to use with hosted Kubernetes API server FQDN.')
 param dnsPrefix string = 'tanzu-${appName}'
@@ -36,7 +59,7 @@ param dnsPrefix string = 'tanzu-${appName}'
 param osDiskSizeGB int = 0
 
 @description('AKS Cluster UserAssigned Managed Identity. Character limit: 3-128 Valid characters: Alphanumerics, hyphens, and underscores')
-param aksIdentityName string = 'id-tap-cluster-dev-westeurope-101'
+param aksIdentityName string = 'id-aks-${appName}-cluster-dev-${location}-101'
 
 @description('The Log Analytics workspace name used by the OMS agent in the AKS Cluster')
 param logAnalyticsWorkspaceName string = 'log-${appName}'
@@ -129,7 +152,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-10-02-preview' = {
         osDiskSizeGB: osDiskSizeGB
         enableAutoScaling: true
         count: agentCount
-        minCount: 4
+        minCount: 3
         maxCount: 12
         maxPods: 142 // 250 Pods max with CNI https://learn.microsoft.com/en-us/azure/aks/configure-azure-cni#configure-maximum---new-clusters
         vmSize: agentVMSize
@@ -278,8 +301,19 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-10-02-preview' = {
         securityMonitoring: {
           enabled: defenderForContainers
         }
-      }      
-    }              
+      }
+    }
+    // https://learn.microsoft.com/en-us/azure/aks/managed-aad
+    // https://learn.microsoft.com/en-us/azure/templates/microsoft.containerservice/managedclusters?pivots=deployment-language-bicep#managedclusteraadprofile
+    aadProfile: {
+      managed: true
+      adminGroupObjectIDs: adminGroupObjectIDs
+      tenantID: tenantId
+      serverAppID: aadServerAppID
+      serverAppSecret: aadServerAppSecret
+      clientAppID: aadClientAppID      
+      enableAzureRBAC: aadEnableRBAC
+    }
   }  
 }
 
