@@ -28,10 +28,10 @@ env:
   APPLICATIONINSIGHTS_CONFIGURATION_FILE: BOOT-INF/classes/applicationinsights.json
 
   # ==== Identities ====:
-  CUSTOMERS_SVC_APP_ID_NAME: id-tap-petclinic-customers-service-dev-westeurope-101 # customize this
-  VETS_SVC_APP_ID_NAME: id-tap-petclinic-vets-service-dev-westeurope-101 # customize this
-  VISITS_SVC_APP_ID_NAME: id-tap-petclinic-visits-service-dev-westeurope-101 # customize this
-  CONFIG_SERVER_APP_ID_NAME: id-tap-petclinic-config-server-dev-westeurope-101 # customize this
+  CUSTOMERS_SVC_APP_ID_NAME: id-aks-tap42-petclinic-customers-service-dev-westeurope-101 # customize this, MUST BE 'id-aks-${appName}-petclinic-customers-service-dev-${location}-101'
+  VETS_SVC_APP_ID_NAME: id-aks-tap42-petclinic-vets-service-dev-westeurope-101 # customize this, MUST BE 'id-aks-${appName}-petclinic-vets-service-dev-${location}-101'
+  VISITS_SVC_APP_ID_NAME: id-aks-tap42-petclinic-visits-service-dev-westeurope-101 # customize this, MUST BE 'id-aks-${appName}-petclinic-visits-service-dev-${location}-101'
+  CONFIG_SERVER_APP_ID_NAME: id-aks-tap42-petclinic-config-server-dev-westeurope-101 # customize this, MUST BE  'id-aks-${appName}-petclinic-config-server-dev-${location}-101'
  
   MYSQL_SERVER_NAME: tap4242
   MYSQL_DB_NAME: tap4242
