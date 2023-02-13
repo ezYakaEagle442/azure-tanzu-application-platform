@@ -11,6 +11,28 @@ param MCnodeRG string = 'rg-MC-${appName}'
 param logAnalyticsWorkspaceName string = 'log-${appName}'
 param vnetName string = 'vnet-aks'
 
+@description('The Admin Group Object IDs to use for AAD Integration.')
+param adminGroupObjectIDs string = '4242-4242-4242-4242'
+
+/*
+@description('The Azure AD Server App ID to use for AAD Integration.')
+param aadServerAppID string = '4242-4242-4242-4242'
+
+@secure()
+@description('The Azure AD Server App Secret to use for AAD Integration.')
+param aadServerAppSecret string
+
+@description('The Azure AD Client App ID to use for AAD Integration.')
+param aadClientAppID string = '4242-4242-4242-4242'
+
+@secure()
+@description('The Azure AD Client App Secret to use for AAD Integration.')
+param aadClientAppSecret string
+
+@description('Is Azure AD RBAC enabled ?')
+param aadEnableRBAC bool = false
+*/
+
 @description('AKS Cluster UserAssigned Managed Identity name. Character limit: 3-128 Valid characters: Alphanumerics, hyphens, and underscores')
 param aksIdentityName string = 'id-aks-cluster-dev-westeurope-101'
 
@@ -45,6 +67,11 @@ module aks './modules/aks/aks.bicep' = {
     sshPublicKey: sshPublicKey
     aksAdminUserName: aksAdminUserName
     authorizedIPRanges: authorizedIPRanges
+    adminGroupObjectIDs: [adminGroupObjectIDs] 
+    //serverAppID: aadServerAppID
+    //serverAppSecret: aadServerAppSecret
+    //clientAppID: aadClientAppID
+    //enableAzureRBAC: aadEnableRBAC
   }
 }
 output controlPlaneFQDN string = aks.outputs.controlPlaneFQDN
