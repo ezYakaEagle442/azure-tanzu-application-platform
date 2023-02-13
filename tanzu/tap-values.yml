@@ -55,7 +55,7 @@ tap_gui:
   service_type: ClusterIP # default to LoadBalancer , other option: ClusterIP
   app_config:
     app:
-      baseUrl: http://tap-gui.$APP_DNS_ZONE
+      baseUrl: https://tap-gui.$APP_DNS_ZONE # https if TLS is enabled
     integrations:
       github: 
         - host: github.com
