@@ -22,7 +22,7 @@ env:
 
   DNS_PREFIX: tanzu-tap42 # customize this param
   ING_NS: ingress # Namespace to use for the Ingress Controller
-  AKS_IDENTITY_NAME: id-tap-cluster-dev-westeurope-101 # customize this
+  AKS_IDENTITY_NAME: id-aks-tap42-cluster-dev-westeurope-101 # customize this , MUST BE 'id-aks-${appName}-cluster-dev-${location}-101'
 
   # APPLICATION INSIGHTS
   APPLICATIONINSIGHTS_CONFIGURATION_FILE: BOOT-INF/classes/applicationinsights.json
