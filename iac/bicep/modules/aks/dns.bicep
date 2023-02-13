@@ -34,7 +34,7 @@ param aksSvcIp string
 ])
 param dnsZoneType string = 'custom'
 
-param recordSetA string = 'tap'
+param recordSetA string = '*.tap'
 param cloudappDnsZone string = 'cloudapp.azure.com' // This DNS Zone is already managed by Azure and can not be changed
 param appDnsZone string = 'tap.${location}.${cloudappDnsZone}'
 param customDns string = 'javaonazurehandsonlabs.com'
