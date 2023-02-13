@@ -49,6 +49,9 @@ ootb_supply_chain_basic:
 
 # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/tap-gui-accessing-tap-gui.html
 tap_gui:
+  tls: # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/tap-gui-tls-cert-mngr-ext-clusterissuer.html
+   namespace: cert-manager
+   secretName: tap-gui
   service_type: ClusterIP # default to LoadBalancer , other option: ClusterIP
   app_config:
     app:
@@ -99,8 +102,8 @@ contour:
   envoy:
     service:
       type: LoadBalancer
-      annotations: 
-        service.beta.kubernetes.io/azure-dns-label-name: $AZURE_DNS_LABEL_NAME # RFE: need to add Azure annotations in the docs
+      #annotations: 
+        #service.beta.kubernetes.io/azure-dns-label-name: $AZURE_DNS_LABEL_NAME # RFE: need to add Azure annotations in the docs
 
 # Cloud Native Runtime Services
 cnrs:
