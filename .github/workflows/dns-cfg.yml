@@ -109,7 +109,7 @@ jobs:
             ingControllerPublicIpId=$(az network public-ip list -g $managed_rg --query "[?ipAddress!=null]|[?contains(ipAddress, '$ING_CTL_IP')].[id]" --output tsv)
             echo $ingControllerPublicIpId
             
-            # az network public-ip update --ids $ingControllerPublicIpId --dns-name ${{ env.AZURE_DNS_LABEL_NAME }} -g $managed_rg
+            az network public-ip update --ids $ingControllerPublicIpId --dns-name ${{ env.AZURE_DNS_LABEL_NAME }} -g $managed_rg
 
             ns_server=$(az network dns record-set ns show --zone-name ${{ env.CUSTOM_DNS }} --name @ -g ${{ env.RG_APP }} --query nsRecords[0] --output tsv)
             ns_server_length=$(echo -n $ns_server | wc -c)
