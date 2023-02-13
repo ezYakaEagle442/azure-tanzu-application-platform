@@ -161,7 +161,7 @@ az ad app list --show-mine --query "[?displayName=='${SPN_APP_NAME}'].{objectId:
 
 # This is the unique ID of the Service Principal object associated with this application.
 # SPN_OBJECT_ID=$(az ad app show --id $SPN_APP_ID --query id -o tsv)
-SPN_OBJECT_ID==$(az ad sp list --all --query "[?appDisplayName=='${SPN_APP_NAME}'].{id:id}" --output tsv)
+SPN_OBJECT_ID=$(az ad sp list --all --query "[?appDisplayName=='${SPN_APP_NAME}'].{id:id}" --output tsv)
 
 # This is the unique ID of the Service Principal object associated with this application.
 az ad sp show --id $SPN_OBJECT_ID
@@ -317,9 +317,8 @@ tar -xvf azwi-v$AAD_WI_CLI_VERSION-linux-amd64.tar
 [https://learn.microsoft.com/en-us/azure/aks/managed-aad](https://learn.microsoft.com/en-us/azure/aks/managed-aad)
 
 ```sh
-
-helm version
-kubelogin --version
+#helm version
+#kubelogin --version
 
 # List existing groups in the directory
 #az ad group list --filter "displayname eq '<group-name>'" -o table
@@ -328,52 +327,86 @@ az ad group list -o table
 # Create an Azure AD group
 AAD_ADM_GRP="AKS TAP Admin Group"
 az ad group create --display-name "$AAD_ADM_GRP" --mail-nickname akstapadmingroup
-aad_admin_group_object_ids=$(az ad group show -g "$AAD_ADM_GRP" --query id -o tsv)
-echo "aad_admin_group_object_ids" : $aad_admin_group_object_ids
+aad_admin_group_object_id=$(az ad group show -g "$AAD_ADM_GRP" --query id -o tsv)
+echo "aad_admin_group_object_id" : $aad_admin_group_object_id
 
-# Create the Azure AD application
-AAD_SERVER_APP="akstap"
-serverApplicationId=$(az ad app create \
-    --display-name "${AAD_SERVER_APP}Server" \
-    --identifier-uris "https://${AAD_SERVER_APP}Server" \
-    --query appId -o tsv)
+# Add Users to the above Azure AD Admin Group
 
-# Update the application group membership claims
-az ad app update --id $serverApplicationId --set groupMembershipClaims=All
+# The object ID of the User, or service principal.
+USR_ID=$(az account show --query user.name -o tsv)
+USR_SPN_ID=$(az ad user show --id ${USR_ID} --query id -o tsv)
+az ad group member add --member-id $USR_SPN_ID -g $aad_admin_group_object_id
 
-
-# Create a service principal for the Azure AD application
-az ad sp create --id $serverApplicationId
-
-# Get the service principal secret
-serverApplicationSecret=$(az ad sp credential reset \
-    --name $serverApplicationId \
-    --credential-description "AKSPassword" \
-    --query password -o tsv)
-
-az ad app permission add \
-    --id $serverApplicationId \
-    --api 00000003-0000-0000-c000-000000000000 \
-    --api-permissions e1fe6dd8-ba31-4d61-89e7-88639da4683d=Scope 06da0dbc-49e2-44d2-8312-53f166ab848a=Scope 7ab1d382-f21e-4acd-a863-ba3e13f7da61=Role
-
-
-clientApplicationId=$(az ad app create \
-    --display-name "${aksname}Client" \
-    --native-app \
-    --reply-urls "https://${aksname}Client" \
-    --query appId -o tsv)
-
-az ad sp create --id $clientApplicationId
-
-oAuthPermissionId=$(az ad app show --id $serverApplicationId --query "oauth2Permissions[0].id" -o tsv)    
-
-az ad app permission add --id $clientApplicationId --api $serverApplicationId --api-permissions ${oAuthPermissionId}=Scope
-az ad app permission grant --id $clientApplicationId --api $serverApplicationId
-
+SPN_APP_NAME="gha_aks_tap_run"
+SPN_OBJECT_ID=$(az ad sp list --all --query "[?appDisplayName=='${SPN_APP_NAME}'].{id:id}" --output tsv)
+az ad group member add --member-id $SPN_OBJECT_ID -g $aad_admin_group_object_id
 ```
 
 Add AAD_ADM_GRP as secrets AAD_ADM_GRP to your GH repo Settings / Security / Secrets and variables / Actions / Actions secrets / Repository secrets
 
+Once the AKS cluster is created, creates Dev & Ops Groups :
+
+```sh
+LOCATION="westeurope"
+AKS_CLUSTER_NAME="aks-tap42"
+RG_APP="rg-aks-tap-apps"
+TANZU_INSTALL_DIR=./tanzu
+
+aks_cluster_id=$(az aks show -n $AKS_CLUSTER_NAME -g $RG_APP --query id -o tsv)
+echo "AKS cluster ID : " $aks_cluster_id
+
+# Create the first example group in Azure AD for the application developers
+APPDEV_ID=$(az ad group create --display-name appdev-${APP_NAME} --mail-nickname appdev-${APP_NAME} --query objectId -o tsv)
+echo "APPDEV GROUP ID: " $APPDEV_ID
+az role assignment create --assignee $APPDEV_ID --role "Azure Kubernetes Service Cluster User Role" --scope $aks_cluster_id
+
+# Create a second example group, this one for SREs named opssre
+OPSSRE_ID=$(az ad group create --display-name opssre-${APP_NAME} --mail-nickname opssre-${APP_NAME} --query objectId -o tsv)
+echo "OPSSRE GROUP ID: " $OPSSRE_ID
+az role assignment create --assignee $OPSSRE_ID --role "Azure Kubernetes Service Cluster User Role" --scope $aks_cluster_id
+
+password=P@ssw0rd1 # Change it !!!
+
+# Create a user for the Dev role
+AKSDEV_ID=$(az ad user create --display-name "AKS Dev ${APP_NAME}" --user-principal-name "aksdev@groland.grd" --password $password --query objectId -o tsv)
+echo "AKS DEV USER ID: " $AKSDEV_ID
+
+# Add the user to the appdev Azure AD group
+az ad group member add --member-id $AKSDEV_ID --group appdev-${APP_NAME} 
+
+# Create a user for the SRE role
+AKSSRE_ID=$(az ad user create --display-name "AKS SRE ${APP_NAME}" --user-principal-name "akssre@groland.grd" --password  $password --query objectId -o tsv)
+echo "AKS SRE USER ID: " $AKSSRE_ID
+
+# Add the user to the opssre Azure AD group
+az ad group member add --member-id $AKSSRE_ID --group opssre-${APP_NAME}
+
+kubectl apply -f ./$TANZU_INSTALL_DIR/role-dev-namespace.yaml
+kubectl apply -f ./$TANZU_INSTALL_DIR/role-sre-namespace.yaml
+
+export DEV_GROUP_OBECT_ID=$APPDEV_ID
+envsubst < ./$TANZU_INSTALL_DIR/k8s/rolebinding-dev-namespace.yaml > ./$TANZU_INSTALL_DIR/k8s/deploy/rolebinding-dev-namespace.yaml
+kubectl apply -f ./$TANZU_INSTALL_DIR/k8s/deploy/rolebinding-dev-namespace.yaml
+kubectl describe role dev-user-full-access -n development
+kubectl describe rolebindings dev-user-access -n development
+
+export SRE_GROUP_OBECT_ID=$OPSSRE_ID
+envsubst < ./$TANZU_INSTALL_DIR/k8s/rolebinding-sre-namespace.yaml > ./$TANZU_INSTALL_DIR/k8s/deploy/rolebinding-sre-namespace.yaml
+kubectl apply -f ./$TANZU_INSTALL_DIR/k8s/deploy/rolebinding-sre-namespace.yaml
+
+export AKS_ADM_GROUP_OBECT_ID=$aad_admin_group_object_id
+envsubst < ./$TANZU_INSTALL_DIR/k8s/aad-cluster-admin-binding.yaml > ./$TANZU_INSTALL_DIR/k8s/deploy/aad-cluster-admin-binding.yaml
+kubectl apply -f ./$TANZU_INSTALL_DIR/k8s/deploy/aad-cluster-admin-binding.yaml
+
+kubectl get clusterrolebindings -A
+kubectl describe clusterrolebindings owner-cluster-admin
+kubectl describe clusterrolebindings aks-cluster-admin-binding
+kubectl describe clusterrolebindings aks-cluster-admin-binding-aad
+kubectl get clusterroles -A
+kubectl describe clusterrole admin
+kubectl describe clusterrole cluster-admin
+
+```
 
 
 

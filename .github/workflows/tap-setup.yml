@@ -56,7 +56,6 @@ env:
 
   DNS_PREFIX: tanzu-tap42 # customize this
   ING_NS: tanzu-system-ingress # Namespace to use for the Ingress Controller
-  AKS_IDENTITY_NAME: id-tap-cluster-dev-westeurope-101 # customize this
   
   # ==== Secrets ====
 
@@ -395,7 +394,7 @@ jobs:
             # https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
             # https://tanzu.vmware.com/developer/guides/platform-security-secrets-sa-what-is/
 
-            kubectl apply -f ${{ env.TANZU_INSTALL_DIR }}/metadata-store-ready-only.yaml
+            kubectl apply -f ${{ env.TANZU_INSTALL_DIR }}/k8s/metadata-store-ready-only.yaml
             export METADATA_STORE_ACCESS_TOKEN=$(kubectl create token metadata-store-read-client -n metadata-store)
             #export METADATA_STORE_ACCESS_TOKEN=$(kubectl get secret \
             #  $(kubectl get sa metadata-store-read-client -n metadata-store -o json \
@@ -495,7 +494,14 @@ jobs:
             ingControllerPublicIpId=$(az network public-ip list -g $managed_rg --query "[?ipAddress!=null]|[?contains(ipAddress, '$ING_CTL_IP')].[id]" --output tsv)
             echo $ingControllerPublicIpId
             
-            # az network public-ip update --ids $ingControllerPublicIpId --dns-name ${{ env.AZURE_DNS_LABEL_NAME }} -g $managed_rg
+            # az network public-ip update --ids $ingControllerPublicIpId --
+            ns_server=$(az network dns record-set ns show --zone-name ${{ env.CUSTOM_DNS }} --name @ -g ${{ env.RG_APP }} --query nsRecords[0] --output tsv)
+            ns_server_length=$(echo -n $ns_server | wc -c)
+            ns_server="${ns_server:0:$ns_server_length-1}"
+            echo "Name Server " $ns_server
+
+            echo "In the registrar's DNS management page, edit the NS records and replace the NS records with the Azure DNS name servers.""
+            nslookup ${{ env.CUSTOM_DNS }} $ns_server
 
             echo "About to check DNS ..."
             dig @8.8.8.8 "tap-gui.${{ env.CUSTOM_DNS }}"

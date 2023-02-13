@@ -45,7 +45,7 @@ param aadClientAppID string = '4242-4242-4242-4242'
 @description('The Azure AD Client App Secret to use for AAD Integration.')
 param aadClientAppSecret string
 
-@description('Is Azure AD RBAC enabled ?')
+@description('Is Azure AD RBAC enabled for Kubernetes authorization ?')
 param aadEnableRBAC bool = false
 */
 
