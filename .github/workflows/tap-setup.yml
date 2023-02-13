@@ -333,7 +333,7 @@ jobs:
             #tanzu package available list contour.tanzu.vmware.com -n ${{ env.TAP_INSTALL_NAMESPACE}}
 
             envsubst < ${{ env.TANZU_INSTALL_DIR }}/k8s/letsencrypt-prod-cluster-issuer.yaml > ${{ env.TANZU_INSTALL_DIR }}/k8s/deploy/letsencrypt-prod-cluster-issuer.yaml
-            cat $TANZU_INSTALL_DIR/k8s/deploy/letsencrypt-prod-cluster-issuer.yaml
+            cat ${{ env.TANZU_INSTALL_DIR }}/k8s/deploy/letsencrypt-prod-cluster-issuer.yaml
             kubectl apply -f ${{ env.TANZU_INSTALL_DIR }}/k8s/deploy/letsencrypt-prod-cluster-issuer.yaml -n cert-manager
 
             kubectl get clusterissuer -A -o wide

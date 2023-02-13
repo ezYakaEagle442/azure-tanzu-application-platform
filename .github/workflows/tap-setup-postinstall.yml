@@ -232,8 +232,12 @@ jobs:
             # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/tap-gui-tls-cert-mngr-ext-clusterissuer.html
             #tanzu package available list contour.tanzu.vmware.com -n ${{ env.TAP_INSTALL_NAMESPACE}}
 
+            ls -al ${{ env.TANZU_INSTALL_DIR }}/k8s
+            echo ""
             envsubst < ${{ env.TANZU_INSTALL_DIR }}/k8s/letsencrypt-prod-cluster-issuer.yaml > ${{ env.TANZU_INSTALL_DIR }}/k8s/deploy/letsencrypt-prod-cluster-issuer.yaml
-            cat $TANZU_INSTALL_DIR/k8s/deploy/letsencrypt-prod-cluster-issuer.yaml
+            cat ${{ env.TANZU_INSTALL_DIR }}/k8s/deploy/letsencrypt-prod-cluster-issuer.yaml
+            ls -al ${{ env.TANZU_INSTALL_DIR }}/k8s/deploy
+            echo ""
             kubectl apply -f ${{ env.TANZU_INSTALL_DIR }}/k8s/deploy/letsencrypt-prod-cluster-issuer.yaml -n cert-manager
 
             kubectl get clusterissuer -A -o wide
@@ -357,7 +361,7 @@ jobs:
             envsubst < ${{ env.TANZU_INSTALL_DIR }}/k8s/tanzu-simple-deployment.yml > ${{ env.TANZU_INSTALL_DIR }}/k8s/deploy/tanzu-simple-deployment.yml
 
       shell: bash
-      
+
     # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/namespace-provisioner-how-tos.html#control-desired-namespaces
     - name: Configure GitOps
       run: |
