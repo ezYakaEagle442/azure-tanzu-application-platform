@@ -34,7 +34,7 @@ param aksSvcIp string
 ])
 param dnsZoneType string = 'custom'
 
-param recordSetA string = '@'
+param recordSetA string = 'tap'
 param cloudappDnsZone string = 'cloudapp.azure.com' // This DNS Zone is already managed by Azure and can not be changed
 param appDnsZone string = 'tap.${location}.${cloudappDnsZone}'
 param customDns string = 'javaonazurehandsonlabs.com'
@@ -65,7 +65,7 @@ resource cutomDnsZone 'Microsoft.Network/dnsZones@2018-05-01' = if(dnsZoneType==
 // https://learn.microsoft.com/en-us/azure/templates/microsoft.network/dnszones/a?pivots=deployment-language-bicep
 
 resource RecordSetA 'Microsoft.Network/dnsZones/A@2018-05-01' = if(dnsZoneType=='azure') {
-  name: recordSetA
+  name: '@'
   parent: azureDnsZone
   properties: {
     ARecords: [
@@ -78,6 +78,19 @@ resource RecordSetA 'Microsoft.Network/dnsZones/A@2018-05-01' = if(dnsZoneType==
 }
 
 resource RecordSetAForCustomDNS 'Microsoft.Network/dnsZones/A@2018-05-01' = if(dnsZoneType=='custom') {
+  name: '@'
+  parent: cutomDnsZone
+  properties: {
+    ARecords: [
+      {
+        ipv4Address: aksSvcIp
+      }
+    ]
+    TTL: 360
+  }
+}
+
+resource RecordSetATanzuForCustomDNS 'Microsoft.Network/dnsZones/A@2018-05-01' = if(dnsZoneType=='custom') {
   name: recordSetA
   parent: cutomDnsZone
   properties: {
