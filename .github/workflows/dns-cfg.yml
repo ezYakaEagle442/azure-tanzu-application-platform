@@ -98,12 +98,12 @@ jobs:
       run: |
 
             echo "ING_CTL_IP:" $ING_CTL_IP
-            az deployment group create --name aks-dns -f iac/bicep/modules/aks/dns.bicep -g ${{ env.RG_APP }} \
-            -p dnsZoneType=custom \
-            -p customDns=${{ env.CUSTOM_DNS }} \
-            -p location=${{ env.LOCATION }} \
-            -p vnetName=${{ env.VNET_NAME }} \
-            -p aksSvcIp=$ING_CTL_IP
+            #az deployment group create --name aks-dns -f iac/bicep/modules/aks/dns.bicep -g ${{ env.RG_APP }} \
+            #-p dnsZoneType=custom \
+            #-p customDns=${{ env.CUSTOM_DNS }} \
+            #-p location=${{ env.LOCATION }} \
+            #-p vnetName=${{ env.VNET_NAME }} \
+            #-p aksSvcIp=$ING_CTL_IP
 
             echo "CLUSTER_RESOURCE_GROUP:" $managed_rg
             ingControllerPublicIpId=$(az network public-ip list -g $managed_rg --query "[?ipAddress!=null]|[?contains(ipAddress, '$ING_CTL_IP')].[id]" --output tsv)
@@ -114,10 +114,12 @@ jobs:
             ns_server=$(az network dns record-set ns show --zone-name ${{ env.CUSTOM_DNS }} --name @ -g ${{ env.RG_APP }} --query nsRecords[0] --output tsv)
             ns_server_length=$(echo -n $ns_server | wc -c)
             ns_server="${ns_server:0:$ns_server_length-1}"
-            echo "Name Server " $ns_server
-
-            echo "In the registrar's DNS management page, edit the NS records and replace the NS records with the Azure DNS name servers.""
-            nslookup ${{ env.CUSTOM_DNS }} $ns_server
+            echo "Name Server 1 " $ns_server
+            
+            ns_server=$(az network dns record-set ns show --zone-name ${{ env.CUSTOM_DNS }} --name @ -g ${{ env.RG_APP }} --query nsRecords[1] --output tsv)
+            ns_server_length=$(echo -n $ns_server | wc -c)
+            ns_server="${ns_server:0:$ns_server_length-1}"
+            echo "Name Server 2 " $ns_server
 
       shell: bash
 
