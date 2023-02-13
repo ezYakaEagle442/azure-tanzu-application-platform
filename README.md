@@ -25,7 +25,7 @@ urlFragment: "tap"
 
 
 Se also :
--  [repo from VMWare](https://github.com/pacphi/gha-workflows-with-gitops-for-tanzu-application-platform/blob/main/docs/AZURE.md)
+- [repo from VMWare](https://github.com/pacphi/gha-workflows-with-gitops-for-tanzu-application-platform/blob/main/docs/AZURE.md)
 - [https://tap-gui.demo-aks.spuchol.me](https://tap-gui.demo-aks.spuchol.me)
 
 This microservices branch was initially derived from [AngularJS version](https://github.com/spring-petclinic/spring-petclinic-angular1) to demonstrate how to split sample Spring application into [microservices](http://www.martinfowler.com/articles/microservices.html).
@@ -312,7 +312,72 @@ tar -xvf azwi-v$AAD_WI_CLI_VERSION-linux-amd64.tar
 
 ```
 
-## Tanzu pre-reqlines
+## AKS integration with AAD pre-req
+
+[https://learn.microsoft.com/en-us/azure/aks/managed-aad](https://learn.microsoft.com/en-us/azure/aks/managed-aad)
+
+```sh
+
+helm version
+kubelogin --version
+
+# List existing groups in the directory
+#az ad group list --filter "displayname eq '<group-name>'" -o table
+az ad group list -o table
+
+# Create an Azure AD group
+AAD_ADM_GRP="AKS TAP Admin Group"
+az ad group create --display-name "$AAD_ADM_GRP" --mail-nickname akstapadmingroup
+aad_admin_group_object_ids=$(az ad group show -g "$AAD_ADM_GRP" --query id -o tsv)
+echo "aad_admin_group_object_ids" : $aad_admin_group_object_ids
+
+# Create the Azure AD application
+AAD_SERVER_APP="akstap"
+serverApplicationId=$(az ad app create \
+    --display-name "${AAD_SERVER_APP}Server" \
+    --identifier-uris "https://${AAD_SERVER_APP}Server" \
+    --query appId -o tsv)
+
+# Update the application group membership claims
+az ad app update --id $serverApplicationId --set groupMembershipClaims=All
+
+
+# Create a service principal for the Azure AD application
+az ad sp create --id $serverApplicationId
+
+# Get the service principal secret
+serverApplicationSecret=$(az ad sp credential reset \
+    --name $serverApplicationId \
+    --credential-description "AKSPassword" \
+    --query password -o tsv)
+
+az ad app permission add \
+    --id $serverApplicationId \
+    --api 00000003-0000-0000-c000-000000000000 \
+    --api-permissions e1fe6dd8-ba31-4d61-89e7-88639da4683d=Scope 06da0dbc-49e2-44d2-8312-53f166ab848a=Scope 7ab1d382-f21e-4acd-a863-ba3e13f7da61=Role
+
+
+clientApplicationId=$(az ad app create \
+    --display-name "${aksname}Client" \
+    --native-app \
+    --reply-urls "https://${aksname}Client" \
+    --query appId -o tsv)
+
+az ad sp create --id $clientApplicationId
+
+oAuthPermissionId=$(az ad app show --id $serverApplicationId --query "oauth2Permissions[0].id" -o tsv)    
+
+az ad app permission add --id $clientApplicationId --api $serverApplicationId --api-permissions ${oAuthPermissionId}=Scope
+az ad app permission grant --id $clientApplicationId --api $serverApplicationId
+
+```
+
+Add AAD_ADM_GRP as secrets AAD_ADM_GRP to your GH repo Settings / Security / Secrets and variables / Actions / Actions secrets / Repository secrets
+
+
+
+
+## Tanzu pre-req
 
 
 Create a folder named "tanzu" on your workstattion / local git grepo.
@@ -429,6 +494,23 @@ ls -al ./$TANZU_INSTALL_DIR/deploy
 cat ./$TANZU_INSTALL_DIR/deploy/tap-values.yml
 
 ```
+### Replace URL in your own repos
+
+Fork those repos : 
+- [https://github.com/ezYakaEagle442/tanzu-simple](https://github.com/ezYakaEagle442/tanzu-simple)
+- [https://github.com/ezYakaEagle442/tap-catalog](https://github.com/ezYakaEagle442/tap-catalog)
+- [https://github.com/ezYakaEagle442/tanzu-tools](https://github.com/ezYakaEagle442/tanzu-tools)
+- [https://github.com/ezYakaEagle442/tanzu-app-deploy](https://github.com/ezYakaEagle442/tanzu-app-deploy)
+
+https://github.com/ezYakaEagle442/tanzu-simple/blob/main/k8s/02-deployment.yml#L18 ==> image d'ACR a remplacer
+https://github.com/ezYakaEagle442/tanzu-simple/blob/main/config/workload.yaml#L15
+https://github.com/ezYakaEagle442/tanzu-simple/blob/main/config/deliverable.yaml#L19
+
+https://github.com/ezYakaEagle442/tap-catalog/blob/main/api/petstore.yaml#L17
+https://github.com/ezYakaEagle442/tap-catalog/blob/main/api/tanzu-app.yaml#L17
+https://github.com/ezYakaEagle442/tap-catalog/blob/main/api/openapi/openapi-tanzu-app.yaml#L7 ==> URL mut be updated
+
+https://github.com/ezYakaEagle442/tanzu-tools/blob/main/tap/data/workload.yaml#L14 ==> URL mut be updated
 
 
 ### Troubleshoot
@@ -506,7 +588,7 @@ kubectl get clusterissuer -A -o wide
 kubectl describe clusterissuer letsencrypt-production
 kubectl get certs -n cert-manager
 
-tanzu package installed update tap -p tap.tanzu.vmware.com -v TAP-VERSION  --values-file tap-values.yaml -n tap-install
+tanzu package installed update tap -p tap.tanzu.vmware.com -v 1.4.0  --values-file tap-values.yaml -n tap-install
 
 ```
 
