@@ -317,8 +317,6 @@ tar -xvf azwi-v$AAD_WI_CLI_VERSION-linux-amd64.tar
 [https://learn.microsoft.com/en-us/azure/aks/managed-aad](https://learn.microsoft.com/en-us/azure/aks/managed-aad)
 
 ```sh
-#helm version
-#kubelogin --version
 
 # List existing groups in the directory
 #az ad group list --filter "displayname eq '<group-name>'" -o table
@@ -350,42 +348,71 @@ Once the AKS cluster is created, creates Dev & Ops Groups :
 LOCATION="westeurope"
 AKS_CLUSTER_NAME="aks-tap42"
 RG_APP="rg-aks-tap-apps"
-TANZU_INSTALL_DIR=./tanzu
+TANZU_INSTALL_DIR=tanzu
+APP_NAME=tap42
 
 aks_cluster_id=$(az aks show -n $AKS_CLUSTER_NAME -g $RG_APP --query id -o tsv)
 echo "AKS cluster ID : " $aks_cluster_id
 
 # Create the first example group in Azure AD for the application developers
-APPDEV_ID=$(az ad group create --display-name appdev-${APP_NAME} --mail-nickname appdev-${APP_NAME} --query objectId -o tsv)
+APPDEV_ID=$(az ad group create --display-name appdev-${APP_NAME} --mail-nickname appdev-${APP_NAME} --query id -o tsv)
 echo "APPDEV GROUP ID: " $APPDEV_ID
 az role assignment create --assignee $APPDEV_ID --role "Azure Kubernetes Service Cluster User Role" --scope $aks_cluster_id
 
 # Create a second example group, this one for SREs named opssre
-OPSSRE_ID=$(az ad group create --display-name opssre-${APP_NAME} --mail-nickname opssre-${APP_NAME} --query objectId -o tsv)
+OPSSRE_ID=$(az ad group create --display-name opssre-${APP_NAME} --mail-nickname opssre-${APP_NAME} --query id -o tsv)
 echo "OPSSRE GROUP ID: " $OPSSRE_ID
 az role assignment create --assignee $OPSSRE_ID --role "Azure Kubernetes Service Cluster User Role" --scope $aks_cluster_id
 
 password=P@ssw0rd1 # Change it !!!
+# You must use one of the verified domain names in your organization ex: foo@xxxEnvMCAP123456.onmicrosoft.com
+VERIFIED_DOMAIN=foo@xxxEnvMCAP123456.onmicrosoft.com
 
 # Create a user for the Dev role
-AKSDEV_ID=$(az ad user create --display-name "AKS Dev ${APP_NAME}" --user-principal-name "aksdev@groland.grd" --password $password --query objectId -o tsv)
+AKSDEV_ID=$(az ad user create --display-name "AKS Dev ${APP_NAME}" --user-principal-name "aksdev@$VERIFIED_DOMAIN" --password $password --query id -o tsv)
 echo "AKS DEV USER ID: " $AKSDEV_ID
 
 # Add the user to the appdev Azure AD group
 az ad group member add --member-id $AKSDEV_ID --group appdev-${APP_NAME} 
 
 # Create a user for the SRE role
-AKSSRE_ID=$(az ad user create --display-name "AKS SRE ${APP_NAME}" --user-principal-name "akssre@groland.grd" --password  $password --query objectId -o tsv)
+AKSSRE_ID=$(az ad user create --display-name "AKS SRE ${APP_NAME}" --user-principal-name "akssre@$VERIFIED_DOMAIN" --password  $password --query id -o tsv)
 echo "AKS SRE USER ID: " $AKSSRE_ID
 
 # Add the user to the opssre Azure AD group
 az ad group member add --member-id $AKSSRE_ID --group opssre-${APP_NAME}
 
-kubectl apply -f ./$TANZU_INSTALL_DIR/role-dev-namespace.yaml
-kubectl apply -f ./$TANZU_INSTALL_DIR/role-sre-namespace.yaml
+
+# https://learn.microsoft.com/en-us/azure/aks/managed-aad#prerequisites
+helm version
+
+KUBELOGIN_VERSION=0.0.26
+wget https://github.com/Azure/kubelogin/releases/download/v$KUBELOGIN_VERSION/kubelogin-linux-amd64.zip -O kubelogin
+unzip kubelogin-linux-amd64.zip
+ls -al bin/linux_amd64/kubelogin
+sudo mv bin/linux_amd64/kubelogin /usr/local/bin
+ls -al /usr/local/bin/kubelogin
+
+# Copy the latest Releases to shell's search path.
+#vim ~/.profile
+#. .profile
+#vim ~/.bashrc
+
+az aks get-credentials --name $AKS_CLUSTER_NAME -g $RG_APP
+
+export KUBECONFIG=~/.kube/config
+which kubelogin 
+kubelogin --version
+kubelogin convert-kubeconfig -l azurecli
+
+kubectl get no
+
+kubectl apply -f $TANZU_INSTALL_DIR/k8s/role-dev-namespace.yaml
+kubectl apply -f $TANZU_INSTALL_DIR/k8s/role-sre-namespace.yaml
 
 export DEV_GROUP_OBECT_ID=$APPDEV_ID
-envsubst < ./$TANZU_INSTALL_DIR/k8s/rolebinding-dev-namespace.yaml > ./$TANZU_INSTALL_DIR/k8s/deploy/rolebinding-dev-namespace.yaml
+envsubst < $TANZU_INSTALL_DIR/k8s/rolebinding-dev-namespace.yaml > $TANZU_INSTALL_DIR/k8s/deploy/rolebinding-dev-namespace.yaml
+cat $TANZU_INSTALL_DIR/k8s/deploy/rolebinding-dev-namespace.yaml
 kubectl apply -f ./$TANZU_INSTALL_DIR/k8s/deploy/rolebinding-dev-namespace.yaml
 kubectl describe role dev-user-full-access -n development
 kubectl describe rolebindings dev-user-access -n development
@@ -396,7 +423,13 @@ kubectl apply -f ./$TANZU_INSTALL_DIR/k8s/deploy/rolebinding-sre-namespace.yaml
 
 export AKS_ADM_GROUP_OBECT_ID=$aad_admin_group_object_id
 envsubst < ./$TANZU_INSTALL_DIR/k8s/aad-cluster-admin-binding.yaml > ./$TANZU_INSTALL_DIR/k8s/deploy/aad-cluster-admin-binding.yaml
-kubectl apply -f ./$TANZU_INSTALL_DIR/k8s/deploy/aad-cluster-admin-binding.yaml
+cat ./$TANZU_INSTALL_DIR/k8s/deploy/aad-cluster-admin-binding.yaml
+kubectl apply -f $TANZU_INSTALL_DIR/k8s/deploy/aad-cluster-admin-binding.yaml
+
+kubectl apply -f $TANZU_INSTALL_DIR/k8s/aad-kapp-controller-binding.yaml
+kubectl apply -f $TANZU_INSTALL_DIR/k8s/aad-metadata-store-binding.yaml
+kubectl apply -f $TANZU_INSTALL_DIR/k8s/aad-tanzu-ingress-binding.yaml
+kubectl apply -f $TANZU_INSTALL_DIR/k8s/aad-tap-install-binding.yaml
 
 kubectl get clusterrolebindings -A
 kubectl describe clusterrolebindings owner-cluster-admin
@@ -790,7 +823,13 @@ DNS_ZONE="appinnohandsonlab.com" # set here your own domain name
 ns_server=$(az network dns record-set ns show --zone-name $DNS_ZONE --name @ -g $RG_APP --query nsRecords[0] --output tsv)
 ns_server_length=$(echo -n $ns_server | wc -c)
 ns_server="${ns_server:0:$ns_server_length-1}"
-echo "Name Server" $ns_server
+echo "Name Server 1" $ns_server
+
+ns_server=$(az network dns record-set ns show --zone-name $DNS_ZONE --name @ -g $RG_APP --query nsRecords[1] --output tsv)
+ns_server_length=$(echo -n $ns_server | wc -c)
+ns_server="${ns_server:0:$ns_server_length-1}"
+echo "Name Server 2" $ns_server
+
 ```
 In the registrar's DNS management page, edit the NS records and replace the NS records with the Azure DNS name servers.
 
