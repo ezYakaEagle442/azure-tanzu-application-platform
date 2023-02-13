@@ -351,9 +351,9 @@ jobs:
             kubectl describe clusterissuer letsencrypt-production
             kubectl get certs -n cert-manager
 
-            envsubst < ${{ env.TANZU_INSTALL_DIR }}/k8s/deploycertificate.yaml > ${{ env.TANZU_INSTALL_DIR }}/k8s/deploy/deploycertificate.yaml
-            cat $TANZU_INSTALL_DIR/k8s/deploy/deploycertificate.yaml
-            kubectl apply -f ${{ env.TANZU_INSTALL_DIR }}/k8s/deploycertificate.yaml
+            envsubst < ${{ env.TANZU_INSTALL_DIR }}/k8s/certificate.yaml > ${{ env.TANZU_INSTALL_DIR }}/k8s/deploy/certificate.yaml
+            cat $TANZU_INSTALL_DIR/k8s/deploy/certificate.yaml
+            kubectl apply -f ${{ env.TANZU_INSTALL_DIR }}/k8s/deploy/certificate.yaml
             
             kubectl get certs -n cert-manager
 
