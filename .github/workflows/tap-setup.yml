@@ -8,9 +8,10 @@ env:
   RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
   
   DNS_ZONE: cloudapp.azure.com
-  APP_DNS_ZONE: tap.westeurope.cloudapp.azure.com
-  CUSTOM_DNS: javaonazurehandsonlabs.com
-  AZURE_DNS_LABEL_NAME: tap
+  APP_DNS_ZONE: westeurope.cloudapp.azure.com
+  CUSTOM_DNS: appinnohandsonlab.com
+  AZURE_DNS_LABEL_NAME: tap-gui
+  TANZU_DNS_CHILD_ZONE: tap.appinnohandsonlab.com
 
   # ==== Azure storage t, values must be consistent with the ones in iac/bicep/modules/aks/storage.bicep ====:
   AZ_STORAGE_NAME : statapaks # customize this
@@ -118,7 +119,26 @@ jobs:
           creds: '${{ secrets.AZURE_CREDENTIALS }}' # Azure credentials
           resource-group: ${{ env.RG_APP }} 
           cluster-name: ${{ env.AKS_CLUSTER_NAME }}
-      id: akslogin
+      id: setakscontext
+
+    # kubectl config set-credentials cicd-runner --token=bearer_token
+    # TODO for AAD Integration:
+    # https://github.com/marketplace/actions/setup-kubelogin
+    # https://github.com/Azure/kubelogin
+    - uses: azure/use-kubelogin@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+      with:
+        kubelogin-version: 'latest'
+      id: kubelogin
+
+    - name: Test CLI
+      run: |
+
+            kubectl config get-contexts
+            kubectl get nodes -o wide
+
+      shell: bash
 
     - name: Authorize local IP access to the Azure BLOB Storage 
       if: ${{ always() }}
@@ -168,6 +188,8 @@ jobs:
 
     - name: Get Tanzu Application Platform GUI Blank Catalog
       run: |
+
+            # TODO
 
       shell: bash
 
@@ -289,6 +311,78 @@ jobs:
 
       shell: bash
 
+    - name: Setup API-Portal
+      run: |
+
+            mkdir ${{ env.TANZU_INSTALL_DIR }}/deploy
+            wget https://raw.githubusercontent.com/ezYakaEagle442/tanzu-tools/main/tap/data/api-portal-ingress.yaml -q --no-cache -O ${{ env.TANZU_INSTALL_DIR }}/k8s/api-portal-ingress.yaml
+            export ING_HOST= ${{ env.TANZU_DNS_CHILD_ZONE }}
+            echo "INGRESS HOST " $ING_HOST
+            mkdir ${{ env.TANZU_INSTALL_DIR }}/k8s/deploy
+
+            envsubst < ${{ env.TANZU_INSTALL_DIR }}/k8s/api-portal-ingress.yaml > ${{ env.TANZU_INSTALL_DIR }}/k8s/deploy/api-portal-ingress.yaml
+            cat $TANZU_INSTALL_DIR/k8s/deploy/api-portal-ingress.yaml
+            kubectl apply -f $TANZU_INSTALL_DIR/k8s/deploy/api-portal-ingress.yaml
+
+            kubectl get ingress -A
+
+            wget https://raw.githubusercontent.com/ezYakaEagle442/tanzu-tools/main/tap/data/workload.yaml -q --no-cache -O ${{ env.TANZU_INSTALL_DIR }}/k8s/workload.yaml
+            export NS= ${{ env.DEV_NAMESPACE }}
+            echo "DEV_NAMESPACE " $NS
+
+            envsubst < ${{ env.TANZU_INSTALL_DIR }}/k8s/workload.yaml > ${{ env.TANZU_INSTALL_DIR }}/k8s/deploy/workload.yaml
+            cat $TANZU_INSTALL_DIR/k8s/deploy/workload.yaml
+
+            tanzu apps workload create -f  $TANZU_INSTALL_DIR/k8s/deploy/workload.yaml -y
+    
+
+            # harbor-fmartin-tanzu.francecentral.cloudapp.azure.com/fmartin/tanzu-simple:latest
+            # image: ${ACR_URL}/${REPO}/tanzu-simple:${IMAGE_TAG}
+            tag_id=latest
+            imageNameTanzuSimple="${{ env.REGISTRY_URL }}/${{ env.REPOSITORY }}/tanzu-simple:$tag_id"
+            wget https://raw.githubusercontent.com/ezYakaEagle442/tanzu-simple/main/k8s/02-deployment.yml  -q --no-cache -O ${{ env.TANZU_INSTALL_DIR }}/k8s/tanzu-simple-deployment.yml
+            envsubst < ${{ env.TANZU_INSTALL_DIR }}/k8s/tanzu-simple-deployment.yml > ${{ env.TANZU_INSTALL_DIR }}/k8s/deploy/tanzu-simple-deployment.yml
+
+      shell: bash
+
+
+      # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/authn-authz-azure-ad.html
+    - name: Integrate with AAD
+      run: |
+
+            echo "You must be Admin of your AAD Tenant, and you need a minimum version of helm 3.3."
+            echo "See https://learn.microsoft.com/en-us/azure/aks/managed-aad"
+            echo "Read https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/authn-authz-azure-ad.html"
+            echo ""
+
+      shell: bash   
+
+    - name: Prepare Contour TLS pre-req
+      run: |
+
+            export ING_HOST=${{ env.TANZU_DNS_CHILD_ZONE }}
+            export CERT_ADMIN_EMAIL=${{ env.CERT_ADMIN_EMAIL }}
+
+            # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/contour-install.html
+            # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/tap-gui-tls-cert-mngr-ext-clusterissuer.html
+            #tanzu package available list contour.tanzu.vmware.com -n ${{ env.TAP_INSTALL_NAMESPACE}}
+
+            envsubst < ${{ env.TANZU_INSTALL_DIR }}/k8s/letsencrypt-prod-cluster-issuer.yaml > ${{ env.TANZU_INSTALL_DIR }}/k8s/deploy/letsencrypt-prod-cluster-issuer.yaml
+            cat $TANZU_INSTALL_DIR/k8s/deploy/letsencrypt-prod-cluster-issuer.yaml
+            kubectl apply -f ${{ env.TANZU_INSTALL_DIR }}/k8s/deploy/letsencrypt-prod-cluster-issuer.yaml -n cert-manager
+
+            kubectl get clusterissuer -A -o wide
+            kubectl describe clusterissuer letsencrypt-production
+            kubectl get certs -n cert-manager
+
+            envsubst < ${{ env.TANZU_INSTALL_DIR }}/k8s/deploycertificate.yaml > ${{ env.TANZU_INSTALL_DIR }}/k8s/deploy/deploycertificate.yaml
+            cat $TANZU_INSTALL_DIR/k8s/deploy/deploycertificate.yaml
+            kubectl apply -f ${{ env.TANZU_INSTALL_DIR }}/k8s/deploycertificate.yaml
+            
+            kubectl get certs -n cert-manager
+
+      shell: bash     
+
     # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/install.html#full-profile
     # Create a tap-values.yml  
     - name: Install TAP profile
@@ -296,7 +390,7 @@ jobs:
 
             tanzu package available list tap.tanzu.vmware.com --namespace ${{ env.TAP_INSTALL_NAMESPACE}}
 
-            mkdir ${{ env.TANZU_INSTALL_DIR }}/deploy
+            # mkdir ${{ env.TANZU_INSTALL_DIR }}/deploy
 
             # https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
             # https://tanzu.vmware.com/developer/guides/platform-security-secrets-sa-what-is/
@@ -325,7 +419,7 @@ jobs:
             # need to substitute env var in the template file
             export TANZU_INSTALL_DIR=${{ env.TANZU_INSTALL_DIR }}
             export DEV_NAMESPACE=${{ env.DEV_NAMESPACE }}
-            export APP_DNS_ZONE=${{ env.APP_DNS_ZONE }}
+            export APP_DNS_ZONE=${{ env.TANZU_DNS_CHILD_ZONE }}
             export TANZU_NET_USER=${{ env.TANZU_NET_USER }}
             export TANZU_NET_PASSWORD=${{ env.TANZU_NET_PASSWORD }}
             export AZURE_CONTAINER_REGISTRY=${{ env.AZURE_CONTAINER_REGISTRY }}
@@ -365,6 +459,8 @@ jobs:
     # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/namespace-provisioner-how-tos.html#control-desired-namespaces
     - name: Configure GitOps
       run: |
+
+            # https://github.com/beeNotice/tanzu-tools/blob/main/tap/script/create-additional-dev-space.sh#L22
             echo TODO ...
 
       shell: bash
@@ -386,6 +482,7 @@ jobs:
 
     - name: Setup DNS
       run: |
+
             echo "ING_CTL_IP:" $ING_CTL_IP
             az deployment group create --name aks-dns -f iac/bicep/modules/aks/dns.bicep -g ${{ env.RG_APP }} \
             -p dnsZoneType=custom \
@@ -398,7 +495,11 @@ jobs:
             ingControllerPublicIpId=$(az network public-ip list -g $managed_rg --query "[?ipAddress!=null]|[?contains(ipAddress, '$ING_CTL_IP')].[id]" --output tsv)
             echo $ingControllerPublicIpId
             
-            az network public-ip update --ids $ingControllerPublicIpId --dns-name ${{ env.AZURE_DNS_LABEL_NAME }} -g $managed_rg
+            # az network public-ip update --ids $ingControllerPublicIpId --dns-name ${{ env.AZURE_DNS_LABEL_NAME }} -g $managed_rg
+
+            echo "About to check DNS ..."
+            dig @8.8.8.8 "tap-gui.${{ env.CUSTOM_DNS }}"
+            # https://github.com/beeNotice/tanzu-tools/blob/main/tap/02_deploy-aks.sh
 
       shell: bash
 
