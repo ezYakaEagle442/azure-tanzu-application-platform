@@ -257,22 +257,63 @@ jobs:
           creds: '${{ secrets.AZURE_CREDENTIALS }}' # Azure credentials
           resource-group: ${{ env.RG_APP }} 
           cluster-name: ${{ env.AKS_CLUSTER_NAME }}
-      id: akslogin
+      id: setakscontext
+
+    # kubectl config set-credentials cicd-runner --token=bearer_token
+    # TODO for AAD Integration:
+    # https://github.com/marketplace/actions/setup-kubelogin
+    # https://github.com/Azure/kubelogin
+    - uses: azure/use-kubelogin@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+      with:
+        kubelogin-version: 'latest'
+      id: kubelogin
+
+    - name: K8S Test with AAD
+      run: |
+
+            kubectl cluster-info
+            kubectl config get-contexts
+            kubectl get nodes -o wide
+
+      shell: bash
 
     - name: Create Petclinic Namespace
       run: |
-            kubectl cluster-info
-            # kubectl create namespace ${{ env.PETCLINIC_NAMESPACE }}
+
             kubectl create namespace ${{ env.PETCLINIC_NAMESPACE }} --dry-run=client -o yaml > ns-petclinic.yaml
             kubectl apply -f ns-petclinic.yaml
+
       shell: bash
 
     - name: Create Tanzu Namespace
       run: |
-            kubectl cluster-info
-            # kubectl create namespace ${{ env.TAP_NAMESPACE }}
+
             kubectl create namespace ${{ env.TAP_NAMESPACE }} --dry-run=client -o yaml > ns-tanzu.yaml
             kubectl apply -f ns-tanzu.yaml
+
+      shell: bash
+
+    - name: Create Dev & Ops Namespace
+      run: |
+
+            kubectl create namespace development
+            kubectl label namespace/development purpose=development
+
+            kubectl create namespace staging
+            kubectl label namespace/staging purpose=staging
+
+            kubectl create namespace production
+            kubectl label namespace/production purpose=production
+
+            kubectl create namespace sre
+            kubectl label namespace/sre purpose=sre
+
+            kubectl get namespaces
+            kubectl describe namespace production
+            kubectl describe namespace sre
+
       shell: bash
 
     # https://learn.microsoft.com/en-us/azure/aks/workload-identity-deploy-cluster
@@ -350,6 +391,7 @@ jobs:
 
     - name: setup Petclinic K8S Config
       run: |
+
             cat <<EOF >> cm-petclinic.yaml
             apiVersion: v1
             kind: ConfigMap
