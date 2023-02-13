@@ -285,6 +285,17 @@ jobs:
 
       shell: bash
 
+    - name: Uninstall Cert-Manager
+      run: |
+
+          # https://cert-manager.io/docs/installation/helm/
+          helm repo add jetstack https://charts.jetstack.io
+          helm repo update          
+          helm uninstall cert-manager --namespace cert-manager
+
+      shell: bash
+
+
 
     - name: Azure Logout security hardening
       run: |
