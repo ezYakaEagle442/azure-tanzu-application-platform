@@ -3,7 +3,7 @@
 @maxLength(20)
 // to get a unique name each time ==> param appName string = 'demo${uniqueString(resourceGroup().id, deployment().name)}'
 param appName string = 'tap${uniqueString(resourceGroup().id)}'
-param location string = 'westeurope'
+param location string = resourceGroup().location
 param acrName string = 'acr${appName}'
 
 @description('The Log Analytics workspace name used by the AKS cluster')

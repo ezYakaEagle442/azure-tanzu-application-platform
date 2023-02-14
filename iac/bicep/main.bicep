@@ -2,7 +2,7 @@
 // to get a unique name each time ==> param appName string = 'demo${uniqueString(resourceGroup().id, deployment().name)}'
 param appName string = 'tap${uniqueString(resourceGroup().id)}'
 
-param location string = 'westeurope'
+param location string = resourceGroup().location
 // param rgName string = 'rg-${appName}'
 param dnsPrefix string = 'tanzu-${appName}'
 param clusterName string = 'aks-${appName}'
