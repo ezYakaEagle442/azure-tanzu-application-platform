@@ -255,6 +255,7 @@ jobs:
 
     - name: Deploy the pre-req
       run: |
+
           # --debug # --what-if to test like a dry-run
            echo "LOCAL_IP=$LOCAL_IP"
            
