@@ -101,9 +101,9 @@ tap_gui:
           # Catalog repository
           target: $CATALOG_URL/blob/main/catalog-info.yaml
     backend:
-        baseUrl: http://tap-gui.$APP_DNS_ZONE
+        baseUrl: https://tap-gui.$APP_DNS_ZONE # https if TLS is enabled
         cors:
-            origin: http://tap-gui.$APP_DNS_ZONE
+            origin: https://tap-gui.$APP_DNS_ZONE # https if TLS is enabled
         # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/tap-gui-database.html
         #database:
         #client: pg
