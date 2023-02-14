@@ -579,6 +579,7 @@ https://github.com/ezYakaEagle442/tap-catalog/blob/main/api/openapi/openapi-tanz
 https://github.com/ezYakaEagle442/tanzu-tools/blob/main/tap/data/workload.yaml#L14 ==> URL mut be updated
 
 
+
 ### Troubleshoot
 
 troubleshoot namespace stuck in terminating-state read [this](https://www.ibm.com/docs/en/cloud-private/3.2.0?topic=console-namespace-is-stuck-in-terminating-state).
@@ -837,6 +838,94 @@ In the registrar's DNS management page, edit the NS records and replace the NS r
 nslookup $DNS_ZONE $ns_server
 ```
 
+# Integrate TAP with AAD
+
+Read [https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/authn-authz-azure-ad.html](https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/authn-authz-azure-ad.html)
+
+Identify or create a list of groups in the Azure AD for each of the Tanzu Application Platform default roles (app-operator, app-viewer, and app-editor) :
+
+```sh
+LOCATION="westeurope"
+AKS_CLUSTER_NAME="aks-tap42"
+RG_APP="rg-aks-tap-apps"
+TANZU_INSTALL_DIR=tanzu
+APP_NAME=tap42
+
+aks_cluster_id=$(az aks show -n $AKS_CLUSTER_NAME -g $RG_APP --query id -o tsv)
+echo "AKS cluster ID : " $aks_cluster_id
+
+# Create the first example group in Azure AD for the application developers
+TAP_APP_OPERATOR_ID=$(az ad group create --display-name tap-app-operator --mail-nickname tap-app-operator --query id -o tsv)
+echo "TAP APP OPERATOR GROUP ID: " $TAP_APP_OPERATOR_ID
+az role assignment create --assignee $TAP_APP_OPERATOR_ID --role "Azure Kubernetes Service Cluster User Role" --scope $aks_cluster_id
+
+TAP_APP_VIEWER_ID=$(az ad group create --display-name tap-app-viewer --mail-nickname tap-app-viewer --query id -o tsv)
+echo "TAP APP OPERATOR GROUP ID: " $TAP_APP_VIEWER_ID
+az role assignment create --assignee $TAP_APP_VIEWER_ID --role "Azure Kubernetes Service Cluster User Role" --scope $aks_cluster_id
+
+TAP_APP_EDITOR_ID=$(az ad group create --display-name tap-app-edittor --mail-nickname tap-app-edittor --query id -o tsv)
+echo "TAP APP EDITOR GROUP ID: " $TAP_APP_EDITOR_ID
+az role assignment create --assignee $TAP_APP_EDITOR_ID --role "Azure Kubernetes Service Cluster User Role" --scope $aks_cluster_id
+```
+
+
+Install the Tanzu Application Platform RBAC CLI plug-in
+Download the Tanzu Application Platform RBAC CLI plug-in tar.gz file from [Tanzu Network](https://network.tanzu.vmware.com/products/tap-auth)
+
+```sh
+tar -zxvf tanzu-auth-plugin_1.1.0-beta.1.tar.gz
+tanzu plugin install rbac --local linux-amd64
+
+
+```
+
+
+```sh
+
+# Which NS ??? ==> workaround : allow to ALL NS, not good from a security perspective
+# tanzu rbac binding add -g OBJECT-ID -r TAP-ROLE -n NAMESPACE
+
+TAP_NAMESPACE=tanzu
+DEV_NAMESPACE=tap-dev
+TAP_INSTALL_NAMESPACE=tap-install
+KAPP_NAMESPACE=kapp-controller
+
+# Only TAP default roles are support [app-viewer, app-editor, app-operator, service-operator]
+tanzu rbac binding add -g $TAP_APP_OPERATOR_ID -r app-operator -n $TAP_NAMESPACE
+tanzu rbac binding add -g $TAP_APP_VIEWER_ID -r app-viewer -n $DEV_NAMESPACE
+
+tanzu rbac binding add -g $TAP_APP_EDITOR_ID -r app-editor -n $DEV_NAMESPACE
+
+tanzu rbac binding add -g $TAP_APP_EDITOR_ID -r app-editor -n $KAPP_NAMESPACE
+
+# tanzu rbac binding add -g $TAP_APP_OPERATOR_ID -r app-operator -A
+# tanzu rbac binding add -g $TAP_APP_VIEWER_ID -r app-viewer -A
+# tanzu rbac binding add -g $TAP_APP_EDITOR_ID -r app-edittor -A
+
+# You must use one of the verified domain names in your organization ex: foo@xxxEnvMCAP123456.onmicrosoft.com
+USR_ID=$(az account show --query user.name -o tsv)
+
+tanzu rbac binding add --user $USR_ID --role app-operator --namespace $DEV_NAMESPACE
+tanzu rbac binding add --user $USR_ID --role app-viewer --namespace $DEV_NAMESPACE
+tanzu rbac binding add --user $USR_ID --role app-editor --namespace $DEV_NAMESPACE
+tanzu rbac binding add --user $USR_ID --role service-operator --namespace $DEV_NAMESPACE
+
+tanzu rbac binding add --group $APPDEV_ID  --role app-operator --namespace $DEV_NAMESPACE
+tanzu rbac binding add --group $APPDEV_ID  --role app-viewer --namespace $DEV_NAMESPACE
+tanzu rbac binding add --group $APPDEV_ID  --role app-editor --namespace $DEV_NAMESPACE
+
+tanzu rbac binding add --group $OPSSRE_ID --role app-operator --namespace $DEV_NAMESPACE
+tanzu rbac binding add --group $OPSSRE_ID --role app-viewer --namespace $DEV_NAMESPACE
+tanzu rbac binding add --group $OPSSRE_ID --role app-editor --namespace $DEV_NAMESPACE
+tanzu rbac binding add --group $OPSSRE_ID --role service-operator --namespace $DEV_NAMESPACE
+
+tanzu rbac binding get --role app-editor --namespace user-ns
+
+```
+
+Access to the TAP GUI: https://tap-gui.tap.<Your Custom Domain>
+
+Ex: https://tap-gui.tap.appinnohandsonlab.com/
 
 # Cost savings - Green-IT
 ```sh
