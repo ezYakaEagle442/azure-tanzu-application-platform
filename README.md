@@ -962,7 +962,7 @@ Ex: https://tap-gui.tap.appinnohandsonlab.com/
 
 ## TAP-values Troubleshoot
 
-To update TAP-values run the command below :
+To update TAP-values run the Workflow [.github/workflows/update-tap-values.yml](.github/workflows/update-tap-values.yml) the command below :
 
 ```sh
 TANZU_INSTALL_DIR=tanzu
