@@ -985,6 +985,8 @@ TANZU_INSTALL_DIR=tanzu
 TAP_INSTALL_NAMESPACE=tap-install
 
 tanzu package installed update tap -p tap.tanzu.vmware.com -v $TAP_VERSION --values-file ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml -n ${{ env.TAP_INSTALL_NAMESPACE}}
+
+tanzu package installed list -A
 ```
 
 # Cost savings - Green-IT
