@@ -66,6 +66,10 @@ env:
   TANZU_NET_PASSWORD: ${{ secrets.TANZU_NET_PASSWORD }}
   GH_PAT: ${{ secrets.GH_PAT }}
 
+  TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_ID: ${{ secrets.TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_ID }}
+  TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_SECRET: ${{ secrets.TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_SECRET }}
+  TAP_BACKSTAGE_AUTH_MICROSOFT_TENANT_ID: ${{ secrets.TAP_BACKSTAGE_AUTH_MICROSOFT_TENANT_ID }}
+
   # ==== Versions ====
   TANZU_CLI_VERSION: v0.25.4
   TAP_VERSION_NUMBER: 1.4.0
@@ -406,6 +410,10 @@ jobs:
             export REPO_SUBFOLDER_APP_TAP=${{ env.REPO_SUBFOLDER_APP_TAP }}
             export GH_PAT=${{ env.GH_PAT }}
 
+            export TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_ID=${{ env.TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_ID }}
+            export TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_SECRET=${{ env.TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_SECRET }}
+            export TAP_BACKSTAGE_AUTH_MICROSOFT_TENANT_ID=${{ env.TAP_BACKSTAGE_AUTH_MICROSOFT_TENANT_ID }}
+            
             export REPOSITORY_USERNAME=$acr_usr
             export REPOSITORY_PASSWORD=$acr_pwd
 
@@ -498,7 +506,7 @@ jobs:
             echo "ING_CTL_IP:" $ING_CTL_IP
             az deployment group create --name aks-dns -f iac/bicep/modules/aks/dns.bicep -g ${{ env.RG_APP }} \
             -p dnsZoneType=custom \
-            -p customDns=${{ env.CUSTOM_DNS }} \     
+            -p customDns=${{ env.CUSTOM_DNS }} \
             -p location=${{ env.LOCATION }} \
             -p vnetName=${{ env.VNET_NAME }} \
             -p aksSvcIp=$ING_CTL_IP
