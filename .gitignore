@@ -7,6 +7,7 @@ tanzu/cli/*
 tanzu/tanzu-framework-linux-amd64-*.tar
 tanzu/tanzu-cluster-essentials-linux-amd64-*.tgz
 tanzu/tap-gui-blank-catalog.tgz
+tanzu/tanzu-auth-plugin_1.1.0-beta.1.tar.gz
 tanzu/deploy
 tanzu/k8s/deploy
 
