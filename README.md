@@ -944,6 +944,22 @@ az ad sp create --id $TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_ID > aad_sp_tap_gui_ba
 az ad app credential reset --id $TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_ID >  aad_app_secret_tap_gui_backstage.json
 export TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_SECRET=$(cat aad_app_secret_tap_gui_backstage.json | jq -r '.password')
 
+# https://backstage.io/docs/auth/microsoft/provider
+# https://learn.microsoft.com/en-gb/azure/active-directory/develop/reply-url
+# https://mappslearning.wordpress.com/2022/04/19/enabling-microsoft-azure-authenticator-for-tanzu-application-platform-tap/
+# Register reply address for the application. : /api/auth/microsoft/handler/frame
+
+APP_DNS_ZONE=tap-gui.tap.appinnohandsonlab.com
+
+az ad app update \
+    --id ${TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_ID} \
+    --web-redirect-uris "https://${APP_DNS_ZONE}/api/auth/microsoft/handler/frame"
+
+# test from a browser:
+https://tap-gui.tap.appinnohandsonlab.com/api/auth/microsoft
+https://tap-gui.tap.appinnohandsonlab.com/api/auth/github
+
+
 envsubst < ./$TANZU_INSTALL_DIR/tap-values.yml > ./$TANZU_INSTALL_DIR/deploy/tap-values.yml
 echo "Cheking folder " ./$TANZU_INSTALL_DIR/deploy
 ls -al ./$TANZU_INSTALL_DIR/deploy
