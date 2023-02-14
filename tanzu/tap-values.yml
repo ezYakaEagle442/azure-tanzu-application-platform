@@ -52,8 +52,35 @@ tap_gui:
   tls: # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/tap-gui-tls-cert-mngr-ext-clusterissuer.html
    namespace: cert-manager
    secretName: tap-gui
+
   service_type: ClusterIP # default to LoadBalancer , other option: ClusterIP
   app_config:
+    # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/tap-gui-auth.html
+    # https://gist.github.com/spuchol81/f9c8856837ded92437db9b4aa6d0c7fe
+    # ex to Authenticate with GitHub
+    # auth:
+    #   environment: development
+    #   providers:
+    #     github:
+    #       development:
+    #         clientId: XXXXX
+    #         clientSecret: TheSecret
+    #   loginPage:
+    #     github:
+    #       title: Appinno IDP
+    #       message: Enter your github account
+
+    # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/tap-gui-auth.html
+    # https://backstage.io/docs/auth/microsoft/provider
+    auth:
+      environment: development
+      providers:
+        microsoft:
+          development:
+            clientId: ${TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_ID}
+            clientSecret: ${TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_SECRET}
+            tenantId: ${TAP_BACKSTAGE_AUTH_MICROSOFT_TENANT_ID}
+
     app:
       baseUrl: https://tap-gui.$APP_DNS_ZONE # https if TLS is enabled
     integrations:

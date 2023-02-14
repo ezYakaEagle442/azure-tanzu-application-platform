@@ -27,6 +27,7 @@ urlFragment: "tap"
 Se also :
 - [repo from VMWare](https://github.com/pacphi/gha-workflows-with-gitops-for-tanzu-application-platform/blob/main/docs/AZURE.md)
 - [https://tap-gui.demo-aks.spuchol.me](https://tap-gui.demo-aks.spuchol.me)
+- [https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap.pdf](https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap.pdf)
 
 This microservices branch was initially derived from [AngularJS version](https://github.com/spring-petclinic/spring-petclinic-angular1) to demonstrate how to split sample Spring application into [microservices](http://www.martinfowler.com/articles/microservices.html).
 To achieve that goal we use IaC with Azure Bicep, MS build of OpenJDK 11, GitHub Actions, Azure AD Workload Identity, Azure Key Vault,  Azure Container Registry, Azure Database for MySQL
@@ -875,8 +876,6 @@ Download the Tanzu Application Platform RBAC CLI plug-in tar.gz file from [Tanzu
 ```sh
 tar -zxvf tanzu-auth-plugin_1.1.0-beta.1.tar.gz
 tanzu plugin install rbac --local linux-amd64
-
-
 ```
 
 
@@ -889,6 +888,16 @@ TAP_NAMESPACE=tanzu
 DEV_NAMESPACE=tap-dev
 TAP_INSTALL_NAMESPACE=tap-install
 KAPP_NAMESPACE=kapp-controller
+
+AAD_ADM_GRP="AKS TAP Admin Group"
+aad_admin_group_object_id=$(az ad group show -g "$AAD_ADM_GRP" --query id -o tsv)
+echo "aad_admin_group_object_id" : $aad_admin_group_object_id
+
+tanzu rbac binding add -g $aad_admin_group_object_id -r app-operator -n $TAP_INSTALL_NAMESPACE
+tanzu rbac binding add -g $aad_admin_group_object_id -r app-viewer -n $TAP_INSTALL_NAMESPACE
+tanzu rbac binding add -g $aad_admin_group_object_id -r app-editor -n $TAP_INSTALL_NAMESPACE
+tanzu rbac binding add -g $aad_admin_group_object_id -r service-operator -n $TAP_INSTALL_NAMESPACE
+
 
 # Only TAP default roles are support [app-viewer, app-editor, app-operator, service-operator]
 tanzu rbac binding add -g $TAP_APP_OPERATOR_ID -r app-operator -n $TAP_NAMESPACE
@@ -921,11 +930,46 @@ tanzu rbac binding add --group $OPSSRE_ID --role service-operator --namespace $D
 
 tanzu rbac binding get --role app-editor --namespace user-ns
 
+
+TAP_GUI_BACKSTAGE_APP_NAME=tap_gui_backstage
+az ad app create --display-name $TAP_GUI_BACKSTAGE_APP_NAME > aad_app_tap_gui_backstage.json
+# This command will output JSON with an appId that is your client-id. The objectId is APPLICATION-OBJECT-ID 
+
+export TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_ID=$(cat aad_app_tap_gui_backstage.json | jq -r '.appId')
+export TAP_BACKSTAGE_AUTH_MICROSOFT_TENANT_ID=$(az account show --query tenantId -o tsv)
+export TAP_BACKSTAGE_AUTH_MICROSOFT_OBJECT_ID=$(cat aad_app_tap_gui_backstage.json | jq -r '.id')
+
+az ad sp create --id $TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_ID > aad_sp_tap_gui_backstage.json
+
+az ad app credential reset --id $TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_ID >  aad_app_secret_tap_gui_backstage.json
+export TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_SECRET=$(cat aad_app_secret_tap_gui_backstage.json | jq -r '.password')
+
+envsubst < ./$TANZU_INSTALL_DIR/tap-values.yml > ./$TANZU_INSTALL_DIR/deploy/tap-values.yml
+echo "Cheking folder " ./$TANZU_INSTALL_DIR/deploy
+ls -al ./$TANZU_INSTALL_DIR/deploy
+cat ./$TANZU_INSTALL_DIR/deploy/tap-values.yml
+
 ```
+
+Add TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_ID, TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_SECRET & TAP_BACKSTAGE_AUTH_MICROSOFT_TENANT_ID as secrets to your GH repo Settings / Security / Secrets and variables / Actions / Actions secrets / Repository secrets
+
+
 
 Access to the TAP GUI: https://tap-gui.tap.<Your Custom Domain>
 
 Ex: https://tap-gui.tap.appinnohandsonlab.com/
+
+
+## TAP-values Troubleshoot
+
+To update TAP-values run the command below :
+
+```sh
+TANZU_INSTALL_DIR=tanzu
+TAP_INSTALL_NAMESPACE=tap-install
+
+tanzu package installed update tap -p tap.tanzu.vmware.com -v $TAP_VERSION --values-file ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml -n ${{ env.TAP_INSTALL_NAMESPACE}}
+```
 
 # Cost savings - Green-IT
 ```sh
