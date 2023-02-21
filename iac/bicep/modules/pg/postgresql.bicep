@@ -6,8 +6,8 @@ param appName string = 'tap${uniqueString(resourceGroup().id)}'
 @description('The location of the DB.')
 param location string = resourceGroup().location
 
-@description('The PostgreSQL DB Admin Login.')
-param postgreSQLadministratorLogin string = 'pg_adm'
+@description('The PostgreSQL DB Admin Login. IMPORTANT: username can no start with prefix "pg_" which is reserved, ex: pg_adm would fails in Bicep')
+param postgreSQLadministratorLogin string = 'pgs_adm'
 
 @secure()
 @description('The PostgreSQL DB Admin Password.')
