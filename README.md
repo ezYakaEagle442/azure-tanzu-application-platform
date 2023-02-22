@@ -388,7 +388,8 @@ az ad group member add --member-id $AKSSRE_ID --group opssre-${APP_NAME}
 helm version
 
 KUBELOGIN_VERSION=0.0.26
-wget https://github.com/Azure/kubelogin/releases/download/v$KUBELOGIN_VERSION/kubelogin-linux-amd64.zip -O kubelogin
+wget https://github.com/Azure/kubelogin/releases/download/v$KUBELOGIN_VERSION/kubelogin-linux-amd64.zip # -O kubelogin
+sudo apt install unzip
 unzip kubelogin-linux-amd64.zip
 ls -al bin/linux_amd64/kubelogin
 sudo mv bin/linux_amd64/kubelogin /usr/local/bin
