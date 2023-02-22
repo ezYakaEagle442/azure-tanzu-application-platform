@@ -154,8 +154,8 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-10-02-preview' = {
         osDiskSizeGB: osDiskSizeGB
         enableAutoScaling: true
         count: agentCount
-        minCount: 3
-        maxCount: 12
+        minCount: 2
+        maxCount: 4
         maxPods: 142 // 250 Pods max with CNI https://learn.microsoft.com/en-us/azure/aks/configure-azure-cni#configure-maximum---new-clusters
         vmSize: agentVMSize
         osType: 'Linux'
@@ -174,8 +174,8 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-10-02-preview' = {
         osDiskSizeGB: osDiskSizeGB
         enableAutoScaling: true
         count: agentCount
-        minCount: 4
-        maxCount: 12
+        minCount: 2
+        maxCount: 4
         maxPods: 142 // 250 Pods max with CNI https://learn.microsoft.com/en-us/azure/aks/configure-azure-cni#configure-maximum---new-clusters
         vmSize: agentVMSize
         osType: 'Linux'
@@ -341,7 +341,7 @@ resource AKSDiags 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
     logs: [
       {
         category: 'kube-apiserver'
-        enabled: true
+        enabled: false
       }
       {
         category: 'kube-audit'
@@ -365,7 +365,7 @@ resource AKSDiags 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
       }
       {
         category: 'guard'
-        enabled: true
+        enabled: false
       }
     ]
     metrics: [
