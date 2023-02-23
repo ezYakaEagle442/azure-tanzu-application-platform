@@ -6,7 +6,7 @@ param appName string = 'tap${uniqueString(resourceGroup().id)}'
 @description('The location of the DB.')
 param location string = resourceGroup().location
 
-@description('The PostgreSQL DB Admin Login. IMPORTANT: username can no start with prefix "pg_" which is reserved, ex: pg_adm would fails in Bicep')
+@description('The PostgreSQL DB Admin Login. IMPORTANT: username can not start with prefix "pg_" which is reserved, ex: pg_adm would fails in Bicep')
 param postgreSQLadministratorLogin string = 'pgs_adm'
 
 @secure()
@@ -46,7 +46,7 @@ param databaseSkuTier string = 'GeneralPurpose'
 param postgreSQLVersion string = '13' // https://docs.microsoft.com/en-us/azure/PostgreSQL/concepts-supported-versions
 
 // https://learn.microsoft.com/en-us/azure/templates/microsoft.dbforpostgresql/flexibleservers?pivots=deployment-language-bicep
-resource PostgreSQLserver 'Microsoft.DBforPostgreSQL/flexibleServers@2022-03-08-preview' = {
+resource PostgreSQLserver 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' = {
   location: location
   name: postgreSQLServerName
   sku: {
@@ -75,10 +75,12 @@ resource PostgreSQLserver 'Microsoft.DBforPostgreSQL/flexibleServers@2022-03-08-
 }
 
 output PostgreSQLResourceID string = PostgreSQLserver.id
+output PostgreSQLServerName string = PostgreSQLserver.name
+output PostgreSQLFQDN string = PostgreSQLserver.properties.fullyQualifiedDomainName
 
 
  // Allow AKS
- resource fwRuleAllowAKS 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2022-03-08-preview' = {
+ resource fwRuleAllowAKS 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2022-12-01' = {
   name: 'Allow-AKS-OutboundPubIP'
   parent: PostgreSQLserver
   properties: {
