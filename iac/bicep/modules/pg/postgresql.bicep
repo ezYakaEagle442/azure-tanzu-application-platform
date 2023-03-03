@@ -36,14 +36,14 @@ param databaseSkuName string = 'Standard_D2s_v3' //  'GP_Gen5_2' for single serv
 ])
 param databaseSkuTier string = 'GeneralPurpose'
 
-@description('PostgreSQL version')
+@description('PostgreSQL version. See https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-supported-versions')
 @allowed([
   '14'
   '13'
   '12'
   '11'
 ])
-param postgreSQLVersion string = '13' // https://docs.microsoft.com/en-us/azure/PostgreSQL/concepts-supported-versions
+param postgreSQLVersion string = '13' // https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-supported-versions
 
 // https://learn.microsoft.com/en-us/azure/templates/microsoft.dbforpostgresql/flexibleservers?pivots=deployment-language-bicep
 resource PostgreSQLserver 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' = {
