@@ -22,7 +22,7 @@ param  ipRules array = []
 param mySQLadministratorLogin string = 'mys_adm'
 
 @description('The MySQL server name')
-param mySQLServerName string = 'petcliaks'
+param mySQLServerName string = appName
 
 @description('The PostgreSQL DB Admin Login. IMPORTANT: username can not start with prefix "pg_" which is reserved, ex: pg_adm would fails in Bicep. Admin login name cannot be azure_superuser, azuresu, azure_pg_admin, sa, admin, administrator, root, guest, dbmanager, loginmanager, dbo, information_schema, sys, db_accessadmin, db_backupoperator, db_datareader, db_datawriter, db_ddladmin, db_denydatareader, db_denydatawriter, db_owner, db_securityadmin, public')
 param postgreSQLadministratorLogin string = 'pgs_adm'
@@ -71,6 +71,7 @@ module mysqlPub './modules/mysql/mysql.bicep' = {
     mySQLadministratorLogin: mySQLadministratorLogin
     mySQLadministratorLoginPassword: kv.getSecret('SPRING-DATASOURCE-PASSWORD')
     k8sOutboundPubIP: ipRules[0]
+    
   }
 }
 
