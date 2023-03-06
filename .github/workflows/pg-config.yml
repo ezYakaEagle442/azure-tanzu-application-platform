@@ -12,6 +12,7 @@ env:
   PG_ADM_USR: pg_adm
   PG_TIME_ZONE: Europe/Paris
   PG_CHARACTER_SET: utf8
+  PG_COLLATION: fr_FR.utf8 # select * from pg_collation ;
   PG_PORT: 5432
 
   # ==== Secrets ====
