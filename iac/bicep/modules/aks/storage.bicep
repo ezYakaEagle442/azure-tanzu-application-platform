@@ -27,6 +27,9 @@ param  vNetRules array = []
 @description('The IP rules to whitelist for the Strorage Account')
 param  ipRules array = []
 
+@description('The Azure Strorage Identity name, see Character limit: 3-128 Valid characters: Alphanumerics, hyphens, and underscores')
+param storageIdentityName string = 'id-aks-${appName}-strorage-dev-${location}-101'
+
 @description('The Identity Tags. See https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/tag-resources?tabs=bicep#apply-an-object')
 param tags object = {
   Environment: 'Dev'
@@ -38,19 +41,9 @@ param tags object = {
 
 
 // https://learn.microsoft.com/en-us/azure/templates/microsoft.managedidentity/userassignedidentities?pivots=deployment-language-bicep
-resource storageIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
+resource storageIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' existing = {
   name: storageIdentityName
-  location: location
-  tags: tags
 }
-output storageIdentityId string = storageIdentity.id
-output storageIdentityPrincipalId string = storageIdentity.properties.principalId
-
-/*
-resource aks 'Microsoft.ContainerService/managedClusters@2022-09-02-preview' existing = {
-  name: clusterName
-}
-*/
 
 // https://learn.microsoft.com/en-us/azure/templates/microsoft.storage/storageaccounts?pivots=deployment-language-bicep
 resource azurestorage 'Microsoft.Storage/storageAccounts@2022-09-01' = {
