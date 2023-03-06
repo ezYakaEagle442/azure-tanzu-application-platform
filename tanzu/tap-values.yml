@@ -105,14 +105,15 @@ tap_gui:
         cors:
             origin: https://tap-gui.$APP_DNS_ZONE # https if TLS is enabled
         # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/tap-gui-database.html
-        #database:
-        #client: pg
-        #connection:
-        #  host: $PG_SQL_HOSTNAME
-        #  port: 5432
-        #  user: $PG_SQL_USERNAME
-        #  password: $PG_SQL_PASSWORD
-        #  ssl: {rejectUnauthorized: false} # Set to true if using SSL
+        database:
+          client: pg
+          connection:
+            host: $PG_SQL_HOSTNAME
+            port: 5432
+            user: $PG_SQL_USERNAME
+            password: $PG_SQL_PASSWORD
+            database: $PG_SQL_DATABASE
+            ssl: {rejectUnauthorized: true} # Set to true if using SSL
 
 grype:
   namespace: "$DEV_NAMESPACE"
