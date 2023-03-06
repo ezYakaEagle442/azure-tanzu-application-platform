@@ -305,7 +305,7 @@ Read [https://azure.github.io/azure-workload-identity/docs/installation/azwi.htm
 
 Install Azure AD Workload Identity CLI
 ```sh
-AAD_WI_CLI_VERSION=0.15.0
+AAD_WI_CLI_VERSION=1.0.0-beta.0 # 0.15.0
 wget https://github.com/Azure/azure-workload-identity/releases/download/v$AAD_WI_CLI_VERSION/azwi-v$AAD_WI_CLI_VERSION-linux-amd64.tar.gz
 gunzip azwi-v$AAD_WI_CLI_VERSION-linux-amd64.tar.gz
 tar -xvf azwi-v$AAD_WI_CLI_VERSION-linux-amd64.tar
@@ -387,7 +387,7 @@ az ad group member add --member-id $AKSSRE_ID --group opssre-${APP_NAME}
 # https://learn.microsoft.com/en-us/azure/aks/managed-aad#prerequisites
 helm version
 
-KUBELOGIN_VERSION=0.0.26
+KUBELOGIN_VERSION=0.0.27
 wget https://github.com/Azure/kubelogin/releases/download/v$KUBELOGIN_VERSION/kubelogin-linux-amd64.zip # -O kubelogin
 sudo apt install unzip
 unzip kubelogin-linux-amd64.zip
@@ -474,6 +474,7 @@ AZ_STORAGE_NAME=statapaks
 az role assignment create --scope "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_APP}" --role "Storage Blob Data Contributor" --assignee-principal-type "User" --assignee-object-id "$USR_SPN_ID"
 
 # ==== Tanzu Tools ====
+
 TANZU_INSTALL_DIR=./tanzu
 TANZU_CLI=tanzu-framework-linux-amd64-v0.25.4.tar # /!\ the version name must match M.n.p like v0.25.4 NOT v0.25.4.1
 TANZU_ESSENTIALS=tanzu-cluster-essentials-linux-amd64-1.4.0.tgz
@@ -486,6 +487,7 @@ TANZU_BLOB_GUI_CAT=tanzu-catalog
 RG_APP=rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
 
 # ==== Azure storage , values must be consistent with the ones in iac/bicep/modules/aks/storage.bicep ====
+
 AZ_STORAGE_NAME=statapaks # customize this
 AZ_BLOB_CONTAINER_NAME=statapaks-blob # customize this
 # AZ_BLOB_SVC_NAME: default # MUST NOT BE MODIFIED
