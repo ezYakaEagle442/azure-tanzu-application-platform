@@ -2,6 +2,16 @@
 name: Delete TAP from AKS
 
 env:
+
+
+
+  # ==== Versions ====
+  AZ_CLI_VERSION: 2.45.0
+  TANZU_CLI_VERSION: v0.25.4
+  TAP_VERSION_NUMBER: 1.4.0
+
+  # ==== General settings  ====
+
   APP_NAME: tap42
   LOCATION: westeurope # francecentral
   RG_KV: rg-kv-tanzu101 # RG where to deploy KV
@@ -32,8 +42,6 @@ env:
   TANZU_BLOB_ESSENTIALS: tanzu-essentials
   TANZU_BLOB_GUI_CAT: tanzu-catalog
 
-  TANZU_CLI_VERSION: v0.25.4
-  TAP_VERSION_NUMBER: 1.4.0
   TANZU_REGISTRY: registry.tanzu.vmware.com
 
   TAP_NAMESPACE: tanzu
@@ -48,10 +56,6 @@ env:
   credentials: ${{ secrets.AZURE_CREDENTIALS }}
   AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
   AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-
-  # ==== Versions ====
-  AZ_CLI_VERSION: 2.44.1
 
 on:
   workflow_dispatch:

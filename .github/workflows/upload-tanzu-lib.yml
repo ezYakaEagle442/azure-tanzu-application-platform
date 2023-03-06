@@ -2,6 +2,8 @@ name: Upload Tanzu tools
 
 env:
 
+  # ==== General settings  ====
+  
   # ==== Tanzu Tools ====
   TANZU_INSTALL_DIR: tanzu
   TANZU_ESSENTIALS: tanzu/tanzu-cluster-essentials-linux-amd64-1.4.0.tgz

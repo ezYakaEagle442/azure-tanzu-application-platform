@@ -2,6 +2,12 @@
 name: Delete Apps
 
 env:
+
+  # ==== Versions ====
+  AZ_CLI_VERSION: 2.45.0
+
+  # ==== General settings  ====
+  
   APP_NAME: tap42
   TAP_NAMESPACE: tanzu
   PETCLINIC_NAMESPACE: petclinic
@@ -16,9 +22,6 @@ env:
 
   # ==== Secrets ====
   credentials: ${{ secrets.AZURE_CREDENTIALS }}
-
-  # ==== Versions ====
-  AZ_CLI_VERSION: 2.44.1
 
 on:
   workflow_dispatch:

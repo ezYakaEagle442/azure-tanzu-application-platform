@@ -1,6 +1,16 @@
 name: Deploy Customers, Vets & Visits Services
 
 env:
+
+  # ==== Versions ====
+  
+  DEPLOYMENT_VERSION: 2.6.13
+  AZ_CLI_VERSION: 2.45.0
+  JAVA_VERSION: 11
+  WI_VERSION: 0.15.0 # Azure AD Workload Identity version: https://github.com/Azure/azure-workload-identity/releases
+
+  # ==== General settings  ====
+
   APP_NAME: tap42
   LOCATION: westeurope # francecentral
   RG_KV: rg-kv-tanzu101 # RG where to deploy KV
@@ -54,16 +64,11 @@ env:
   DISCOVERY_SERVER: discovery-server
 
   # ==== Secrets ====
+
   credentials: ${{ secrets.AZURE_CREDENTIALS }}
   AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
   AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
   SPRING_CLOUD_AZURE_TENANT_ID: ${{ secrets.SPRING_CLOUD_AZURE_TENANT_ID }}
-
-  # ==== Versions ====
-  DEPLOYMENT_VERSION: 2.6.13
-  AZ_CLI_VERSION: 2.44.1
-  JAVA_VERSION: 11
-  WI_VERSION: 0.15.0 # Azure AD Workload Identity version: https://github.com/Azure/azure-workload-identity/releases
 
 on:
   workflow_call:

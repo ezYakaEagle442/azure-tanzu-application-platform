@@ -2,6 +2,13 @@
 name: Load SQL scripts to DB
 
 env:
+
+
+  # ==== Versions ====
+  AZ_CLI_VERSION: 2.45.0
+
+  # ==== General settings  ====
+
   APP_NAME: tap42
   LOCATION: westeurope
 
@@ -19,9 +26,6 @@ env:
 
   PG_ADM_PWD: ${{ secrets.PG_ADM_PWD }}
   credentials: ${{ secrets.AZURE_CREDENTIALS }}
-
-  # ==== Versions ====
-  AZ_CLI_VERSION: 2.44.1
 
 on:
   workflow_dispatch:

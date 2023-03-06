@@ -4,6 +4,15 @@
 name: Deploy IaC Pre-Req with Azure Bicep
 
 env:
+
+  # ==== Versions ====
+
+  DEPLOYMENT_VERSION: 2.6.13
+  AZ_CLI_VERSION: 2.45.0
+  JAVA_VERSION: 11
+
+  # ==== General settings  ====
+
   APP_NAME: tap42
   LOCATION: westeurope # francecentral
   RG_KV: rg-kv-tanzu101 # RG where to deploy KV
@@ -20,9 +29,6 @@ env:
   VNET_CIDR: 172.16.0.0/16
   AKS_SUBNET_CIDR: 172.16.0.0/21
   AKS_SUBNET_NAME: snet-aks
-
-  START_IP_ADDRESS: 172.16.1.0
-  END_IP_ADDRESS: 172.16.7.255
 
   DNS_ZONE: cloudapp.azure.com
   APP_DNS_ZONE: tap.westeurope.cloudapp.azure.com
@@ -88,11 +94,6 @@ env:
   credentials: ${{ secrets.AZURE_CREDENTIALS }}
   AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
   AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-  # ==== Versions ====
-  DEPLOYMENT_VERSION: 2.6.13
-  AZ_CLI_VERSION: 2.42.0
-  JAVA_VERSION: 11
 
 on:
   workflow_dispatch:

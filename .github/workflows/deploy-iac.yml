@@ -4,6 +4,14 @@
 name: Deploy IaC with Azure Bicep
 
 env:
+
+  # ==== Versions ====
+  DEPLOYMENT_VERSION: 2.6.13
+  AZ_CLI_VERSION: 2.45.0
+  JAVA_VERSION: 11
+
+  # ==== General settings  ====
+
   APP_NAME: tap42
   LOCATION: westeurope # francecentral
   RG_KV: rg-kv-tanzu101 # RG where to deploy KV
@@ -97,11 +105,6 @@ env:
   AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
   AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
   AAD_ADM_GRP: ${{ secrets.AAD_ADM_GRP }}
-  
-  # ==== Versions ====
-  DEPLOYMENT_VERSION: 2.6.13
-  AZ_CLI_VERSION: 2.44.1
-  JAVA_VERSION: 11
 
 on:
   workflow_dispatch:

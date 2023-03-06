@@ -4,6 +4,12 @@
 name: Delete Azure Resource Groups
 
 env:
+
+  # ==== Versions ====
+  AZ_CLI_VERSION: 2.45.0
+
+  # ==== General settings  ====
+  
   APP_NAME: tap42
   LOCATION: westeurope # francecentral
   RG_KV: rg-kv-tanzu101 # RG where to deploy KV
@@ -17,9 +23,6 @@ env:
 
   # ==== Secrets ====
   credentials: ${{ secrets.AZURE_CREDENTIALS }}
-
-  # ==== Versions ====
-  AZ_CLI_VERSION: 2.42.0
 
 on:
   workflow_dispatch:

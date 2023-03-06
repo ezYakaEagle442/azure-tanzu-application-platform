@@ -8,6 +8,14 @@
 name: Java CI with Maven for UI WITHOUT -Denv=azure 
 
 env:
+
+  # ==== Versions ====
+  DEPLOYMENT_VERSION: 2.6.13
+  AZ_CLI_VERSION: 2.45.0
+  JAVA_VERSION: 11
+
+  # ==== General settings  ====
+
   AZURE_CONTAINER_REGISTRY: tanzu42 # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
   REGISTRY_URL: tanzu42.azurecr.io  # set this to the URL of your registry
   REPOSITORY: tap                  # set this to your ACR repository
@@ -48,11 +56,6 @@ env:
   DOCKERFILE_PATH_CUSTOMERS_SERVICE: ./docker/petclinic-customers-service/Dockerfile
   DOCKERFILE_PATH_VETS_SERVICE: ./docker/petclinic-vets-service/Dockerfile
   DOCKERFILE_PATH_VISITS_SERVICE: ./docker/petclinic-visits-service/Dockerfile
-
-  # ==== Versions ====
-  DEPLOYMENT_VERSION: 2.6.13
-  AZ_CLI_VERSION: 2.44.1
-  JAVA_VERSION: 11
 
   # https://github.com/Azure/actions-workflow-samples/blob/master/assets/create-secrets-for-GitHub-workflows.md#consume-secrets-in-your-workflow
   # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#example-using-secrets

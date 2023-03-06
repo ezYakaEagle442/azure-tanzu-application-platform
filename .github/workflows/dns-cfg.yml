@@ -1,6 +1,14 @@
 name: Install ingress-nginx and configure DNS
 
 env:
+
+
+  # ==== Versions ====
+  
+  AZ_CLI_VERSION: 2.45.0
+
+  # ==== General settings  ====
+
   APP_NAME: tap42
   LOCATION: westeurope
   RG_KV: rg-kv-tanzu101 # RG where to deploy KV
@@ -28,8 +36,6 @@ env:
   AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
   AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-  # ==== Versions ====
-  AZ_CLI_VERSION: 2.44.1
 
 on:
   workflow_dispatch:

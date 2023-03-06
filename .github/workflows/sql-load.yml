@@ -2,6 +2,12 @@
 name: Load SQL scripts to DB
 
 env:
+
+
+  # ==== Versions ====
+
+  # ==== General settings  ====
+
   APP_NAME: tap42
   LOCATION: westeurope
 
@@ -18,9 +24,6 @@ env:
 
   MYSQL_ADM_PWD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
   credentials: ${{ secrets.AZURE_CREDENTIALS }}
-
-  # ==== Versions ====
-  AZ_CLI_VERSION: 2.44.1
 
 on:
   workflow_dispatch:

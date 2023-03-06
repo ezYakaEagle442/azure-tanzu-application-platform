@@ -1,6 +1,16 @@
 name: Update TAP values
 
 env:
+
+  # ==== Versions ====
+
+  TANZU_CLI_VERSION: v0.25.4
+  TAP_VERSION_NUMBER: 1.4.0
+  CERT_MANAGER_VERSION: v1.11.0
+  AZ_CLI_VERSION: 2.45.0
+
+  # ==== General settings  ====
+
   APP_NAME: tap42
   LOCATION: westeurope # francecentral
   RG_KV: rg-kv-tanzu101 # RG where to deploy KV
@@ -23,6 +33,7 @@ env:
   AZ_BLOB_TIMEOUT: 600
 
   # ==== Tanzu Tools ====
+
   IMG_PKG_CONCURRENCY: 2 # 1 or 2 ONLY for GitHub pulic Runners /!\ not more. Test with value 42 on Self-Hosted Runners deployed to AKS
 
   TANZU_INSTALL_DIR: tanzu
@@ -70,12 +81,6 @@ env:
   TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_SECRET: ${{ secrets.TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_SECRET }}
   TAP_BACKSTAGE_AUTH_MICROSOFT_TENANT_ID: ${{ secrets.TAP_BACKSTAGE_AUTH_MICROSOFT_TENANT_ID }}
   
-  # ==== Versions ====
-  TANZU_CLI_VERSION: v0.25.4
-  TAP_VERSION_NUMBER: 1.4.0
-  CERT_MANAGER_VERSION: v1.11.0
-  AZ_CLI_VERSION: 2.44.1
-
 on:
   workflow_dispatch:
   workflow_call:

@@ -10,10 +10,13 @@ name: Java CI with Maven for SVC WITH -Denv=azure
 env:
 
   # ==== Versions ====
+
   DEPLOYMENT_VERSION: 2.6.13
-  AZ_CLI_VERSION: 2.44.1
+  AZ_CLI_VERSION: 2.45.0
   JAVA_VERSION: 11
 
+  # ==== General settings  ====
+  
   AZURE_CONTAINER_REGISTRY: tanzu42 # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
   REGISTRY_URL: tanzu42.azurecr.io  # set this to the URL of your registry
   REPOSITORY: tap                  # set this to your ACR repository
@@ -35,6 +38,7 @@ env:
   AZ_BLOB_TIMEOUT: 600
   
   # ==== APPS ====
+
   CLOUD_PROVIDER_ENV: azure
   PRJ_PREFIX: spring-petclinic
 
