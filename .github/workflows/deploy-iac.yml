@@ -40,6 +40,9 @@ env:
   MYSQL_CHARACTER_SET: utf8
   MYSQL_PORT: 3306
 
+  CHARSET: utf8
+  COLLATION: fr_FR.utf8 # select * from pg_collation ;
+
   PG_SERVER_NAME: tap4242
   PG_DB_NAME: tap4242
   PG_ADM_USR: pg_adm
@@ -222,6 +225,8 @@ jobs:
               -p mySQLServerName=${{ env.MYSQL_SERVER_NAME }} \
               -p postgreSQLadministratorLogin=${{ env.PG_ADM_USR }} \
               -p postgreSQLServerName=${{ env.PG_SERVER_NAME }} \
+              -p charset=${{ env.CHARSET }} \
+              -p collation=${{ env.COLLATION }} \
               -p vNetRules=[$vNetRules] \
               -p ipRules=$ipRules
 
