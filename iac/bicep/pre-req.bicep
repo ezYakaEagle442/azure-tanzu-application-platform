@@ -34,8 +34,8 @@ param mySQLadministratorLoginPassword string
 @description('The MySQL server name')
 param mySQLServerName string = appName
 
-@description('The PostgreSQL DB Admin Login.')
-param postgreSQLadministratorLogin string = 'pg_adm'
+@description('The PostgreSQL DB Admin Login. IMPORTANT: username can not start with prefix "pg_" which is reserved, ex: pg_adm would fails in Bicep. Admin login name cannot be azure_superuser, azuresu, azure_pg_admin, sa, admin, administrator, root, guest, dbmanager, loginmanager, dbo, information_schema, sys, db_accessadmin, db_backupoperator, db_datareader, db_datawriter, db_ddladmin, db_denydatareader, db_denydatawriter, db_owner, db_securityadmin, public')
+param postgreSQLadministratorLogin string = 'pgs_adm'
 
 @secure()
 @description('The PostgreSQL DB Admin Password.')
@@ -43,6 +43,12 @@ param postgreSQLadministratorLoginPassword string
 
 @description('The PostgreSQL server name')
 param postgreSQLServerName string = appName
+
+@description('The PostgreSQL DB name.')
+param dbName string = 'tap'
+
+param charset string = 'utf8'
+param collation string = 'fr_FR.utf8' // select * from pg_collation ;
 
 @description('The Azure Active Directory tenant ID that should be used for authenticating requests to the Key Vault.')
 param tenantId string = subscription().tenantId
@@ -157,7 +163,6 @@ module mysql './modules/mysql/mysql.bicep' = {
   }
 }
 
-/* 
 module postgresqldb './modules/pg/postgresql.bicep' = {
   name: 'postgresqldb'
   params: {
@@ -166,9 +171,12 @@ module postgresqldb './modules/pg/postgresql.bicep' = {
     postgreSQLServerName: postgreSQLServerName
     postgreSQLadministratorLogin: postgreSQLadministratorLogin 
     postgreSQLadministratorLoginPassword: postgreSQLadministratorLoginPassword
+    charset: charset
+    collation: collation
+    dbName: dbName
   }
 }
-*/
+
 
 module storage './modules/aks/storage.bicep' = {
   name: 'storage'
