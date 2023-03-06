@@ -1,12 +1,27 @@
 
+/* https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-cli#inline-parameters 
+vim arrayContent.json
+[
+  "42.42.42.42"
+]
+
+az deployment group create --name postgresql -f ./iac/bicep/modules/pg/postgresql.bicep -g rg-aca-tap-quarkus \
+-p appName=tap42424242 -p location=westeurope -p postgreSQLadministratorLogin=pgs_adm \
+-p postgreSQLServerName=tap42424242 -p dbName=tap -p databaseSkuName=Standard_B1ms -p databaseSkuTier=Burstable -p postgreSQLVersion=13 \
+-p charset=utf8 -p collation=fr_FR.utf8 \
+-p k8sOutboundPubIP=@arrayContent.json \
+-p postgreSQLadministratorLoginPassword=xxx
+*/
+
+
 @description('A UNIQUE name')
 @maxLength(20)
-param appName string = 'tap${uniqueString(resourceGroup().id)}'
+param appName string = 'tap${uniqueString(resourceGroup().id, subscription().id)}'
 
 @description('The location of the DB.')
 param location string = resourceGroup().location
 
-@description('The PostgreSQL DB Admin Login. IMPORTANT: username can not start with prefix "pg_" which is reserved, ex: pg_adm would fails in Bicep')
+@description('The PostgreSQL DB Admin Login. IMPORTANT: username can not start with prefix "pg_" which is reserved, ex: pg_adm would fails in Bicep. Admin login name cannot be azure_superuser, azuresu, azure_pg_admin, sa, admin, administrator, root, guest, dbmanager, loginmanager, dbo, information_schema, sys, db_accessadmin, db_backupoperator, db_datareader, db_datawriter, db_ddladmin, db_denydatareader, db_denydatawriter, db_owner, db_securityadmin, public')
 param postgreSQLadministratorLogin string = 'pgs_adm'
 
 @secure()
@@ -44,6 +59,13 @@ param databaseSkuTier string = 'GeneralPurpose'
   '11'
 ])
 param postgreSQLVersion string = '13' // https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-supported-versions
+
+
+@description('The PostgreSQL DB name.')
+param dbName string = 'tap'
+
+param charset string = 'utf8'
+param collation string = 'fr_FR.utf8' // select * from pg_collation ;
 
 // https://learn.microsoft.com/en-us/azure/templates/microsoft.dbforpostgresql/flexibleservers?pivots=deployment-language-bicep
 resource PostgreSQLserver 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01' = {
@@ -88,3 +110,15 @@ output PostgreSQLFQDN string = PostgreSQLserver.properties.fullyQualifiedDomainN
     endIpAddress: k8sOutboundPubIP
   }
 }
+
+resource PostgreSQLDB 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2022-12-01' = {
+  name: dbName
+  parent: PostgreSQLserver
+  properties: {
+    charset: charset
+    collation: collation
+  }
+}
+
+output PostgreSQLDBResourceID string = PostgreSQLDB.id
+output PostgreSQLDBName string = PostgreSQLDB.name
