@@ -2,7 +2,7 @@
 // https://github.com/brwilkinson/AzureDeploymentFramework/blob/main/ADF/bicep/AKS.bicep
 @description('A UNIQUE name')
 @maxLength(20)
-param appName string = 'tap${uniqueString(deployment().name)}'
+param appName string = 'tap${uniqueString(resourceGroup().id, subscription().id)}'
 
 @description('The location of the Managed Cluster resource.')
 param location string = resourceGroup().location

@@ -1,6 +1,6 @@
 @description('A UNIQUE name')
 @maxLength(20)
-param appName string = 'tap${uniqueString(deployment().name)}'
+param appName string = 'tap${uniqueString(resourceGroup().id, subscription().id)}'
 
 @description('The location of the Azure resources.')
 param location string = resourceGroup().location
@@ -35,9 +35,6 @@ param tags object = {
   CostCenter: '42'
   Owner: 'TAP'
 }
-
-@description('The Azure Strorage Identity name, see Character limit: 3-128 Valid characters: Alphanumerics, hyphens, and underscores')
-param storageIdentityName string = 'id-aks-${appName}-strorage-dev-${location}-101'
 
 
 // https://learn.microsoft.com/en-us/azure/templates/microsoft.managedidentity/userassignedidentities?pivots=deployment-language-bicep

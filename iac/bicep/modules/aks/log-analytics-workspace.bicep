@@ -1,4 +1,4 @@
-param appName string = 'tap${uniqueString(deployment().name)}'
+param appName string = 'tap${uniqueString(resourceGroup().id, subscription().id)}'
 
 param logAnalyticsWorkspaceName string = 'log-${appName}'
 param location string = 'westeurope'

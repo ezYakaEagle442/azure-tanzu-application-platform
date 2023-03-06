@@ -1,6 +1,6 @@
 @description('A UNIQUE name')
 @maxLength(20)
-param appName string = 'tap${uniqueString(resourceGroup().id)}'
+param appName string = 'tap${uniqueString(resourceGroup().id, subscription().id)}'
 
 @maxLength(24)
 @description('The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters.')

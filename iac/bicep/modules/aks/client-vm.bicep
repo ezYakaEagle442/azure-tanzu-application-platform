@@ -19,7 +19,7 @@ az deployment group create --name storage -f iac/bicep/modules/tap/client-vm.bic
 */
 @description('A UNIQUE name')
 @maxLength(20)
-param appName string = 'tap${uniqueString(deployment().name)}'
+param appName string = 'tap${uniqueString(resourceGroup().id, subscription().id)}'
 
 @description('The location of the Azure resources.')
 param location string = resourceGroup().location
