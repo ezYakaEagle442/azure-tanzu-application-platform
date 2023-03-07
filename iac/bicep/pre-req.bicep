@@ -103,7 +103,7 @@ output appInsightsConnectionString string = appInsights.properties.ConnectionStr
 // output appInsightsInstrumentationKey string = appInsights.properties.InstrumentationKey
 
 module ACR './modules/aks/acr.bicep' = {
-  name: acrName
+  name: 'acr'
   params: {
     appName: appName
     acrName: acrName
