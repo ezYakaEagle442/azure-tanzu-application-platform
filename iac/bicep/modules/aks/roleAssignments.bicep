@@ -42,3 +42,9 @@ resource AKSClusterRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-
     principalType: 'ServicePrincipal'
   }
 }
+output aksClusterRoleAssignmentId string = AKSClusterRoleAssignment.id
+output aksClusterRoleAssignmentName string = AKSClusterRoleAssignment.name
+output aksClusterRoleAssignmentRoleDefinitionId string = AKSClusterRoleAssignment.properties.roleDefinitionId
+output aksClusterRoleAssignmentRoleUpdatedOn string = AKSClusterRoleAssignment.properties.updatedOn
+output aksClusterRoleAssignmentType string = AKSClusterRoleAssignment.type
+
