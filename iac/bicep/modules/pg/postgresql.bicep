@@ -29,7 +29,7 @@ param postgreSQLadministratorLogin string = 'pgs_adm'
 param postgreSQLadministratorLoginPassword string
 
 @description('The PostgreSQL server name')
-param postgreSQLServerName string = 'tanzu${appName}'
+param postgreSQLServerName string = appName
 
 @description('AKS Outbound Public IP')
 param k8sOutboundPubIP string = '0.0.0.0'
@@ -110,6 +110,9 @@ output PostgreSQLFQDN string = PostgreSQLserver.properties.fullyQualifiedDomainN
     endIpAddress: k8sOutboundPubIP
   }
 }
+
+output fwRuleAllowAKSResourceID string = fwRuleAllowAKS.id
+output fwRuleAllowAKSName string = fwRuleAllowAKS.name
 
 resource PostgreSQLDB 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2022-12-01' = {
   name: dbName
