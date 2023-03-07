@@ -16,7 +16,7 @@ env:
   
   PG_SERVER_NAME: tap4242
   PG_DB_NAME: tap4242
-  PG_ADM_USR: pg_adm
+  PG_ADM_USR: pgs_adm
   PG_TIME_ZONE: Europe/Paris
   PG_CHARACTER_SET: utf8
   PG_COLLATION: fr_FR.utf8 # select * from pg_collation ;
@@ -38,7 +38,7 @@ jobs:
             
     steps:
     - name: Login with GHA Runner SP
-      uses: azure/login@v1.4.6 # fails https://github.com/marketplace/actions/azure-login
+      uses: azure/login@v1 # fails https://github.com/marketplace/actions/azure-login
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }} # ${{ env.credentials }}
 
@@ -47,6 +47,7 @@ jobs:
 
     - name: Configure DB
       run: |
+
             az postgres flexible-server parameter set --name time_zone --value ${{ env.PG_TIME_ZONE }} \
             -s ${{ env.PG_SERVER_NAME }} -g ${{ env.RG_APP }}
 
@@ -65,7 +66,7 @@ jobs:
     - name: Disable local IP access to the DB
       if: ${{ always() }}
       run: |
-            az postgres flexible-server firewall-rule delete -g ${{ env.RG_APP }} -n ${{ env.PG_SERVER_NAME }} --rule-name gha --yes
+            az postgres flexible-server firewall-rule delete -n ${{ env.PG_SERVER_NAME }} -g ${{ env.RG_APP }} --rule-name gha --yes
       shell: bash
 
     # security hardening for self-hosted agents: https://github.com/marketplace/actions/azure-login
