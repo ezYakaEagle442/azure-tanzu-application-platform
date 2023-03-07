@@ -86,7 +86,7 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Azure Login
-      uses: azure/login@v1.4.6 # https://github.com/marketplace/actions/azure-login
+      uses: azure/login@v1 # https://github.com/marketplace/actions/azure-login
       with:
         creds: ${{ env.credentials }}
 
@@ -94,6 +94,7 @@ jobs:
     # /!\ IMPORTANT:  The step that creates or updates the environment variable does not have access to the new value, but all subsequent steps in a job will have access.
     - name: Set Base environment variables
       run: |
+
         echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
         echo "API_GATEWAY_FOLDER=${{ env.PRJ_PREFIX }}-${{ env.API_GATEWAY }}" >> $GITHUB_ENV
         echo "GH_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV # "/github/workspace"
@@ -101,6 +102,7 @@ jobs:
 
     - name: Display environment variables
       run: |
+
         echo "Checking GITHUB_ENV"
         echo "LOCAL_IP=$LOCAL_IP"
         echo "API_GATEWAY_FOLDER=$API_GATEWAY_FOLDER"
@@ -120,6 +122,7 @@ jobs:
     - name: Prepare Manifests to deploy UI + API Gateway to aks
       # with: # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepswith
       run: |
+
           echo "About to deploy the API-Gateway UI ..." 
           tag_id=${{ inputs.tag_id }}
           echo "Image Build tag ID:"$tag_id
