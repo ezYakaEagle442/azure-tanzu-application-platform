@@ -9,11 +9,11 @@ param appName string = 'tap${uniqueString(resourceGroup().id, subscription().id)
 
 @description('The Identity Tags. See https://learn.microsoft.com/en-us/azure/azure-resource-manager/management/tag-resources?tabs=bicep#apply-an-object')
 param tags object = {
-  'Environment': 'Dev'
-  'Dept': 'IT'
-  'Scope': 'EU'
-  'CostCenter': '42'
-  'Owner': 'aks-${appName}'
+  Environment: 'Dev'
+  Dept: 'IT'
+  Scope: 'EU'
+  CostCenter: '442'
+  Owner: 'aks-${appName}'
 }
 
 ///////////////////////////////////
