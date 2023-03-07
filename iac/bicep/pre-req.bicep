@@ -34,6 +34,17 @@ param mySQLadministratorLoginPassword string
 @description('The MySQL server name')
 param mySQLServerName string = appName
 
+@description('The MySQL DB name.')
+param mySqlDbName string = 'petclinic'
+
+param mySqlCharset string = 'utf8'
+
+@allowed( [
+  'utf8_general_ci'
+
+])
+param mySqlCollation string = 'utf8_general_ci' // SELECT @@character_set_database, @@collation_database;
+
 @description('The PostgreSQL DB Admin Login. IMPORTANT: username can not start with prefix "pg_" which is reserved, ex: pg_adm would fails in Bicep. Admin login name cannot be azure_superuser, azuresu, azure_pg_admin, sa, admin, administrator, root, guest, dbmanager, loginmanager, dbo, information_schema, sys, db_accessadmin, db_backupoperator, db_datareader, db_datawriter, db_ddladmin, db_denydatareader, db_denydatawriter, db_owner, db_securityadmin, public')
 param postgreSQLadministratorLogin string = 'pgs_adm'
 
@@ -45,10 +56,10 @@ param postgreSQLadministratorLoginPassword string
 param postgreSQLServerName string = appName
 
 @description('The PostgreSQL DB name.')
-param dbName string = 'tap'
+param pgDbName string = 'tap'
 
-param charset string = 'utf8'
-param collation string = 'fr_FR.utf8' // select * from pg_collation ;
+param pgCharset string = 'utf8'
+param pgCollation string = 'fr_FR.utf8' // select * from pg_collation ;
 
 @description('The Azure Active Directory tenant ID that should be used for authenticating requests to the Key Vault.')
 param tenantId string = subscription().tenantId
@@ -143,10 +154,16 @@ var vNetRules = [
 module roleAssignments './modules/aks/roleAssignments.bicep' = {
   name: 'role-assignments'
   params: {
+    appName: appName
     aksClusterPrincipalId: identities.outputs.aksIdentityPrincipalId
     networkRoleType: 'NetworkContributor'
     vnetName: vnetName
     subnetName: aksSubnetName
+    azureStorageName: azureStorageName
+    azureBlobServiceName: azureBlobServiceName
+    blobContainerName: blobContainerName
+    storageBlobRoleType: 'StorageBlobDataContributor'
+    ghRunnerSpnPrincipalId: ghRunnerSpnPrincipalId
   }
 }
 
@@ -156,8 +173,11 @@ module mysql './modules/mysql/mysql.bicep' = {
     appName: appName
     location: location
     mySQLServerName: mySQLServerName
+    my
     mySQLadministratorLogin: mySQLadministratorLogin
     mySQLadministratorLoginPassword: mySQLadministratorLoginPassword
+    charset: mySqlCharset
+    collation: mySqlCollation
     // The default number of managed outbound public IPs is 1.
     // https://learn.microsoft.com/en-us/azure/aks/load-balancer-standard#scale-the-number-of-managed-outbound-public-ips
   }
@@ -169,11 +189,11 @@ module postgresqldb './modules/pg/postgresql.bicep' = {
     appName: appName
     location: location
     postgreSQLServerName: postgreSQLServerName
+    dbName: pgDbName
     postgreSQLadministratorLogin: postgreSQLadministratorLogin 
     postgreSQLadministratorLoginPassword: postgreSQLadministratorLoginPassword
-    charset: charset
-    collation: collation
-    dbName: dbName
+    charset: pgCharset
+    collation: pgCollation
   }
 }
 
@@ -186,7 +206,6 @@ module storage './modules/aks/storage.bicep' = {
     blobContainerName: blobContainerName
     azureBlobServiceName: azureBlobServiceName
     azureStorageName: azureStorageName
-    ghRunnerSpnPrincipalId: ghRunnerSpnPrincipalId
   }
   dependsOn: [
     identities

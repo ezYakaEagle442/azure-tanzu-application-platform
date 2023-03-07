@@ -14,7 +14,10 @@ param mySQLadministratorLogin string = 'mys_adm'
 param mySQLadministratorLoginPassword string
 
 @description('The MySQL server name')
-param mySQLServerName string = 'tanzu${appName}'
+param mySQLServerName string = appName
+
+@description('The MySQL DB name.')
+param dbName string = 'petclinic'
 
 @description('AKS Outbound Public IP')
 param k8sOutboundPubIP string = '0.0.0.0'
@@ -43,6 +46,14 @@ param databaseSkuTier string = 'Burstable'
 ])
 param mySqlVersion string = '5.7' // https://docs.microsoft.com/en-us/azure/mysql/concepts-supported-versions
 
+param charset string = 'utf8'
+
+@allowed( [
+  'utf8_general_ci'
+
+])
+param collation string = 'utf8_general_ci' // SELECT @@character_set_database, @@collation_database;
+
 resource mysqlserver 'Microsoft.DBforMySQL/flexibleServers@2021-12-01-preview' = {
   location: location
   name: mySQLServerName
@@ -68,7 +79,21 @@ resource mysqlserver 'Microsoft.DBforMySQL/flexibleServers@2021-12-01-preview' =
 }
 
 output mySQLResourceID string = mysqlserver.id
+output mySQLServerName string = mysqlserver.name
+output mySQLServerFQDN string = mysqlserver.properties.fullyQualifiedDomainName
 
+
+resource mysqlDB 'Microsoft.DBforMySQL/flexibleServers/databases@2021-12-01-preview' = {
+  name: dbName
+  parent: mysqlserver
+  properties: {
+    charset: charset
+    collation: collation
+  }
+}
+
+output mysqlDBResourceId string = mysqlDB.id
+output mysqlDBName string = mysqlDB.name
 
  // Allow AKS
  resource fwRuleAllowAKS 'Microsoft.DBforMySQL/flexibleServers/firewallRules@2021-12-01-preview' = {
@@ -79,3 +104,6 @@ output mySQLResourceID string = mysqlserver.id
     endIpAddress: k8sOutboundPubIP
   }
 }
+
+output fwRuleAllowAKSResourceId string = fwRuleAllowAKS.id
+output fwRuleAllowAKSName string = fwRuleAllowAKS.name

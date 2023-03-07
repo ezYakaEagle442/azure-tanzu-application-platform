@@ -24,6 +24,17 @@ param mySQLadministratorLogin string = 'mys_adm'
 @description('The MySQL server name')
 param mySQLServerName string = appName
 
+@description('The MySQL DB name.')
+param mySqlDbName string = 'petclinic'
+
+param mySqlCharset string = 'utf8'
+
+@allowed( [
+  'utf8_general_ci'
+
+])
+param mySqlCollation string = 'utf8_general_ci' // SELECT @@character_set_database, @@collation_database;
+
 @description('The PostgreSQL DB Admin Login. IMPORTANT: username can not start with prefix "pg_" which is reserved, ex: pg_adm would fails in Bicep. Admin login name cannot be azure_superuser, azuresu, azure_pg_admin, sa, admin, administrator, root, guest, dbmanager, loginmanager, dbo, information_schema, sys, db_accessadmin, db_backupoperator, db_datareader, db_datawriter, db_ddladmin, db_denydatareader, db_denydatawriter, db_owner, db_securityadmin, public')
 param postgreSQLadministratorLogin string = 'pgs_adm'
 
@@ -31,10 +42,10 @@ param postgreSQLadministratorLogin string = 'pgs_adm'
 param postgreSQLServerName string = appName
 
 @description('The PostgreSQL DB name.')
-param dbName string = 'tap'
+param pgDbName string = 'tap'
 
-param charset string = 'utf8'
-param collation string = 'fr_FR.utf8' // select * from pg_collation ;
+param pgCharset string = 'utf8'
+param pgCollation string = 'fr_FR.utf8' // select * from pg_collation ;
 
 resource kvRG 'Microsoft.Resources/resourceGroups@2022-09-01' existing = {
   name: kvRGName
@@ -68,10 +79,12 @@ module mysqlPub './modules/mysql/mysql.bicep' = {
     appName: appName
     location: location
     mySQLServerName: mySQLServerName
+    dbName: mySqlDbName
     mySQLadministratorLogin: mySQLadministratorLogin
     mySQLadministratorLoginPassword: kv.getSecret('SPRING-DATASOURCE-PASSWORD')
     k8sOutboundPubIP: ipRules[0]
-    
+    charset: mySqlCharset
+    collation: mySqlCollation
   }
 }
 
@@ -84,8 +97,8 @@ module postgresqldb './modules/pg/postgresql.bicep' = {
     postgreSQLadministratorLogin: postgreSQLadministratorLogin 
     postgreSQLadministratorLoginPassword: kv.getSecret('PG-ADM-PWD')
     k8sOutboundPubIP: ipRules[0]
-    charset: charset
-    collation: collation
-    dbName: dbName
+    charset: pgCharset
+    collation: pgCollation
+    dbName: pgDbName
   }
 }
