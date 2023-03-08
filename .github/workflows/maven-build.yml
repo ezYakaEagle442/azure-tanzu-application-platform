@@ -99,7 +99,6 @@ jobs:
     # /!\ IMPORTANT:  The step that creates or updates the environment variable does not have access to the new value, but all subsequent steps in a job will have access.
     - name: Set Base environment variables
       run: |
-        echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
         
         echo "API_GATEWAY_JAR_ARTIFACT=${{ env.PRJ_PREFIX }}-${{ env.API_GATEWAY }}-${{ env.DEPLOYMENT_VERSION }}.jar" >> $GITHUB_ENV
         echo "ADMIN_SERVER_JAR_ARTIFACT=${{ env.PRJ_PREFIX }}-${{ env.ADMIN_SERVER }}-${{ env.DEPLOYMENT_VERSION }}.jar" >> $GITHUB_ENV
@@ -130,7 +129,13 @@ jobs:
         echo "VISITS_SERVICE_GROUP_ID=org.springframework.samples.petclinic.visits" >> $GITHUB_ENV
         echo "VISITS_SERVICE_ARTIFACT_ID=${{ env.PRJ_PREFIX }}-${{ env.VISITS_SERVICE }}" >> $GITHUB_ENV
 
+        KV_NAME=$(az deployment group show --name aks-tap-kv -g ${{ env.RG_KV }} --query properties.outputs.keyVaultName.value -o tsv)
+        echo "KV_NAME=$KV_NAME" >> $GITHUB_ENV 
+        echo "KV_NAME=$KV_NAME"
+
         echo "GH_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV # "/github/workspace"
+        echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
+
       shell: bash
 
     - name: Checkout

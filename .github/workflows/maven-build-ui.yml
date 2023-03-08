@@ -10,6 +10,7 @@ name: Java CI with Maven for UI WITHOUT -Denv=azure
 env:
 
   # ==== Versions ====
+  
   DEPLOYMENT_VERSION: 2.6.13
   AZ_CLI_VERSION: 2.45.0
   JAVA_VERSION: 11
