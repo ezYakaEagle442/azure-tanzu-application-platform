@@ -27,8 +27,8 @@ env:
   RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
 
   # ==== Azure storage to store Artifacts , values must be consistent with the ones in storage.bicep ====:
-  AZ_STORAGE_NAME : statapaks # customize this
-  AZ_BLOB_CONTAINER_NAME: statapaks-blob # customize this
+  AZ_STORAGE_NAME : statap42 # customize this
+  AZ_BLOB_CONTAINER_NAME: statap42-blob # customize this
   # AZ_BLOB_SVC_NAME: default # MUST NOT BE MODIFIED
   # https://stakspetcliaks.blob.core.windows.net/petcliaks-blob/spring-petclinic-vets-service-2.6.13.jar
 
@@ -139,6 +139,14 @@ jobs:
         echo "KV_NAME=$KV_NAME" >> $GITHUB_ENV 
         echo "KV_NAME=$KV_NAME"
 
+        storage_name=$(az deployment group show --name storage -g ${{ env.RG_APP }} --query properties.outputs.azurestorageName.value -o tsv)
+        echo "storage_name=" $storage_name
+        echo "AZ_STORAGE_NAME="$storage_name >> $GITHUB_ENV
+
+        blobContainerName=$(az deployment group show --name storage -g ${{ env.RG_APP }} --query properties.outputs.blobcontainerName.value -o tsv)
+        echo "blobContainerName=" $blobContainerName
+        echo "AZ_BLOB_CONTAINER_NAME="$blobContainerName >> $GITHUB_ENV
+
         echo "GH_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV # "/github/workspace"
         echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
 
@@ -157,6 +165,9 @@ jobs:
     - name: Build with Maven
       id: mvn_build
       run: |
+
+        echo "AZ_STORAGE_NAME="$AZ_STORAGE_NAME
+
         pwd
         ls -al
 
@@ -202,6 +213,7 @@ jobs:
 
     - name: Check all Jar artifacts
       run: |
+
         pwd
         ls -al
 
@@ -213,7 +225,7 @@ jobs:
 
     # https://github.com/marketplace/actions/docker-setup-buildx
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2.0.0
+      uses: docker/setup-buildx-action@v2
 
     - name: Build image and push it to ACR
       id: docker_build      
@@ -272,6 +284,7 @@ jobs:
     - name: Authorize local IP access to the Azure BLOB Storage 
       if: ${{ always() }}
       run: |
+
         echo "About to ADD network-rule to ALLOW $LOCAL_IP to Azure BLOB Storage ${{ env.AZ_STORAGE_NAME }}"
         az storage account network-rule add --ip-address $LOCAL_IP --account-name  ${{ env.AZ_STORAGE_NAME }}  --action "Allow" -g ${{ env.RG_APP }}  --only-show-errors
         sleep 30
@@ -281,18 +294,18 @@ jobs:
         echo "VETS_SERVICE_JAR=spring-petclinic-${{ env.VETS_SERVICE }}/target/$VETS_SERVICE_JAR_ARTIFACT" >> $GITHUB_ENV
         echo "VISITS_SERVICE_JAR=spring-petclinic-${{ env.VISITS_SERVICE }}/target/$VISITS_SERVICE_JAR_ARTIFACT" >> $GITHUB_ENV
 
-
       shell: bash
 
     - name: Upload Artifacts to Azure BLOB Storage
       id: blob_upload
-      run: | 
+      run: |
+
         # https://learn.microsoft.com/en-us/azure/storage/blobs/blob-cli
 
         # Runner will be blocked by network rules of storage account. Must Allow its IP
         # in Bicep : RBAC ==> GH Runner SPN must have "Storage Blob Data Contributor" Role on the storage Account
 
-         az config set extension.use_dynamic_install=yes_without_prompt
+        az config set extension.use_dynamic_install=yes_without_prompt
         echo "About to upload Artifcats to Azure BLOB Storage. /!\ --overwrite' is in preview and under development"
         echo "AZ_BLOB_MAX_CONNECTIONS=${{ env.AZ_BLOB_MAX_CONNECTIONS }}"
         echo "AZ_BLOB_TIMEOUT=${{ env.AZ_BLOB_TIMEOUT }} "

@@ -23,8 +23,8 @@ env:
   TANZU_DNS_CHILD_ZONE: tap.appinnohandsonlab.com
 
   # ==== Azure storage t, values must be consistent with the ones in iac/bicep/modules/aks/storage.bicep ====:
-  AZ_STORAGE_NAME : statapaks # customize this
-  AZ_BLOB_CONTAINER_NAME: statapaks-blob # customize this
+  AZ_STORAGE_NAME : statap42 # customize this
+  AZ_BLOB_CONTAINER_NAME: statap42-blob # customize this
   # AZ_BLOB_SVC_NAME: default # MUST NOT BE MODIFIED
 
   # https://learn.microsoft.com/en-us/rest/api/storageservices/setting-timeouts-for-blob-service-operations
@@ -112,21 +112,32 @@ jobs:
     - name: Set Base environment variables
       run: |
 
-        echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
-        echo "GH_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV # "/github/workspace"
-
         managed_rg=$(az aks show --resource-group ${{ env.RG_APP }} --name ${{ env.AKS_CLUSTER_NAME }} --query nodeResourceGroup -o tsv)
         echo "CLUSTER_RESOURCE_GROUP:" $managed_rg
         echo "managed_rg=$managed_rg" >> $GITHUB_ENV
+        
+        storage_name=$(az deployment group show --name storage -g ${{ env.RG_APP }} --query properties.outputs.azurestorageName.value -o tsv)
+        echo "storage_name=" $storage_name
+        echo "AZ_STORAGE_NAME="$storage_name >> $GITHUB_ENV
+
+        blobContainerName=$(az deployment group show --name storage -g ${{ env.RG_APP }} --query properties.outputs.blobcontainerName.value -o tsv)
+        echo "blobContainerName=" $blobContainerName
+        echo "AZ_BLOB_CONTAINER_NAME="$blobContainerName >> $GITHUB_ENV
+
+        echo "GH_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV # "/github/workspace"
+        echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
 
       shell: bash
 
     - name: Display environment variables
       run: |
+
         echo "Checking GITHUB_ENV"
         echo "LOCAL_IP=$LOCAL_IP"
         echo "managed_rg=$managed_rg"
+        echo "AZ_STORAGE_NAME="$AZ_STORAGE_NAME
         echo "GH_WORKSPACE=$GH_WORKSPACE"
+
       shell: bash
 
     # https://github.com/Azure/aks-set-context/tree/releases/v1

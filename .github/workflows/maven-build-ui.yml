@@ -28,8 +28,8 @@ env:
   RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
 
  # ==== Azure storage to store Artifacts , values must be consistent with the ones in storage.bicep ====:
-  AZ_STORAGE_NAME : statapaks # customize this
-  AZ_BLOB_CONTAINER_NAME: statapaks-blob # customize this
+  AZ_STORAGE_NAME : statap42 # customize this
+  AZ_BLOB_CONTAINER_NAME: statap42-blob # customize this
   # AZ_BLOB_SVC_NAME: default # MUST NOT BE MODIFIED
   # https://stakspetcliaks.blob.core.windows.net/petcliaks-blob/spring-petclinic-vets-service-2.6.13.jar
 
@@ -110,6 +110,14 @@ jobs:
         echo "API_GATEWAY_GROUP_ID=org.springframework.samples.petclinic.api" >> $GITHUB_ENV
         echo "API_GATEWAY_ARTIFACT_ID=${{ env.PRJ_PREFIX }}-${{ env.API_GATEWAY }}" >> $GITHUB_ENV
 
+        storage_name=$(az deployment group show --name storage -g ${{ env.RG_APP }} --query properties.outputs.azurestorageName.value -o tsv)
+        echo "storage_name=" $storage_name
+        echo "AZ_STORAGE_NAME="$storage_name >> $GITHUB_ENV
+
+        blobContainerName=$(az deployment group show --name storage -g ${{ env.RG_APP }} --query properties.outputs.blobcontainerName.value -o tsv)
+        echo "blobContainerName=" $blobContainerName
+        echo "AZ_BLOB_CONTAINER_NAME="$blobContainerName >> $GITHUB_ENV
+
         echo "GH_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV # "/github/workspace"
         echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
         
@@ -129,6 +137,8 @@ jobs:
       id: mvn_build
       run: |
 
+        echo "AZ_STORAGE_NAME="$AZ_STORAGE_NAME
+        
         pwd
         ls -al
 

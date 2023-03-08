@@ -140,7 +140,6 @@ jobs:
     - name: Test CLI
       run: |
 
-
             kubectl config get-contexts
             kubectl get nodes -o wide
 

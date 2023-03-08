@@ -40,8 +40,8 @@ env:
   REPOSITORY: tap                  # set this to your ACR repository
 
   # ==== Azure storage to store Artifacts , values must be consistent with the ones in storage.bicep ====:
-  AZ_STORAGE_NAME : statapaks # customize this
-  AZ_BLOB_CONTAINER_NAME: statapaks-blob # customize this
+  AZ_STORAGE_NAME : statap42 # customize this
+  AZ_BLOB_CONTAINER_NAME: statap42-blob # customize this
   # AZ_BLOB_SVC_NAME: default # MUST NOT BE MODIFIED
   # https://stakspetcliaks.blob.core.windows.net/petcliaks-blob/spring-petclinic-vets-service-2.6.13.jar
 
@@ -102,8 +102,6 @@ jobs:
     # /!\ IMPORTANT:  The step that creates or updates the environment variable does not have access to the new value, but all subsequent steps in a job will have access.
     - name: Set Base environment variables
       run: |
-
-        echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
         
         echo "ADMIN_SERVER_FOLDER=${{ env.PRJ_PREFIX }}-${{ env.ADMIN_SERVER }}" >> $GITHUB_ENV
         echo "DISCOVERY_SERVER_FOLDER=${{ env.PRJ_PREFIX }}-${{ env.DISCOVERY_SERVER }}" >> $GITHUB_ENV
@@ -114,6 +112,16 @@ jobs:
         echo "VETS_SERVICE_FOLDER=${{ env.PRJ_PREFIX }}-${{ env.VETS_SERVICE }}" >> $GITHUB_ENV
         echo "VISITS_SERVICE_FOLDER=${{ env.PRJ_PREFIX }}-${{ env.VISITS_SERVICE }}" >> $GITHUB_ENV
 
+        storage_name=$(az deployment group show --name storage -g ${{ env.RG_APP }} --query properties.outputs.azurestorageName.value -o tsv)
+        echo "storage_name=" $storage_name
+        echo "AZ_STORAGE_NAME="$storage_name >> $GITHUB_ENV
+
+        blobContainerName=$(az deployment group show --name storage -g ${{ env.RG_APP }} --query properties.outputs.blobcontainerName.value -o tsv)
+        echo "blobContainerName=" $blobContainerName
+        echo "AZ_BLOB_CONTAINER_NAME="$blobContainerName >> $GITHUB_ENV
+
+        echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
+
         echo "GH_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV # "/github/workspace"
       shell: bash
 
@@ -122,7 +130,8 @@ jobs:
 
         echo "Checking GITHUB_ENV"
         echo "LOCAL_IP=$LOCAL_IP"
-        
+        echo "AZ_STORAGE_NAME="$AZ_STORAGE_NAME
+                
         echo "ADMIN_SERVER_FOLDER=$ADMIN_SERVER_FOLDER"
         echo "DISCOVERY_SERVER_FOLDER=$DISCOVERY_SERVER_FOLDER"
 
@@ -133,6 +142,7 @@ jobs:
         echo "VISITS_SERVICE_FOLDER=$VISITS_SERVICE_FOLDER"
 
         echo "GH_WORKSPACE=$GH_WORKSPACE"
+
       shell: bash
 
 

@@ -17,8 +17,8 @@ env:
   RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
 
   # ==== Azure storage to store Artifacts , values must be consistent with the ones in iac/bicep/modules/aks/storage.bicep ====:
-  AZ_STORAGE_NAME : statapaks # customize this
-  AZ_BLOB_CONTAINER_NAME: statapaks-blob # customize this
+  AZ_STORAGE_NAME : statap42 # customize this
+  AZ_BLOB_CONTAINER_NAME: statap42-blob # customize this
   # AZ_BLOB_SVC_NAME: default # MUST NOT BE MODIFIED
 
   # https://learn.microsoft.com/en-us/rest/api/storageservices/setting-timeouts-for-blob-service-operations
@@ -46,8 +46,18 @@ jobs:
     # /!\ IMPORTANT:  The step that creates or updates the environment variable does not have access to the new value, but all subsequent steps in a job will have access.
     - name: Set Base environment variables
       run: |
+
+        storage_name=$(az deployment group show --name storage -g ${{ env.RG_APP }} --query properties.outputs.azurestorageName.value -o tsv)
+        echo "storage_name=" $storage_name
+        echo "AZ_STORAGE_NAME="$storage_name >> $GITHUB_ENV
+
+        blobContainerName=$(az deployment group show --name storage -g ${{ env.RG_APP }} --query properties.outputs.blobcontainerName.value -o tsv)
+        echo "blobContainerName=" $blobContainerName
+        echo "AZ_BLOB_CONTAINER_NAME="$blobContainerName >> $GITHUB_ENV
+
         echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV        
         echo "GH_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV # "/github/workspace"
+
       shell: bash
 
     - name: Checkout
@@ -58,11 +68,11 @@ jobs:
       with:
         creds: ${{ env.credentials }}
 
-
-
     - name: Authorize local IP access to the Azure BLOB Storage 
       if: ${{ always() }}
       run: |
+
+        echo "AZ_STORAGE_NAME="$AZ_STORAGE_NAME
         echo "About to ADD network-rule to ALLOW $LOCAL_IP to Azure BLOB Storage ${{ env.AZ_STORAGE_NAME }}"
         az storage account network-rule add --ip-address $LOCAL_IP --account-name  ${{ env.AZ_STORAGE_NAME }}  --action "Allow" -g ${{ env.RG_APP }}  --only-show-errors
 
@@ -70,7 +80,8 @@ jobs:
 
     - name: Upload tools to Azure BLOB Storage
       id: blob_upload
-      run: | 
+      run: |
+
         # https://learn.microsoft.com/en-us/azure/storage/blobs/blob-cli
 
         # Runner will be blocked by network rules of storage account. Must Allow its IP
