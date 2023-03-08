@@ -45,6 +45,22 @@ param mySqlCharset string = 'utf8'
 ])
 param mySqlCollation string = 'utf8_general_ci' // SELECT @@character_set_database, @@collation_database;
 
+@description('Azure Database SKU')
+@allowed([
+  'Standard_D4s_v3'
+  'Standard_D2s_v3'
+  'Standard_B1ms'
+])
+param databaseSkuName string = 'Standard_B1ms' //  'GP_Gen5_2' for single server
+
+@description('Azure Database pricing tier')
+@allowed([
+  'Burstable'
+  'GeneralPurpose'
+  'MemoryOptimized'
+])
+param databaseSkuTier string = 'Burstable'
+
 @description('The PostgreSQL DB Admin Login. IMPORTANT: username can not start with prefix "pg_" which is reserved, ex: pg_adm would fails in Bicep. Admin login name cannot be azure_superuser, azuresu, azure_pg_admin, sa, admin, administrator, root, guest, dbmanager, loginmanager, dbo, information_schema, sys, db_accessadmin, db_backupoperator, db_datareader, db_datawriter, db_ddladmin, db_denydatareader, db_denydatawriter, db_owner, db_securityadmin, public')
 param postgreSQLadministratorLogin string = 'pgs_adm'
 
@@ -174,6 +190,8 @@ module mysql './modules/mysql/mysql.bicep' = {
     location: location
     mySQLServerName: mySQLServerName
     dbName: mySqlDbName
+    databaseSkuName: databaseSkuName
+    databaseSkuTier: databaseSkuTier
     mySQLadministratorLogin: mySQLadministratorLogin
     mySQLadministratorLoginPassword: mySQLadministratorLoginPassword
     charset: mySqlCharset
@@ -190,6 +208,8 @@ module postgresqldb './modules/pg/postgresql.bicep' = {
     location: location
     postgreSQLServerName: postgreSQLServerName
     dbName: pgDbName
+    databaseSkuName: databaseSkuName
+    databaseSkuTier: databaseSkuTier    
     postgreSQLadministratorLogin: postgreSQLadministratorLogin 
     postgreSQLadministratorLoginPassword: postgreSQLadministratorLoginPassword
     charset: pgCharset
