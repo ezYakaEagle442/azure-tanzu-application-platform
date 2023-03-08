@@ -94,6 +94,12 @@ module mysqlPub './modules/mysql/mysql.bicep' = {
   }
 }
 
+output mySQLResourceID string = mysqlPub.outputs.mySQLResourceID
+output mySQLServerName string = mysqlPub.outputs.mySQLServerName
+output mySQLServerFQDN string = mysqlPub.outputs.mySQLServerFQDN
+output mysqlDBResourceId string = mysqlPub.outputs.mysqlDBResourceId
+output mysqlDBName string = mysqlPub.outputs.mysqlDBName
+
 module postgresqldb './modules/pg/postgresql.bicep' = {
   name: 'postgresqldb'
   params: {
@@ -109,6 +115,12 @@ module postgresqldb './modules/pg/postgresql.bicep' = {
   }
 }
 
+output PostgreSQLResourceID string = postgresqldb.outputs.PostgreSQLResourceID
+output PostgreSQLServerName string = postgresqldb.outputs.PostgreSQLServerName
+output PostgreSQLFQDN string = postgresqldb.outputs.PostgreSQLFQDN
+output PostgreSQLDBResourceID string = postgresqldb.outputs.PostgreSQLDBResourceID
+output PostgreSQLDBName string = postgresqldb.outputs.PostgreSQLDBName
+
 module storage './modules/aks/storage.bicep' = {
   name: 'storage'
   params: {
@@ -120,3 +132,12 @@ module storage './modules/aks/storage.bicep' = {
     blobContainerName: blobContainerName
   }
 }
+
+output azurestorageId string = storage.outputs.azurestorageId
+output azurestorageName string = storage.outputs.azurestorageName
+output azurestorageHttpEndpoint string = storage.outputs.azurestorageHttpEndpoint
+output azurestorageFileEndpoint string = storage.outputs.azurestorageFileEndpoint
+output azureblobserviceId string = storage.outputs.azureblobserviceId
+output azureblobserviceName string = storage.outputs.azureblobserviceName
+output blobcontainerId string = storage.outputs.blobcontainerId
+output blobcontainerName string = storage.outputs.blobcontainerName
