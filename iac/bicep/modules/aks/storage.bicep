@@ -6,6 +6,9 @@ vim arrayContent.json
 
 az deployment group create --name storage -f ./iac/bicep/modules/aks/storage.bicep -g rg-aks-tap-apps \
 -p appName=tap42 -p location=westeurope 
+
+az storage blob service-properties show --account-name staXXX
+
 */
 
 
@@ -141,13 +144,13 @@ resource azureblobservice 'Microsoft.Storage/storageAccounts/blobServices@2022-0
   properties: {
     containerDeleteRetentionPolicy: {
       allowPermanentDelete: true
-      days: 5
+      days: 7
       enabled: true
     }
     // defaultServiceVersion: ''
     deleteRetentionPolicy: {
       allowPermanentDelete: true
-      days: 180
+      days: 7
       enabled: true
     }
     isVersioningEnabled: false
@@ -157,10 +160,10 @@ resource azureblobservice 'Microsoft.Storage/storageAccounts/blobServices@2022-0
       ]
       enable: false
       name: 'AccessTimeTracking'
-      trackingGranularityInDays: 30
+      trackingGranularityInDays: 1
     }
     restorePolicy: {
-      days: 30
+      days: 5
       enabled: false
     }
   }
