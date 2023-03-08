@@ -16,7 +16,7 @@ env:
   RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, postgresql, etc.
   
   PG_SERVER_NAME: tap4242
-  PG_DB_NAME: tap4242
+  PG_DB_NAME: tap
   PG_ADM_USR: pgs_adm
   PG_TIME_ZONE: Europe/Paris
   PG_CHARACTER_SET: utf8
