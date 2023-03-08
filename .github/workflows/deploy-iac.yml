@@ -142,15 +142,15 @@ jobs:
         echo "VETS_SERVICE_FOLDER=${{ env.PRJ_PREFIX }}-${{ env.VETS_SERVICE }}" >> $GITHUB_ENV
         echo "VISITS_SERVICE_FOLDER=${{ env.PRJ_PREFIX }}-${{ env.VISITS_SERVICE }}" >> $GITHUB_ENV
 
-        storage_name=$(az deployment group show --name storage  -g ${{ env.RG_APP }} --query properties.outputs.azureStorageName.value -o tsv)
+        storage_name=$(az deployment group show --name storage -g ${{ env.RG_APP }} --query properties.outputs.azurestorageName.value -o tsv)
         echo "storage_name=" $storage_name
         echo "AZ_STORAGE_NAME="$storage_name >> $GITHUB_ENV
 
-        blobContainerName=$(az deployment group show --name storage  -g ${{ env.RG_APP }} --query properties.outputs.blobContainerName.value -o tsv)
+        blobContainerName=$(az deployment group show --name storage -g ${{ env.RG_APP }} --query properties.outputs.blobcontainerName.value -o tsv)
         echo "blobContainerName=" $blobContainerName
         echo "AZ_BLOB_CONTAINER_NAME="$blobContainerName >> $GITHUB_ENV
 
-        MYSQL_SERVER_NAME=$(az deployment group show --name mysqldbpub -g ${{ env.RG_APP }} --query properties.outputs.mySQLServerName.value -o tsv)
+        MYSQL_SERVER_NAME=$(az deployment group show --name mysqldb -g ${{ env.RG_APP }} --query properties.outputs.mySQLServerName.value -o tsv)
         echo "MYSQL_SERVER_NAME="$MYSQL_SERVER_NAME
         echo "MYSQL_SERVER_NAME="$MYSQL_SERVER_NAME >> $GITHUB_ENV
 
@@ -169,9 +169,6 @@ jobs:
         KV_NAME=$(az deployment group show --name aks-tap-kv -g ${{ env.RG_KV }} --query properties.outputs.keyVaultName.value -o tsv)
         echo "KV_NAME=$KV_NAME" >> $GITHUB_ENV 
         echo "KV_NAME=$KV_NAME"
-
-        ACR
-        DB
 
         echo "GH_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV # "/github/workspace"
         echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
