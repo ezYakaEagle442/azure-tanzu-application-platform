@@ -109,7 +109,7 @@ tap_gui:
           client: pg
           connection:
             host: $PG_SQL_HOSTNAME
-            port: 5432
+            port: $PG_SQL_PORT
             user: $PG_SQL_USERNAME
             password: $PG_SQL_PASSWORD
             database: $PG_SQL_DATABASE
