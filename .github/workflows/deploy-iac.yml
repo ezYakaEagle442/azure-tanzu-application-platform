@@ -124,6 +124,12 @@ jobs:
     runs-on: ubuntu-latest
             
     steps:
+
+    - name: Login with GHA Runner SP
+      uses: azure/login@v1 # https://github.com/marketplace/actions/azure-login
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }} # ${{ env.credentials }}
+
     - name: Set Base environment variables
       run: |
         
@@ -198,11 +204,6 @@ jobs:
         echo "LOCAL_IP=$LOCAL_IP"
 
       shell: bash
-
-    - name: Login with GHA Runner SP
-      uses: azure/login@v1 # https://github.com/marketplace/actions/azure-login
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }} # ${{ env.credentials }}
 
     - name: Checkout
       uses: actions/checkout@v3 # https://github.com/actions/checkout

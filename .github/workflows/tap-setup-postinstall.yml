@@ -160,7 +160,8 @@ jobs:
 
     - name: Download Tanzu Tools from Azure BLOB Storage
       id: blob_download
-      run: | 
+      run: |
+
         # https://learn.microsoft.com/en-us/azure/storage/blobs/blob-cli
 
         pwd
