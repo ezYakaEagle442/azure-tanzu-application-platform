@@ -272,7 +272,7 @@ jobs:
               -p kvRGName=${{ env.RG_KV }} \
               -p databaseSkuName=${{ env.DB_SKU_NAME }} \
               -p databaseSkuTier=${{ env.DB_SKU_TIER }} \
-              -p mySQLDbName=${{ env.MYSQL_DB_NAME }} \
+              -p mySqlDbName=${{ env.MYSQL_DB_NAME }} \
               -p mySqlVersion="${{ env.MYSQL_VERSION }}" \
               -p mySqlCharset=${{ env.MYSQL_CHARACTER_SET }} \
               -p mySqlCollation=${{ env.MYSQL_COLLATION }} \
