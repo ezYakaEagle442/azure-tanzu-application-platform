@@ -143,11 +143,11 @@ jobs:
         echo "VISITS_SERVICE_FOLDER=${{ env.PRJ_PREFIX }}-${{ env.VISITS_SERVICE }}" >> $GITHUB_ENV
 
         storage_name=$(az deployment group show --name storage  -g ${{ env.RG_APP }} --query properties.outputs.azureStorageName.value -o tsv)
-        echo "storage_name" $storage_name
+        echo "storage_name=" $storage_name
         echo "AZ_STORAGE_NAME="$storage_name >> $GITHUB_ENV
 
         blobContainerName=$(az deployment group show --name storage  -g ${{ env.RG_APP }} --query properties.outputs.blobContainerName.value -o tsv)
-        echo "blobContainerName" $blobContainerName
+        echo "blobContainerName=" $blobContainerName
         echo "AZ_BLOB_CONTAINER_NAME="$blobContainerName >> $GITHUB_ENV
 
         MYSQL_SERVER_NAME=$(az deployment group show --name mysqldbpub -g ${{ env.RG_APP }} --query properties.outputs.mySQLServerName.value -o tsv)

@@ -139,6 +139,12 @@ module ACR './modules/aks/acr.bicep' = {
   }
 }
 
+output acrId string = ACR.outputs.acrId
+output acrName string = ACR.outputs.acrName
+output acrIdentity string = ACR.outputs.acrIdentity
+output acrType string = ACR.outputs.acrType
+output acrRegistryUrl string = ACR.outputs.acrRegistryUrl
+
 module identities './modules/aks/identity.bicep' = {
   name: 'aks-identities'
   params: {
@@ -201,6 +207,12 @@ module mysql './modules/mysql/mysql.bicep' = {
   }
 }
 
+output mySQLResourceID string = mysql.outputs.mySQLResourceID
+output mySQLServerName string = mysql.outputs.mySQLServerName
+output mySQLServerFQDN string = mysql.outputs.mySQLServerFQDN
+output mysqlDBResourceId string = mysql.outputs.mysqlDBResourceId
+output mysqlDBName string = mysql.outputs.mysqlDBName
+
 module postgresqldb './modules/pg/postgresql.bicep' = {
   name: 'postgresqldb'
   params: {
@@ -217,6 +229,11 @@ module postgresqldb './modules/pg/postgresql.bicep' = {
   }
 }
 
+output PostgreSQLResourceID string = postgresqldb.outputs.PostgreSQLResourceID
+output PostgreSQLServerName string = postgresqldb.outputs.PostgreSQLServerName
+output PostgreSQLFQDN string = postgresqldb.outputs.PostgreSQLFQDN
+output PostgreSQLDBResourceID string = postgresqldb.outputs.PostgreSQLDBResourceID
+output PostgreSQLDBName string = postgresqldb.outputs.PostgreSQLDBName
 
 module storage './modules/aks/storage.bicep' = {
   name: 'storage'
@@ -231,3 +248,12 @@ module storage './modules/aks/storage.bicep' = {
     identities
   ] 
 }
+
+output azurestorageId string = storage.outputs.azurestorageId
+output azurestorageName string = storage.outputs.azurestorageName
+output azurestorageHttpEndpoint string = storage.outputs.azurestorageHttpEndpoint
+output azurestorageFileEndpoint string = storage.outputs.azurestorageFileEndpoint
+output azureblobserviceId string = storage.outputs.azureblobserviceId
+output azureblobserviceName string = storage.outputs.azureblobserviceName
+output blobcontainerId string = storage.outputs.blobcontainerId
+output blobcontainerName string = storage.outputs.blobcontainerName
