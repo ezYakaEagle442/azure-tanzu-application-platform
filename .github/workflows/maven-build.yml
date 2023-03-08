@@ -95,6 +95,12 @@ jobs:
       tag_id: ${{ steps.docker_build.outputs.tag_id }}
 
     steps:
+
+    - name: Azure Login
+      uses: azure/login@v1 # https://github.com/marketplace/actions/azure-login
+      with:
+        creds: ${{ env.credentials }}
+            
     # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#environment-files
     # /!\ IMPORTANT:  The step that creates or updates the environment variable does not have access to the new value, but all subsequent steps in a job will have access.
     - name: Set Base environment variables
@@ -208,11 +214,6 @@ jobs:
     # https://github.com/marketplace/actions/docker-setup-buildx
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2.0.0
-
-    - name: Azure Login
-      uses: azure/login@v1.4.6 # https://github.com/marketplace/actions/azure-login
-      with:
-        creds: ${{ env.credentials }}
 
     - name: Build image and push it to ACR
       id: docker_build      
