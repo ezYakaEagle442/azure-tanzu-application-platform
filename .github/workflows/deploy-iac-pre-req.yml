@@ -33,8 +33,8 @@ env:
   DNS_ZONE: cloudapp.azure.com
   APP_DNS_ZONE: tap.westeurope.cloudapp.azure.com
 
-  MYSQL_SERVER_NAME: tap4242
-  MYSQL_DB_NAME: tap4242
+  MYSQL_SERVER_NAME: tap42
+  MYSQL_DB_NAME: petclinic
   MYSQL_ADM_USR: mys_adm
   MYSQL_TIME_ZONE: Europe/Paris
   MYSQL_CHARACTER_SET: utf8
@@ -44,8 +44,8 @@ env:
   DB_SKU_NAME: Standard_B1ms
   DB_SKU_TIER : Burstable
 
-  PG_SERVER_NAME: tap4242
-  PG_DB_NAME: tap4242
+  PG_SERVER_NAME: tap42
+  PG_DB_NAME: tap
   PG_ADM_USR: pg_adm
   PG_TIME_ZONE: Europe/Paris
   PG_CHARACTER_SET: utf8

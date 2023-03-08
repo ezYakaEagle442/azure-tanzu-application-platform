@@ -33,7 +33,15 @@ env:
   AZ_BLOB_MAXSIZE_CONDITION: 440401920 # 420 Mb
   AZ_BLOB_TIMEOUT: 600
 
+  # ==== Tanzu DB ====
+
+  PG_SERVER_NAME: tap42
+  PG_DB_NAME: tap
+  PG_ADM_USR: pgs_adm
+  PG_PORT: 5432
+
   # ==== Tanzu Tools ====
+
   IMG_PKG_CONCURRENCY: 2 # 1 or 2 ONLY for GitHub pulic Runners /!\ not more. Test with value 42 on Self-Hosted Runners deployed to AKS
 
   TANZU_INSTALL_DIR: tanzu
@@ -412,6 +420,12 @@ jobs:
             export INSTALL_REGISTRY_PASSWORD=$acr_pwd
             export INSTALL_REPO=${{ env.REPOSITORY }}
 
+            export PG_SQL_HOSTNAME=${{ env.PG_SERVER_NAME }}
+            export PG_SQL_PORT=${{ env.PG_PORT }}
+            export PG_SQL_DATABASE=${{ env.PG_DB_NAME }}
+            export PG_SQL_USERNAME=${{ env.PG_ADM_USR }}
+            export PG_SQL_PASSWORD=${{ env.PG_ADM_PWD }}
+            
             export TAP_VERSION=${{ env.TAP_VERSION_NUMBER }}
 
             # need to substitute env var in the template file

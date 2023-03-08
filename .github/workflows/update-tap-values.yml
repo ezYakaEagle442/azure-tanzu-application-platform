@@ -35,8 +35,8 @@ env:
 
   # ==== Tanzu DB ====
 
-  PG_SERVER_NAME: tap4242
-  PG_DB_NAME: tap4242
+  PG_SERVER_NAME: tap42
+  PG_DB_NAME: tap
   PG_ADM_USR: pgs_adm
   PG_PORT: 5432
   
