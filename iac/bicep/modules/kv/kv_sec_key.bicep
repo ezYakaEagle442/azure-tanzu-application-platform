@@ -73,6 +73,8 @@ resource kvSecrets 'Microsoft.KeyVault/vaults/secrets@2022-07-01' = {
   }
 }
 
+output kvSecretsId string = kvSecrets.id
+output kvSecretsName string = kvSecrets.name
 
 // https://docs.microsoft.com/en-us/azure/templates/microsoft.keyvault/vaults/keys?tabs=bicep
 // https://docs.microsoft.com/en-us/azure/key-vault/keys/about-keys-details
