@@ -140,10 +140,33 @@ jobs:
         echo "storage_name" $storage_name
         echo "AZ_STORAGE_NAME="$storage_name >> $GITHUB_ENV
 
+        blobContainerName=$(az deployment group show --name storage  -g ${{ env.RG_APP }} --query properties.outputs.blobContainerName.value -o tsv)
+        echo "blobContainerName" $blobContainerName
+        echo "AZ_BLOB_CONTAINER_NAME="$blobContainerName >> $GITHUB_ENV
+
+        MYSQL_SERVER_NAME=$(az deployment group show --name mysqldbpub -g ${{ env.RG_APP }} --query properties.outputs.mySQLServerName.value -o tsv)
+        echo "MYSQL_SERVER_NAME="$MYSQL_SERVER_NAME
+        echo "MYSQL_SERVER_NAME="$MYSQL_SERVER_NAME >> $GITHUB_ENV
+
+        PG_SERVER_NAME=$(az deployment group show --name postgresql -g ${{ env.RG_APP }} --query properties.outputs.postgreSQLServerName.value -o tsv)
+        echo "PG_SERVER_NAME="$PG_SERVER_NAME
+        echo "PG_SERVER_NAME="$PG_SERVER_NAME >> $GITHUB_ENV
+
+        REGISTRY_URL=$(az deployment group show --name acr -g ${{ env.RG_APP }} --query properties.outputs.acrRegistryUrl.value -o tsv)
+        echo "REGISTRY_URL="$REGISTRY_URL
+        echo "REGISTRY_URL="$REGISTRY_URL >> $GITHUB_ENV
+
+        AZURE_CONTAINER_REGISTRY=$(az deployment group show --name acr -g ${{ env.RG_APP }} --query properties.outputs.acrName.value -o tsv)
+        echo "AZURE_CONTAINER_REGISTRY="$AZURE_CONTAINER_REGISTRY
+        echo "AZURE_CONTAINER_REGISTRY="$AZURE_CONTAINER_REGISTRY >> $GITHUB_ENV
+
         KV_NAME=$(az deployment group show --name aks-tap-kv -g ${{ env.RG_KV }} --query properties.outputs.keyVaultName.value -o tsv)
         echo "KV_NAME=$KV_NAME" >> $GITHUB_ENV 
         echo "KV_NAME=$KV_NAME"
-        
+
+        ACR
+        DB
+
         echo "GH_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV # "/github/workspace"
         echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
         
@@ -153,7 +176,6 @@ jobs:
       run: |
 
         echo "Checking GITHUB_ENV"
-        echo "LOCAL_IP=$LOCAL_IP"
         
         echo "ADMIN_SERVER_FOLDER=$ADMIN_SERVER_FOLDER"
         echo "DISCOVERY_SERVER_FOLDER=$DISCOVERY_SERVER_FOLDER"
@@ -164,11 +186,21 @@ jobs:
         echo "VETS_SERVICE_FOLDER=$VETS_SERVICE_FOLDER"
         echo "VISITS_SERVICE_FOLDER=$VISITS_SERVICE_FOLDER"
 
+        echo "AZ_STORAGE_NAME="$AZ_STORAGE_NAME
+        echo "AZ_BLOB_CONTAINER_NAME=$AZ_BLOB_CONTAINER_NAME
+        echo "MYSQL_SERVER_NAME=$MYSQL_SERVER_NAME
+        echo "PG_SERVER_NAME="$PG_SERVER_NAME
+        echo "REGISTRY_URL="$REGISTRY_URL
+        echo "AZURE_CONTAINER_REGISTRY="$AZURE_CONTAINER_REGISTRY
+        echo "KV_NAME=$KV_NAME"
+
         echo "GH_WORKSPACE=$GH_WORKSPACE"
+        echo "LOCAL_IP=$LOCAL_IP"
+
       shell: bash
 
     - name: Login with GHA Runner SP
-      uses: azure/login@v1.4.6 # https://github.com/marketplace/actions/azure-login
+      uses: azure/login@v1 # https://github.com/marketplace/actions/azure-login
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }} # ${{ env.credentials }}
 
@@ -251,8 +283,8 @@ jobs:
               -p pgCharset=${{ env.PG_CHARACTER_SET }} \
               -p pgCollation=${{ env.PG_COLLATION }} \
               -p postgreSQLVersion=${{ env.PG_VERSION }} \
-              -p azureStorageName=${{ env.XXXX }} \
-              -p blobContainerName=${{ env.XXXX }} \
+              -p azureStorageName=${{ env.AZ_STORAGE_NAME }} \
+              -p blobContainerName=${{ env.AZ_BLOB_CONTAINER_NAME }} \
               -p vNetRules=[$vNetRules] \
               -p ipRules=$ipRules
 
