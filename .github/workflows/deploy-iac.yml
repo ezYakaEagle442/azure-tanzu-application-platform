@@ -154,7 +154,7 @@ jobs:
         echo "MYSQL_SERVER_NAME="$MYSQL_SERVER_NAME
         echo "MYSQL_SERVER_NAME="$MYSQL_SERVER_NAME >> $GITHUB_ENV
 
-        PG_SERVER_NAME=$(az deployment group show --name postgresql -g ${{ env.RG_APP }} --query properties.outputs.postgreSQLServerName.value -o tsv)
+        PG_SERVER_NAME=$(az deployment group show --name postgresqldb -g ${{ env.RG_APP }} --query properties.outputs.postgreSQLServerName.value -o tsv)
         echo "PG_SERVER_NAME="$PG_SERVER_NAME
         echo "PG_SERVER_NAME="$PG_SERVER_NAME >> $GITHUB_ENV
 
