@@ -65,7 +65,7 @@ You have to specify some [KV secrets](./iac/bicep/modules/kv/kv_sec_key.bicep#L2
 
 dash '-' are not supported in GH secrets, so the secrets must be named in GH with underscore '_'.
 
-(Also the '&' character in the SPRING_DATASOURCE_URL must be escaped with '\&'
+(ex: the '&' character in the SPRING_DATASOURCE_URL must be escaped with '\&'
 jdbc:mysql://petcliaks777.mysql.database.azure.com:3306/petclinic?useSSL=true\&requireSSL=true\&enabledTLSProtocols=TLSv1.2\&verifyServerCertificate=true)
 
 Add the App secrets used by the Spring Config to your GH repo secrets / Actions secrets / Repository secrets / Add :
@@ -77,6 +77,7 @@ SPRING_CLOUD_AZURE_TENANT_ID | PUT YOUR AZURE TENANT ID HERE
 VM_ADMIN_PASSWORD | PUT YOUR PASSWORD HERE
 TANZU_NET_USER  | PUT YOUR Tanzu Network USER HERE
 TANZU_NET_PASSWORD | PUT YOUR Tanzu Network USER PASSWORD HERE
+PG_ADM_PWD | PUT YOUR Tanzu Network USER PASSWORD HERE
 
 ```bash
 LOCATION="westeurope"
@@ -228,7 +229,7 @@ az login --service-principal -u $SPN_APP_ID -p $SPN_PWD --tenant $TENANT_ID
 
 Add SUBSCRIPTION_ID, TENANT_ID, SPN_APP_ID and SPN_PWD as secrets to your GH repo Settings / Security / Secrets and variables / Actions / Actions secrets / Repository secrets
 
-Finally Create a GH [PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token) "PKG_PAT" that can be use to , [publish packages](./.github/workflows/maven-build.yml#L176) and [delete packages](./.github/workflows/delete-all-artifacts.yml)
+Finally Create a GH [PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token) "GH_PAT" that can be use to , [publish packages](./.github/workflows/maven-build.yml#L176) and [delete packages](./.github/workflows/delete-all-artifacts.yml)
 
 <span style="color:red">**Your GitHub [personal access token](https://github.com/settings/tokens?type=beta) needs to have the workflow scope selected. You need at least delete:packages and read:packages scopes to delete a package. You need contents: read and packages: write permissions to publish and download artifacts**</span>
 
@@ -301,17 +302,32 @@ az extension add -n k8s-configuration
 
 ```
 
-Read [https://azure.github.io/azure-workload-identity/docs/installation/azwi.html](https://azure.github.io/azure-workload-identity/docs/installation/azwi.html)
+## K8S Tips
 
-Install Azure AD Workload Identity CLI
-```sh
-AAD_WI_CLI_VERSION=1.0.0-beta.0 # 0.15.0
-wget https://github.com/Azure/azure-workload-identity/releases/download/v$AAD_WI_CLI_VERSION/azwi-v$AAD_WI_CLI_VERSION-linux-amd64.tar.gz
-gunzip azwi-v$AAD_WI_CLI_VERSION-linux-amd64.tar.gz
-tar -xvf azwi-v$AAD_WI_CLI_VERSION-linux-amd64.tar
-./azwi version
 
-```
+``sh
+  source <(kubectl completion bash) # setup autocomplete in bash into the current shell, bash-completion package should be installed first.
+  echo "source <(kubectl completion bash)" >> ~/.bashrc 
+  alias k=kubectl
+  complete -F __start_kubectl k
+
+  alias kn='kubectl config set-context --current --namespace '
+
+  export gen="--dry-run=client -o yaml"
+
+  alias kp="kubectl get pods -o wide"
+  alias kd="kubectl get deployment -o wide"
+  alias ks="kubectl get svc -o wide"
+  alias kno="kubectl get nodes -o wide"
+
+  alias kdp="kubectl describe pod"
+  alias kdd="kubectl describe deployment"
+  alias kds="kubectl describe service"
+
+  vi ~/.vimrc
+  set ts=2 sw=2
+  . ~/.vimrc
+``
 
 ## AKS integration with AAD pre-req
 
@@ -339,9 +355,51 @@ az ad group member add --member-id $USR_SPN_ID -g $aad_admin_group_object_id
 SPN_APP_NAME="gha_aks_tap_run"
 SPN_OBJECT_ID=$(az ad sp list --all --query "[?appDisplayName=='${SPN_APP_NAME}'].{id:id}" --output tsv)
 az ad group member add --member-id $SPN_OBJECT_ID -g $aad_admin_group_object_id
+
+
+TAP_GUI_BACKSTAGE_APP_NAME=tap_gui_backstage
+az ad app create --display-name $TAP_GUI_BACKSTAGE_APP_NAME > aad_app_tap_gui_backstage.json
+# This command will output JSON with an appId that is your client-id. The objectId is APPLICATION-OBJECT-ID 
+
+export TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_ID=$(cat aad_app_tap_gui_backstage.json | jq -r '.appId')
+export TAP_BACKSTAGE_AUTH_MICROSOFT_TENANT_ID=$(az account show --query tenantId -o tsv)
+export TAP_BACKSTAGE_AUTH_MICROSOFT_OBJECT_ID=$(cat aad_app_tap_gui_backstage.json | jq -r '.id')
+
+az ad sp create --id $TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_ID > aad_sp_tap_gui_backstage.json
+
+az ad app credential reset --id $TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_ID >  aad_app_secret_tap_gui_backstage.json
+export TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_SECRET=$(cat aad_app_secret_tap_gui_backstage.json | jq -r '.password')
+
+
+TAP_GUI_BACKSTAGE_APP_ID=$(az ad sp list --all --query "[?appDisplayName=='${TAP_GUI_BACKSTAGE_APP_NAME}'].{appId:appId}" --output tsv)
+TAP_GUI_BACKSTAGE_OBJECT_ID=$(az ad sp list --all --query "[?appDisplayName=='${TAP_GUI_BACKSTAGE_APP_NAME}'].{id:id}" --output tsv)
+
+TAP_GUI_BACKSTAGE_APP_OBJECT_ID=$(az ad app list --filter "displayName eq '$TAP_GUI_BACKSTAGE_APP_NAME'" --query "[?displayName=='$TAP_GUI_BACKSTAGE_APP_NAME'].{id:id}" -o tsv | tr -d '\r')
+
+az ad app show --id $TAP_GUI_BACKSTAGE_APP_OBJECT_ID
+
 ```
 
 Add AAD_ADM_GRP as secrets AAD_ADM_GRP to your GH repo Settings / Security / Secrets and variables / Actions / Actions secrets / Repository secrets
+
+
+Add TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_ID, TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_SECRET & TAP_BACKSTAGE_AUTH_MICROSOFT_TENANT_ID as secrets to your GH repo Settings / Security / Secrets and variables / Actions / Actions secrets / Repository secrets
+
+# CI/CD Post-Install
+
+Once the IaC deployment workflow is sucessfully completed follow those nex tsteps to continue TAP Installation.
+
+Read [https://azure.github.io/azure-workload-identity/docs/installation/azwi.html](https://azure.github.io/azure-workload-identity/docs/installation/azwi.html)
+
+Install Azure AD Workload Identity CLI
+```sh
+AAD_WI_CLI_VERSION=1.0.0-beta.0 # 0.15.0
+wget https://github.com/Azure/azure-workload-identity/releases/download/v$AAD_WI_CLI_VERSION/azwi-v$AAD_WI_CLI_VERSION-linux-amd64.tar.gz
+gunzip azwi-v$AAD_WI_CLI_VERSION-linux-amd64.tar.gz
+tar -xvf azwi-v$AAD_WI_CLI_VERSION-linux-amd64.tar
+./azwi version
+
+```
 
 Once the AKS cluster is created, creates Dev & Ops Groups :
 
@@ -367,7 +425,7 @@ az role assignment create --assignee $OPSSRE_ID --role "Azure Kubernetes Service
 
 password=P@ssw0rd1 # Change it !!!
 # You must use one of the verified domain names in your organization ex: foo@xxxEnvMCAP123456.onmicrosoft.com
-VERIFIED_DOMAIN=foo@xxxEnvMCAP123456.onmicrosoft.com
+VERIFIED_DOMAIN=xxxEnvMCAP123456.onmicrosoft.com
 
 # Create a user for the Dev role
 AKSDEV_ID=$(az ad user create --display-name "AKS Dev ${APP_NAME}" --user-principal-name "aksdev@$VERIFIED_DOMAIN" --password $password --query id -o tsv)
@@ -467,10 +525,11 @@ Once the Storage account is created, run this CLI snippet from your workstation 
 ```sh
 # "/subscriptions/${SUBSCRIPTION_ID}/providers/Microsoft.Authorization/roleDefinitions/ba92f5b4-2d11-453d-a403-e96b0029c9fe"
 # your subscription must have Role "Storage Blob Data Contributor" 
-USR_ID=$(az account show --query user.name -o tsv)
+USR_ID=$(az account show --query user.name -o tsv | tr -d '\r')
 USR_SPN_ID=$(az ad user show --id ${USR_ID} --query id -o tsv)
+SUBSCRIPTION_ID=$(az account show --query id -o tsv  | tr -d '\r')
 
-AZ_STORAGE_NAME=statapaks
+AZ_STORAGE_NAME=statapXXX
 az role assignment create --scope "/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RG_APP}" --role "Storage Blob Data Contributor" --assignee-principal-type "User" --assignee-object-id "$USR_SPN_ID"
 
 # ==== Tanzu Tools ====
@@ -517,7 +576,7 @@ az storage blob upload --name  $TANZU_BLOB_CLI --file $TANZU_INSTALL_DIR/$TANZU_
 az storage blob upload --name  $TANZU_BLOB_ESSENTIALS --file $TANZU_INSTALL_DIR/$TANZU_ESSENTIALS --container-name $AZ_BLOB_CONTAINER_NAME --account-name $AZ_STORAGE_NAME --auth-mode login --overwrite --max-connections $AZ_BLOB_MAX_CONNECTIONS --timeout $AZ_BLOB_TIMEOUT
 
 echo "About to REMOVE network-rule ALLOWING $LOCAL_IP to Azure BLOB Storage $AZ_STORAGE_NAME"
-az storage account network-rule remove --ip-address $LOCAL_IP --account-name  $AZ_STORAGE_NAME-g $RG_APP --only-show-errors
+az storage account network-rule remove --ip-address $LOCAL_IP --account-name  $AZ_STORAGE_NAME -g $RG_APP --only-show-errors
 
 ```
 
@@ -641,7 +700,7 @@ kubectl exec -it dummy -n tap-gui -- bash
   curl http://server:7000
 
 # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/tap-gui-install-tap-gui.html
-export ING_HOST=tap.westeurope.cloudapp.azure.com
+export ING_HOST=tap.appinno.com #tap.westeurope.cloudapp.azure.com
 echo "INGRESS HOST " $ING_HOST
 mkdir $TANZU_INSTALL_DIR/k8s/deploy
 envsubst < $TANZU_INSTALL_DIR/k8s/contour-ingress.yaml > $TANZU_INSTALL_DIR/k8s/deploy/contour-ingress.yaml
@@ -734,83 +793,179 @@ The Workflow run the steps in this in this order :
 
 You need to set your own param values in :
 
-- [Azure Infra services deployment workflow](./.github/workflows/deploy-iac.yml#L13)
-```sh
 
-```
+- [Azure Infra services deployment workflow](./.github/workflows/deploy-iac.yml#L10)
 
-
-- [Azure Infra services deployment workflow](./.github/workflows/deploy-iac.yml#L13)
 ```sh
 env:
-  APP_NAME: petcliaks
+  DEPLOYMENT_VERSION: 2.6.13
+  AZ_CLI_VERSION: 2.45.0
+  JAVA_VERSION: 11
+
+  # ==== General settings  ====
+
+  APP_NAME: tap42
   LOCATION: westeurope # francecentral
-  RG_KV: rg-iac-kv33 # RG where to deploy KV
-  RG_APP: rg-iac-aks-petclinic-mic-srv # RG where to deploy the other Azure services: AKS, ACR, MySQL, etc.
+  RG_KV: rg-kv-tanzu101 # RG where to deploy KV
+  RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
   
-  ACR_NAME: acrpetcliaks
+  ACR_NAME: tanzu42 # customize this
+  DNS_ZONE: cloudapp.azure.com
+  APP_DNS_ZONE: tap.westeurope.cloudapp.azure.com
+  CUSTOM_DNS: appinnohandsonlab.com # set here your own domain name
+  AZURE_DNS_LABEL_NAME: petclinic
 
+  TAP_NAMESPACE: tanzu
+  PETCLINIC_NAMESPACE: petclinic
+  AKS_CLUSTER_NAME: aks-tap42
   VNET_NAME: vnet-aks
-  VNET_CIDR: 172.16.0.0/16
-  AKS_SUBNET_CIDR: 172.16.1.0/24
-  AKS_SUBNET_NAME: snet-aks
 
-  START_IP_ADRESS: 172.16.1.0
-  END_IP_ADRESS: 172.16.1.255
+  DNS_PREFIX: tanzu-tap42 # customize this param
+  ING_NS: ingress # Namespace to use for the Ingress Controller
+  AKS_IDENTITY_NAME: id-aks-tap42-cluster-dev-westeurope-101 # customize this , MUST BE 'id-aks-${appName}-cluster-dev-${location}-101'
 
-  MYSQL_SERVER_NAME: petcliaks
-  MYSQL_DB_NAME: petclinic
+  # APPLICATION INSIGHTS
+  APPLICATIONINSIGHTS_CONFIGURATION_FILE: BOOT-INF/classes/applicationinsights.json
+
+  # ==== Identities ====:
+  CUSTOMERS_SVC_APP_ID_NAME: id-aks-tap42-petclinic-customers-service-dev-westeurope-101 # customize this, MUST BE 'id-aks-${appName}-petclinic-customers-service-dev-${location}-101'
+  VETS_SVC_APP_ID_NAME: id-aks-tap42-petclinic-vets-service-dev-westeurope-101 # customize this, MUST BE 'id-aks-${appName}-petclinic-vets-service-dev-${location}-101'
+  VISITS_SVC_APP_ID_NAME: id-aks-tap42-petclinic-visits-service-dev-westeurope-101 # customize this, MUST BE 'id-aks-${appName}-petclinic-visits-service-dev-${location}-101'
+  CONFIG_SERVER_APP_ID_NAME: id-aks-tap42-petclinic-config-server-dev-westeurope-101 # customize this, MUST BE  'id-aks-${appName}-petclinic-config-server-dev-${location}-101'
+ 
+  MYSQL_SERVER_NAME: tap4242
+  MYSQL_DB_NAME: tap4242
   MYSQL_ADM_USR: mys_adm
   MYSQL_TIME_ZONE: Europe/Paris
   MYSQL_CHARACTER_SET: utf8
+  MYSQL_COLLATION: utf8_general_ci 
   MYSQL_PORT: 3306
 
-  DEPLOY_TO_VNET: false
+  DB_SKU_NAME: Standard_B1ms
+  DB_SKU_TIER : Burstable
 
-  KV_NAME: kv-petcliaks33 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
+  PG_SERVER_NAME: tap4242
+  PG_DB_NAME: tap4242
+  PG_ADM_USR: pgs_adm
+  PG_TIME_ZONE: Europe/Paris
+  PG_CHARACTER_SET: utf8
+  PG_COLLATION: fr_FR.utf8 # select * from pg_collation ;
+  PG_PORT: 5432
 
-  # https://learn.microsoft.com/en-us/azure/key-vault/secrets/secrets-best-practices#secrets-rotation
-  # Because secrets are sensitive to leakage or exposure, it's important to rotate them often, at least every 60 days. 
-  # Expiry date in seconds since 1970-01-01T00:00:00Z. Ex: 1672444800 ==> 31/12/2022'
+  SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT: https://kv-tap42.vault.azure.net/
+  KV_NAME: kv-tap42 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
   SECRET_EXPIRY_DATE: 1703980800 # ==> 31/12/2023
 ```
 
 - [Maven Build workflow](./.github/workflows/maven-build.yml)
 ```sh
-  AZURE_CONTAINER_REGISTRY: acrpetcliaks # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
-  REGISTRY_URL: acrpetcliaks.azurecr.io  # set this to the URL of your registry
-  REPOSITORY: petclinic                  # set this to your ACR repository
+
+  DEPLOYMENT_VERSION: 2.6.13
+  AZ_CLI_VERSION: 2.45.0
+  JAVA_VERSION: 11
+
+  # ==== General settings  ====
+  
+  AZURE_CONTAINER_REGISTRY: tanzu42 # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
+  REGISTRY_URL: tanzu42.azurecr.io  # set this to the URL of your registry
+  REPOSITORY: tap                  # set this to your ACR repository
   PROJECT_NAME: petclinic                # set this to your project's name
 
-  KV_NAME: kv-petcliaks33 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
-  RG_KV: rg-iac-kv33 # RG where to deploy KV
-  RG_APP: rg-iac-aks-petclinic-mic-srv # RG where to deploy the other Azure services: AKS, ACR, MySQL, etc.
+  KV_NAME: kv-tap42 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
+  RG_KV: rg-kv-tanzu101 # RG where to deploy KV
+  RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
 
   # ==== Azure storage to store Artifacts , values must be consistent with the ones in storage.bicep ====:
-  AZ_STORAGE_NAME : stakspetcliaks # customize this
-  AZ_BLOB_CONTAINER_NAME: petcliaks-blob # customize this
+  AZ_STORAGE_NAME : statap42 # customize this
+  AZ_BLOB_CONTAINER_NAME: tap42-blob # customize this
+
 ```
 
 
 - [Maven Build workflow for the UI](./.github/workflows/maven-build-ui.yml)
+
 ```sh
-  AZURE_CONTAINER_REGISTRY: acrpetcliaks # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
-  REGISTRY_URL: acrpetcliaks.azurecr.io  # set this to the URL of your registry
-  REPOSITORY: petclinic                  # set this to your ACR repository
+
+  DEPLOYMENT_VERSION: 2.6.13
+  AZ_CLI_VERSION: 2.45.0
+  JAVA_VERSION: 11
+
+  # ==== General settings  ====
+
+  AZURE_CONTAINER_REGISTRY: tanzu42 # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
+  REGISTRY_URL: tanzu42.azurecr.io  # set this to the URL of your registry
+  REPOSITORY: tap                  # set this to your ACR repository
   PROJECT_NAME: petclinic                # set this to your project's name
 
-  KV_NAME: kv-petcliaks33 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
-  RG_KV: rg-iac-kv33 # RG where to deploy KV
-  RG_APP: rg-iac-aks-petclinic-mic-srv # RG where to deploy the other Azure services: AKS, ACR, MySQL, etc.
+  KV_NAME: kv-tap42 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
+  
+  RG_KV: rg-kv-tanzu101 # RG where to deploy KV
+  RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
 
-  # ==== Azure storage to store Artifacts , values must be consistent with the ones in storage.bicep ====:
-  AZ_STORAGE_NAME : stakspetcliaks # customize this
-  AZ_BLOB_CONTAINER_NAME: petcliaks-blob # customize this
+ # ==== Azure storage to store Artifacts , values must be consistent with the ones in storage.bicep ====:
+  AZ_STORAGE_NAME : statap42 # customize this
+  AZ_BLOB_CONTAINER_NAME: tap42-blob # customize this
+
 ```
 
 Once you commit, then push your code update to your repo, it will trigger a Maven build which you need to can CANCELL from https://github.com/USERNAME/azure-tanzu-application-platform/actions/workflows/maven-build.yml the first time you trigger the workflow, anyway it will fail because the ACR does not exist yet and the docker build will fail to push the Images.
 
 Note: the GH Hosted Runner / [Ubuntu latest image has already Azure CLI installed](https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#cli-tools)
+
+
+- [Tanzu Setup](./.github/workflows/tap-setup.yml)
+
+```sh
+  APP_NAME: tap777
+  LOCATION: westeurope # francecentral
+  RG_KV: rg-kv-tanzu101 # RG where to deploy KV
+  RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
+  
+  DNS_ZONE: cloudapp.azure.com
+  APP_DNS_ZONE: westeurope.cloudapp.azure.com
+  CUSTOM_DNS: appinno.com
+  AZURE_DNS_LABEL_NAME: tap-gui
+  TANZU_DNS_CHILD_ZONE: tap.appinno.com
+
+  # ==== Azure storage t, values must be consistent with the ones in iac/bicep/modules/aks/storage.bicep ====:
+  AZ_STORAGE_NAME : statap42 # customize this
+  AZ_BLOB_CONTAINER_NAME: tap42-blob # customize this
+
+  # ==== Tanzu Tools ====
+  IMG_PKG_CONCURRENCY: 2 # 1 or 2 ONLY for GitHub pulic Runners /!\ not more. Test with value 42 on Self-Hosted Runners deployed to AKS
+
+  TANZU_INSTALL_DIR: tanzu
+  TANZU_ESSENTIALS: tanzu-cluster-essentials-linux-amd64-1.4.0.tgz
+  TANZU_GUI_CAT: tap-gui-blank-catalog.tgz
+  TANZU_CLI: tanzu-framework-linux-amd64-v0.25.4.tar # /!\ the version name must match M.n.p like v0.25.4 NOT v0.25.4.1
+
+  TANZU_BLOB_CLI: tanzu-cli
+  TANZU_BLOB_ESSENTIALS: tanzu-essentials
+  TANZU_BLOB_GUI_CAT: tanzu-catalog
+
+  TANZU_REGISTRY: registry.tanzu.vmware.com
+
+  AZURE_CONTAINER_REGISTRY: tanzu42 # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
+  REGISTRY_URL: tanzu42.azurecr.io  # set this to the URL of your registry
+  REPOSITORY: tap                   # set this to your ACR repository
+  REPO_SUBFOLDER_APP_TAP: tanzu-app-tap
+
+  CATALOG_URL: https://github.com/ezYakaEagle442/tap-catalog
+  TAP_NAMESPACE: tanzu
+  DEV_NAMESPACE: tap-dev
+  TAP_INSTALL_NAMESPACE: tap-install install
+
+  KAPP_NAMESPACE: kapp-controller
+  AKS_CLUSTER_NAME: aks-tap42  # set this to your AKS cluster name
+  CONTEXT_NAME: aks-tap42 # usuallythe conext is the same as the AKS cluster name
+
+  VNET_NAME: vnet-aks
+
+  DNS_PREFIX: tanzu-tap42 # customize this
+  ING_NS: tanzu-system-ingress # Namespace to use for the Ingress Controller
+
+```
+
 
 
 # DNS Management
@@ -823,7 +978,7 @@ You must therefote use your own custom domain, once the IaC workflows has sucess
 ```sh
 LOCATION="westeurope"
 RG_APP="rg-aks-tap-apps"
-DNS_ZONE="appinnohandsonlab.com" # set here your own domain name
+DNS_ZONE="appinno.com" # set here your own domain name
 
 ns_server=$(az network dns record-set ns show --zone-name $DNS_ZONE --name @ -g $RG_APP --query nsRecords[0] --output tsv)
 ns_server_length=$(echo -n $ns_server | wc -c)
@@ -861,14 +1016,17 @@ echo "AKS cluster ID : " $aks_cluster_id
 # Create the first example group in Azure AD for the application developers
 TAP_APP_OPERATOR_ID=$(az ad group create --display-name tap-app-operator --mail-nickname tap-app-operator --query id -o tsv)
 echo "TAP APP OPERATOR GROUP ID: " $TAP_APP_OPERATOR_ID
+TAP_APP_OPERATOR_ID=$(az ad group show --group tap-app-operator --query id -o tsv | tr -d '\r')
 az role assignment create --assignee $TAP_APP_OPERATOR_ID --role "Azure Kubernetes Service Cluster User Role" --scope $aks_cluster_id
 
 TAP_APP_VIEWER_ID=$(az ad group create --display-name tap-app-viewer --mail-nickname tap-app-viewer --query id -o tsv)
 echo "TAP APP OPERATOR GROUP ID: " $TAP_APP_VIEWER_ID
+TAP_APP_VIEWER_ID=$(az ad group show --group tap-app-viewer --query id -o tsv | tr -d '\r')
 az role assignment create --assignee $TAP_APP_VIEWER_ID --role "Azure Kubernetes Service Cluster User Role" --scope $aks_cluster_id
 
 TAP_APP_EDITOR_ID=$(az ad group create --display-name tap-app-edittor --mail-nickname tap-app-edittor --query id -o tsv)
 echo "TAP APP EDITOR GROUP ID: " $TAP_APP_EDITOR_ID
+TAP_APP_EDITOR_ID=$(az ad group show --group tap-app-edittor --query id -o tsv | tr -d '\r')
 az role assignment create --assignee $TAP_APP_EDITOR_ID --role "Azure Kubernetes Service Cluster User Role" --scope $aks_cluster_id
 ```
 
@@ -900,7 +1058,6 @@ tanzu rbac binding add -g $aad_admin_group_object_id -r app-operator -n $TAP_INS
 tanzu rbac binding add -g $aad_admin_group_object_id -r app-viewer -n $TAP_INSTALL_NAMESPACE
 tanzu rbac binding add -g $aad_admin_group_object_id -r app-editor -n $TAP_INSTALL_NAMESPACE
 tanzu rbac binding add -g $aad_admin_group_object_id -r service-operator -n $TAP_INSTALL_NAMESPACE
-
 
 # Only TAP default roles are support [app-viewer, app-editor, app-operator, service-operator]
 tanzu rbac binding add -g $TAP_APP_OPERATOR_ID -r app-operator -n $TAP_NAMESPACE
@@ -934,33 +1091,21 @@ tanzu rbac binding add --group $OPSSRE_ID --role service-operator --namespace $D
 tanzu rbac binding get --role app-editor --namespace user-ns
 
 
-TAP_GUI_BACKSTAGE_APP_NAME=tap_gui_backstage
-az ad app create --display-name $TAP_GUI_BACKSTAGE_APP_NAME > aad_app_tap_gui_backstage.json
-# This command will output JSON with an appId that is your client-id. The objectId is APPLICATION-OBJECT-ID 
-
-export TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_ID=$(cat aad_app_tap_gui_backstage.json | jq -r '.appId')
-export TAP_BACKSTAGE_AUTH_MICROSOFT_TENANT_ID=$(az account show --query tenantId -o tsv)
-export TAP_BACKSTAGE_AUTH_MICROSOFT_OBJECT_ID=$(cat aad_app_tap_gui_backstage.json | jq -r '.id')
-
-az ad sp create --id $TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_ID > aad_sp_tap_gui_backstage.json
-
-az ad app credential reset --id $TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_ID >  aad_app_secret_tap_gui_backstage.json
-export TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_SECRET=$(cat aad_app_secret_tap_gui_backstage.json | jq -r '.password')
 
 # https://backstage.io/docs/auth/microsoft/provider
 # https://learn.microsoft.com/en-gb/azure/active-directory/develop/reply-url
 # https://mappslearning.wordpress.com/2022/04/19/enabling-microsoft-azure-authenticator-for-tanzu-application-platform-tap/
 # Register reply address for the application. : /api/auth/microsoft/handler/frame
 
-APP_DNS_ZONE=tap-gui.tap.appinnohandsonlab.com
+APP_DNS_ZONE=tap-gui.tap.appinno.com
 
 az ad app update \
     --id ${TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_ID} \
     --web-redirect-uris "https://${APP_DNS_ZONE}/api/auth/microsoft/handler/frame"
 
 # test from a browser:
-https://tap-gui.tap.appinnohandsonlab.com/api/auth/microsoft
-https://tap-gui.tap.appinnohandsonlab.com/api/auth/github
+https://tap-gui.tap.appinno.com/api/auth/microsoft
+https://tap-gui.tap.appinno.com/api/auth/github
 
 
 envsubst < ./$TANZU_INSTALL_DIR/tap-values.yml > ./$TANZU_INSTALL_DIR/deploy/tap-values.yml
@@ -970,13 +1115,9 @@ cat ./$TANZU_INSTALL_DIR/deploy/tap-values.yml
 
 ```
 
-Add TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_ID, TAP_BACKSTAGE_AUTH_MICROSOFT_CLIENT_SECRET & TAP_BACKSTAGE_AUTH_MICROSOFT_TENANT_ID as secrets to your GH repo Settings / Security / Secrets and variables / Actions / Actions secrets / Repository secrets
-
-
-
 Access to the TAP GUI: https://tap-gui.tap.<Your Custom Domain>
 
-Ex: https://tap-gui.tap.appinnohandsonlab.com/
+Ex: https://tap-gui.tap.appinno.com/
 
 
 ## TAP-values Troubleshoot
@@ -993,6 +1134,7 @@ tanzu package installed list -A
 ```
 
 # Cost savings - Green-IT
+
 ```sh
 LOCATION="westeurope"
 AKS_CLUSTER_NAME="aks-tap42"
