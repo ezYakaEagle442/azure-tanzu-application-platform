@@ -55,7 +55,7 @@ env:
   CATALOG_URL: https://github.com/ezYakaEagle442/tap-catalog
   TAP_NAMESPACE: tanzu
   DEV_NAMESPACE: tap-dev
-  TAP_INSTALL_NAMESPACE: tap-install                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+  TAP_INSTALL_NAMESPACE: tap-install
   KAPP_NAMESPACE: kapp-controller
   AKS_CLUSTER_NAME: aks-tap42  # set this to your AKS cluster name
   CONTEXT_NAME: aks-tap42 # usuallythe conext is the same as the AKS cluster name
