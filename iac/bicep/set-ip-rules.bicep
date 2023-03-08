@@ -47,6 +47,12 @@ param pgDbName string = 'tap'
 param pgCharset string = 'utf8'
 param pgCollation string = 'fr_FR.utf8' // select * from pg_collation ;
 
+@description('The Storage Account name')
+param azureStorageName string = 'sta${appName}'
+
+@description('The BLOB Storage Container name')
+param blobContainerName string = '${appName}-blob'
+
 resource kvRG 'Microsoft.Resources/resourceGroups@2022-09-01' existing = {
   name: kvRGName
   scope: subscription()
@@ -100,5 +106,17 @@ module postgresqldb './modules/pg/postgresql.bicep' = {
     charset: pgCharset
     collation: pgCollation
     dbName: pgDbName
+  }
+}
+
+module storage './modules/aks/storage.bicep' = {
+  name: 'storage'
+  params: {
+    appName: appName
+    location: location
+    vNetRules: vNetRules
+    ipRules: ipRules[0]
+    azureStorageName: azureStorageName
+    blobContainerName: blobContainerName
   }
 }
