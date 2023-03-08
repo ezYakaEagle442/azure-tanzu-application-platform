@@ -167,7 +167,7 @@ module storage './modules/aks/storage.bicep' = {
     appName: appName
     location: location
     vNetRules: vNetRules
-    ipRules: ipRules[0]
+    ipRules: ipRules
     azureStorageName: azureStorageName
     blobContainerName: blobContainerName
   }
