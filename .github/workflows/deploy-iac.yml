@@ -49,6 +49,7 @@ env:
   MYSQL_CHARACTER_SET: utf8
   MYSQL_COLLATION: utf8_general_ci 
   MYSQL_PORT: 3306
+  MYSQL_VERSION: "8.0.21"
 
   DB_SKU_NAME: Standard_B1ms
   DB_SKU_TIER : Burstable
@@ -60,6 +61,7 @@ env:
   PG_CHARACTER_SET: utf8
   PG_COLLATION: fr_FR.utf8 # select * from pg_collation ;
   PG_PORT: 5432
+  PG_VERSION: "13"
 
   SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT: https://kv-tap42.vault.azure.net/
   KV_NAME: kv-tap42 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
