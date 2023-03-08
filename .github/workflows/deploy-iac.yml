@@ -6,6 +6,7 @@ name: Deploy IaC with Azure Bicep
 env:
 
   # ==== Versions ====
+
   DEPLOYMENT_VERSION: 2.6.13
   AZ_CLI_VERSION: 2.45.0
   JAVA_VERSION: 11
@@ -48,6 +49,9 @@ env:
   MYSQL_CHARACTER_SET: utf8
   MYSQL_COLLATION: utf8_general_ci 
   MYSQL_PORT: 3306
+
+  DB_SKU_NAME: Standard_B1ms
+  DB_SKU_TIER : Burstable
 
   PG_SERVER_NAME: tap4242
   PG_DB_NAME: tap4242
@@ -132,6 +136,14 @@ jobs:
         echo "VETS_SERVICE_FOLDER=${{ env.PRJ_PREFIX }}-${{ env.VETS_SERVICE }}" >> $GITHUB_ENV
         echo "VISITS_SERVICE_FOLDER=${{ env.PRJ_PREFIX }}-${{ env.VISITS_SERVICE }}" >> $GITHUB_ENV
 
+        storage_name=$(az deployment group show --name storage  -g ${{ env.RG_APP }} --query properties.outputs.azureStorageName.value -o tsv)
+        echo "storage_name" $storage_name
+        echo "AZ_STORAGE_NAME="$storage_name >> $GITHUB_ENV
+
+        KV_NAME=$(az deployment group show --name aks-tap-kv -g ${{ env.RG_KV }} --query properties.outputs.keyVaultName.value -o tsv)
+        echo "KV_NAME=$KV_NAME" >> $GITHUB_ENV 
+        echo "KV_NAME=$KV_NAME"
+        
         echo "GH_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV # "/github/workspace"
         echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
         
@@ -232,14 +244,15 @@ jobs:
               -p databaseSkuTier=${{ env.DB_SKU_TIER }} \
               -p mySQLDbName=${{ env.MYSQL_DB_NAME }} \
               -p mySqlVersion="${{ env.MYSQL_VERSION }}" \
-              -p mySqlCharset=${{ env.MYSQL_CHARSET }} \
+              -p mySqlCharset=${{ env.MYSQL_CHARACTER_SET }} \
               -p mySqlCollation=${{ env.MYSQL_COLLATION }} \
               -p postgreSQLadministratorLogin=${{ env.PG_ADM_USR }} \
               -p pgDbName=${{ env.PG_DB_NAME }} \
-              -p pgCharset=${{ env.PG_CHARSET }} \
+              -p pgCharset=${{ env.PG_CHARACTER_SET }} \
               -p pgCollation=${{ env.PG_COLLATION }} \
               -p postgreSQLVersion=${{ env.PG_VERSION }} \
-
+              -p azureStorageName=${{ env.XXXX }} \
+              -p blobContainerName=${{ env.XXXX }} \
               -p vNetRules=[$vNetRules] \
               -p ipRules=$ipRules
 

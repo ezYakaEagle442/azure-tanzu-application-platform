@@ -38,13 +38,18 @@ env:
   MYSQL_ADM_USR: mys_adm
   MYSQL_TIME_ZONE: Europe/Paris
   MYSQL_CHARACTER_SET: utf8
+  MYSQL_COLLATION: utf8_general_ci  
   MYSQL_PORT: 3306
+
+  DB_SKU_NAME: Standard_B1ms
+  DB_SKU_TIER : Burstable
 
   PG_SERVER_NAME: tap4242
   PG_DB_NAME: tap4242
   PG_ADM_USR: pg_adm
   PG_TIME_ZONE: Europe/Paris
   PG_CHARACTER_SET: utf8
+  PG_COLLATION: fr_FR.utf8 # select * from pg_collation ;   
   PG_PORT: 5432
 
   DEPLOY_TO_VNET: false
@@ -108,6 +113,7 @@ jobs:
     # /!\ IMPORTANT: The step that creates or updates the environment variable does not have access to the new value, but all subsequent steps in a job will have access.
     - name: Set Base environment variables
       run: |
+
         # ip addr show eth3 | grep inet
         # ifconfig -a
         # hostname -I
@@ -120,7 +126,7 @@ jobs:
       shell: bash
 
     - name: Login with GHA Runner SP
-      uses: azure/login@v1.4.6 # https://github.com/marketplace/actions/azure-login
+      uses: azure/login@v1 # https://github.com/marketplace/actions/azure-login
       with:
         creds: ${{ env.credentials }} # ${{ secrets.AZURE_CREDENTIALS }}
 
@@ -134,6 +140,7 @@ jobs:
         # inlineScript: |
       shell: bash
       run: |
+
           pwd
           ls -al
            echo "LOCAL_IP=$LOCAL_IP"
@@ -195,7 +202,8 @@ jobs:
     # https://github.com/azure/azure-quickstart-templates/tree/master/quickstarts/microsoft.resources/deployment-script-ssh-key-gen
     - name: Create SSH-PRV-KEY secret in Azure Key Vault
       run: |
-          # woraround using --file to fix this error : Unable to parse parameter: OPENSSH
+
+          # workaround using --file to fix this error : Unable to parse parameter: OPENSSH
           echo "${{ env.SSH_PRV_KEY }}" > ${{ env.SSH_KEY }}
           ls -al ${{ env.SSH_KEY }}
           az keyvault secret set --name "SSH-PRV-KEY" --vault-name ${{ env.KV_NAME }} --file ${{ env.SSH_KEY }}
@@ -240,16 +248,22 @@ jobs:
     needs: deploy-kv
     steps:
 
-    - name: Set Base environment variables
-      run: |
-        echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
-        az version
-      shell: bash
-
     - name: Login with GHA Runner SP
-      uses: azure/login@v1.4.6 # fails https://github.com/marketplace/actions/azure-login
+      uses: azure/login@v1 # fails https://github.com/marketplace/actions/azure-login
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }} # ${{ env.credentials }}
+
+    - name: Set Base environment variables
+      run: |
+
+        echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
+        az version
+
+        KV_NAME=$(az deployment group show --name aks-tap-kv -g ${{ env.RG_KV }} --query properties.outputs.keyVaultName.value -o tsv)
+        echo "KV_NAME=$KV_NAME" >> $GITHUB_ENV 
+        echo "KV_NAME=$KV_NAME"
+
+      shell: bash
         
     - name: Checkout
       uses: actions/checkout@v3 # https://github.com/actions/checkout
@@ -258,7 +272,7 @@ jobs:
       run: |
 
           # --debug # --what-if to test like a dry-run
-           echo "LOCAL_IP=$LOCAL_IP"
+          echo "LOCAL_IP=$LOCAL_IP"
            
           az deployment group create --name aks-tap-pre-req -f iac/bicep/pre-req.bicep -g ${{ env.RG_APP }} \
             -p appName=${{ env.APP_NAME }} \
@@ -268,10 +282,15 @@ jobs:
             -p vnetCidr=${{ env.VNET_CIDR }} \
             -p aksSubnetCidr=${{ env.AKS_SUBNET_CIDR }} \
             -p aksSubnetName=${{ env.AKS_SUBNET_NAME }} \
+            -p databaseSkuName=${{ env.DB_SKU_NAME }} \
+            -p databaseSkuTier=${{ env.DB_SKU_TIER }} \
             -p mySQLServerName=${{ env.MYSQL_SERVER_NAME }} \
             -p mySQLadministratorLoginPassword=${{ env.SPRING_DATASOURCE_PASSWORD }} \
             -p postgreSQLServerName=${{ env.PG_SERVER_NAME }} \
+            -p pgDbName=${{ env.PG_DB_NAME }} \
             -p postgreSQLadministratorLoginPassword=${{ env.PG_ADM_PWD }} \
+            -p pgCharset=${{ env.PG_CHARACTER_SET }} \
+            -p pgCollation=${{ env.PG_COLLATION }} \
             -p acrName=${{ env.ACR_NAME }} \
             -p azureStorageName=${{ env.AZ_STORAGE_NAME }}  \
             -p blobContainerName=${{ env.AZ_BLOB_CONTAINER_NAME }} \
@@ -299,6 +318,10 @@ jobs:
             -p visitsIdentityId=$visitsServicePrincipalId \
             -p customersIdentityId=$customersServicePrincipalId \
             -p kvRoleType=KeyVaultSecretsUser
+
+          storage_name=$(az deployment group show --name storage  -g ${{ env.RG_APP }} --query properties.outputs.azureStorageName.value -o tsv)
+          echo "storage_name" $storage_name
+          echo "AZ_STORAGE_NAME="$storage_name >> $GITHUB_ENV
 
       shell: bash
 
