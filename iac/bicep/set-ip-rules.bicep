@@ -80,7 +80,7 @@ resource kv 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
 }  
 
 module mysqlPub './modules/mysql/mysql.bicep' = {
-  name: 'mysqldbpub'
+  name: 'mysqldb'
   params: {
     appName: appName
     location: location
