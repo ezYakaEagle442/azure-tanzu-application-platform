@@ -6,12 +6,17 @@ on:
 
 env:
   
-  AZ_CLI_VERSION: 2.44.1
-  DEPLOYMENT_VERSION: 2.6.13
+  # ==== Versions ====
+  
+  AZ_CLI_VERSION: 2.45.0
+  JAVA_VERSION: 11
+
+  # ==== General settings  ====
 
   GH_API: api.github.com/user/packages/maven
 
   # ==== APPS ====:
+
   API_GATEWAY: api-gateway
   ADMIN_SERVER: admin-server
   CUSTOMERS_SERVICE: customers-service
