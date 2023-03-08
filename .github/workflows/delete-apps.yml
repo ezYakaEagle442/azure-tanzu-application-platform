@@ -4,6 +4,7 @@ name: Delete Apps
 env:
 
   # ==== Versions ====
+
   AZ_CLI_VERSION: 2.45.0
 
   # ==== General settings  ====
@@ -45,6 +46,7 @@ jobs:
 
     - name: Delete Apps
       run: |
+
           az config set extension.use_dynamic_install=yes_without_prompt
 
           # az aks list -o table

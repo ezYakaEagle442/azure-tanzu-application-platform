@@ -6,6 +6,7 @@ name: Delete Azure Resource Groups
 env:
 
   # ==== Versions ====
+  
   AZ_CLI_VERSION: 2.45.0
 
   # ==== General settings  ====
