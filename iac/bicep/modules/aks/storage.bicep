@@ -141,13 +141,13 @@ resource azureblobservice 'Microsoft.Storage/storageAccounts/blobServices@2022-0
   properties: {
     containerDeleteRetentionPolicy: {
       allowPermanentDelete: true
-      days: 1
+      days: 5
       enabled: true
     }
     // defaultServiceVersion: ''
     deleteRetentionPolicy: {
       allowPermanentDelete: true
-      days: 1
+      days: 180
       enabled: true
     }
     isVersioningEnabled: false
@@ -157,10 +157,10 @@ resource azureblobservice 'Microsoft.Storage/storageAccounts/blobServices@2022-0
       ]
       enable: false
       name: 'AccessTimeTracking'
-      trackingGranularityInDays: 1
+      trackingGranularityInDays: 30
     }
     restorePolicy: {
-      days: 2
+      days: 30
       enabled: false
     }
   }
