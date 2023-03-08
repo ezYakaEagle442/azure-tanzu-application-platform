@@ -24,6 +24,13 @@ param mySQLadministratorLogin string = 'mys_adm'
 @description('The MySQL server name')
 param mySQLServerName string = appName
 
+@description('MySQL version see https://learn.microsoft.com/en-us/azure/mysql/concepts-version-policy')
+@allowed([
+  '8.0'
+  '5.7'
+])
+param mySqlVersion string = '5.7' // https://docs.microsoft.com/en-us/azure/mysql/concepts-supported-versions
+
 @description('The MySQL DB name.')
 param mySqlDbName string = 'petclinic'
 
@@ -35,11 +42,37 @@ param mySqlCharset string = 'utf8'
 ])
 param mySqlCollation string = 'utf8_general_ci' // SELECT @@character_set_database, @@collation_database;
 
+// https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/how-to-deploy-on-azure-free-account
+@description('Azure database for PostgreSQL SKU')
+@allowed([
+  'Standard_D4s_v3'
+  'Standard_D2s_v3'
+  'Standard_B1ms'
+])
+param databaseSkuName string = 'Standard_D2s_v3' //  'GP_Gen5_2' for single server
+
+@description('Azure database for PostgreSQL pricing tier')
+@allowed([
+  'Burstable'
+  'GeneralPurpose'
+  'MemoryOptimized'
+])
+param databaseSkuTier string = 'GeneralPurpose'
+
 @description('The PostgreSQL DB Admin Login. IMPORTANT: username can not start with prefix "pg_" which is reserved, ex: pg_adm would fails in Bicep. Admin login name cannot be azure_superuser, azuresu, azure_pg_admin, sa, admin, administrator, root, guest, dbmanager, loginmanager, dbo, information_schema, sys, db_accessadmin, db_backupoperator, db_datareader, db_datawriter, db_ddladmin, db_denydatareader, db_denydatawriter, db_owner, db_securityadmin, public')
 param postgreSQLadministratorLogin string = 'pgs_adm'
 
 @description('The PostgreSQL server name')
 param postgreSQLServerName string = appName
+
+@description('PostgreSQL version. See https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-supported-versions')
+@allowed([
+  '14'
+  '13'
+  '12'
+  '11'
+])
+param postgreSQLVersion string = '13' // https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-supported-versions
 
 @description('The PostgreSQL DB name.')
 param pgDbName string = 'tap'
@@ -84,6 +117,9 @@ module mysqlPub './modules/mysql/mysql.bicep' = {
   params: {
     appName: appName
     location: location
+    databaseSkuName: databaseSkuName
+    mySqlVersion: mySqlVersion
+    databaseSkuTier: databaseSkuTier    
     mySQLServerName: mySQLServerName
     dbName: mySqlDbName
     mySQLadministratorLogin: mySQLadministratorLogin
@@ -105,6 +141,9 @@ module postgresqldb './modules/pg/postgresql.bicep' = {
   params: {
     appName: appName
     location: location
+    databaseSkuName: databaseSkuName
+    databaseSkuTier: databaseSkuTier
+    postgreSQLVersion: postgreSQLVersion
     postgreSQLServerName: postgreSQLServerName
     dbName: pgDbName
     postgreSQLadministratorLogin: postgreSQLadministratorLogin 
