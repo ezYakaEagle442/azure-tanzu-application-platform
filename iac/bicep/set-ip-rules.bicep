@@ -100,12 +100,12 @@ module postgresqldb './modules/pg/postgresql.bicep' = {
     appName: appName
     location: location
     postgreSQLServerName: postgreSQLServerName
+    dbName: pgDbName
     postgreSQLadministratorLogin: postgreSQLadministratorLogin 
     postgreSQLadministratorLoginPassword: kv.getSecret('PG-ADM-PWD')
     k8sOutboundPubIP: ipRules[0]
     charset: pgCharset
     collation: pgCollation
-    dbName: pgDbName
   }
 }
 
