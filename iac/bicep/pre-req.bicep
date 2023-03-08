@@ -173,7 +173,7 @@ module mysql './modules/mysql/mysql.bicep' = {
     appName: appName
     location: location
     mySQLServerName: mySQLServerName
-    my
+    dbName: mySqlDbName
     mySQLadministratorLogin: mySQLadministratorLogin
     mySQLadministratorLoginPassword: mySQLadministratorLoginPassword
     charset: mySqlCharset
