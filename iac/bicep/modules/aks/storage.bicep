@@ -1,3 +1,14 @@
+/* https://learn.microsoft.com/en-us/azure/azure-resource-manager/bicep/deploy-cli#inline-parameters 
+vim arrayContent.json
+[
+  "42.42.42.42"
+]
+
+az deployment group create --name storage -f ./iac/bicep/modules/aks/storage.bicep -g rg-aks-tap-apps \
+-p appName=tap42 -p location=westeurope 
+*/
+
+
 @description('A UNIQUE name')
 @maxLength(20)
 param appName string = 'tap${uniqueString(resourceGroup().id, subscription().id)}'
@@ -123,19 +134,20 @@ output azurestorageHttpEndpoint string = azurestorage.properties.primaryEndpoint
 output azurestorageFileEndpoint string = azurestorage.properties.primaryEndpoints.file
 
 
+// https://learn.microsoft.com/en-us/azure/templates/microsoft.storage/storageaccounts/blobservices?pivots=deployment-language-bicep
 resource azureblobservice 'Microsoft.Storage/storageAccounts/blobServices@2022-09-01' = {
   name: azureBlobServiceName
   parent: azurestorage
   properties: {
     containerDeleteRetentionPolicy: {
       allowPermanentDelete: true
-      days: 5
+      days: 1
       enabled: true
     }
     // defaultServiceVersion: ''
     deleteRetentionPolicy: {
       allowPermanentDelete: true
-      days: 5
+      days: 1
       enabled: true
     }
     isVersioningEnabled: false
@@ -145,10 +157,10 @@ resource azureblobservice 'Microsoft.Storage/storageAccounts/blobServices@2022-0
       ]
       enable: false
       name: 'AccessTimeTracking'
-      trackingGranularityInDays: 30
+      trackingGranularityInDays: 1
     }
     restorePolicy: {
-      days: 1
+      days: 2
       enabled: false
     }
   }
