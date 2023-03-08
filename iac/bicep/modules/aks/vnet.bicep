@@ -39,7 +39,13 @@ resource vnet 'Microsoft.Network/virtualNetworks@2022-07-01' = {
               locations: [
                 '*'
               ]
-            }            
+            }
+            {
+              service: 'Microsoft.Storage'
+              locations: [
+                '*'
+              ]
+            } 
           ]
           delegations: []
           privateEndpointNetworkPolicies: 'Enabled'
