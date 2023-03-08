@@ -46,16 +46,15 @@ env:
   MYSQL_ADM_USR: mys_adm
   MYSQL_TIME_ZONE: Europe/Paris
   MYSQL_CHARACTER_SET: utf8
+  MYSQL_COLLATION: utf8_general_ci 
   MYSQL_PORT: 3306
-
-  CHARSET: utf8
-  COLLATION: fr_FR.utf8 # select * from pg_collation ;
 
   PG_SERVER_NAME: tap4242
   PG_DB_NAME: tap4242
   PG_ADM_USR: pg_adm
   PG_TIME_ZONE: Europe/Paris
   PG_CHARACTER_SET: utf8
+  PG_COLLATION: fr_FR.utf8 # select * from pg_collation ;
   PG_PORT: 5432
 
   SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT: https://kv-tap42.vault.azure.net/
@@ -229,12 +228,18 @@ jobs:
               -p location=${{ env.LOCATION }} \
               -p kvName=${{ env.KV_NAME }} \
               -p kvRGName=${{ env.RG_KV }} \
-              -p mySQLadministratorLogin=${{ env.MYSQL_ADM_USR }} \
-              -p mySQLServerName=${{ env.MYSQL_SERVER_NAME }} \
+              -p databaseSkuName=${{ env.DB_SKU_NAME }} \
+              -p databaseSkuTier=${{ env.DB_SKU_TIER }} \
+              -p mySQLDbName=${{ env.MYSQL_DB_NAME }} \
+              -p mySqlVersion="${{ env.MYSQL_VERSION }}" \
+              -p mySqlCharset=${{ env.MYSQL_CHARSET }} \
+              -p mySqlCollation=${{ env.MYSQL_COLLATION }} \
               -p postgreSQLadministratorLogin=${{ env.PG_ADM_USR }} \
-              -p postgreSQLServerName=${{ env.PG_SERVER_NAME }} \
-              -p charset=${{ env.CHARSET }} \
-              -p collation=${{ env.COLLATION }} \
+              -p pgDbName=${{ env.PG_DB_NAME }} \
+              -p pgCharset=${{ env.PG_CHARSET }} \
+              -p pgCollation=${{ env.PG_COLLATION }} \
+              -p postgreSQLVersion=${{ env.PG_VERSION }} \
+
               -p vNetRules=[$vNetRules] \
               -p ipRules=$ipRules
 
