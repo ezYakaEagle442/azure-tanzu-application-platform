@@ -425,7 +425,7 @@ jobs:
             export PG_SQL_DATABASE=${{ env.PG_DB_NAME }}
             export PG_SQL_USERNAME=${{ env.PG_ADM_USR }}
             export PG_SQL_PASSWORD=${{ env.PG_ADM_PWD }}
-            
+
             export TAP_VERSION=${{ env.TAP_VERSION_NUMBER }}
 
             # need to substitute env var in the template file
@@ -562,6 +562,17 @@ jobs:
             echo "About to check DNS ..."
             dig @8.8.8.8 "tap-gui.${{ env.CUSTOM_DNS }}"
             # https://github.com/beeNotice/tanzu-tools/blob/main/tap/02_deploy-aks.sh
+
+            echo ""
+
+            echo "****************************************************************************************"
+            echo "*                                                                                      *"
+            echo "*                                                                                      *"
+            echo "You can now Access to the TAP GUI at https://tap-gui.tap.${{ env.CUSTOM_DNS }}         *"
+            echo "*                                                                                      *"
+            echo "*                                                                                      *"
+            echo "*                                                                                      *"
+            echo "****************************************************************************************"
 
       shell: bash
 
