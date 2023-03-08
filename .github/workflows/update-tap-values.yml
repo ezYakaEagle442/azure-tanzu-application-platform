@@ -24,7 +24,7 @@ env:
 
   # ==== Azure storage t, values must be consistent with the ones in iac/bicep/modules/aks/storage.bicep ====:
   AZ_STORAGE_NAME : statap42 # customize this
-  AZ_BLOB_CONTAINER_NAME: statap42-blob # customize this
+  AZ_BLOB_CONTAINER_NAME: tap42-blob # customize this
   # AZ_BLOB_SVC_NAME: default # MUST NOT BE MODIFIED
 
   # https://learn.microsoft.com/en-us/rest/api/storageservices/setting-timeouts-for-blob-service-operations
