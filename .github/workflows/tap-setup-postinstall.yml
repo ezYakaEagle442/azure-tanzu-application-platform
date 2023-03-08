@@ -33,7 +33,15 @@ env:
   AZ_BLOB_MAXSIZE_CONDITION: 440401920 # 420 Mb
   AZ_BLOB_TIMEOUT: 600
 
+  # ==== Tanzu DB ====
+
+  PG_SERVER_NAME: tap4242
+  PG_DB_NAME: tap4242
+  PG_ADM_USR: pgs_adm
+  PG_PORT: 5432
+
   # ==== Tanzu Tools ====
+
   IMG_PKG_CONCURRENCY: 2 # 1 or 2 ONLY for GitHub pulic Runners /!\ not more. Test with value 42 on Self-Hosted Runners deployed to AKS
 
   TANZU_INSTALL_DIR: tanzu
@@ -66,6 +74,8 @@ env:
   ING_NS: tanzu-system-ingress # Namespace to use for the Ingress Controller
 
   # ==== Secrets ====
+
+  PG_ADM_PWD: ${{ secrets.PG_ADM_PWD }}
 
   credentials: ${{ secrets.AZURE_CREDENTIALS }}
   AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -302,6 +312,12 @@ jobs:
             export INSTALL_REGISTRY_USERNAME=$acr_usr
             export INSTALL_REGISTRY_PASSWORD=$acr_pwd
             export INSTALL_REPO=${{ env.REPOSITORY }}
+
+            export PG_SQL_HOSTNAME=${{ env.PG_SERVER_NAME }}
+            export PG_SQL_PORT=${{ env.PG_PORT }}
+            export PG_SQL_DATABASE=${{ env.PG_DB_NAME }}
+            export PG_SQL_USERNAME=${{ env.PG_ADM_USR }}
+            export PG_SQL_PASSWORD=${{ env.PG_ADM_PWD }}
 
             export TAP_VERSION=${{ env.TAP_VERSION_NUMBER }}
 

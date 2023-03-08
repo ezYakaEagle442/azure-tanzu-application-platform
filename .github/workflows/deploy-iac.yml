@@ -55,7 +55,7 @@ env:
 
   PG_SERVER_NAME: tap4242
   PG_DB_NAME: tap4242
-  PG_ADM_USR: pg_adm
+  PG_ADM_USR: pgs_adm
   PG_TIME_ZONE: Europe/Paris
   PG_CHARACTER_SET: utf8
   PG_COLLATION: fr_FR.utf8 # select * from pg_collation ;
