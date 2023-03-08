@@ -6,6 +6,7 @@ env:
 
 
   # ==== Versions ====
+  
   AZ_CLI_VERSION: 2.45.0
   TANZU_CLI_VERSION: v0.25.4
   TAP_VERSION_NUMBER: 1.4.0
