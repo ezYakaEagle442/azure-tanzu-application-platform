@@ -74,12 +74,14 @@ module aks './modules/aks/aks.bicep' = {
     //enableAzureRBAC: aadEnableRBAC
   }
 }
+
+output aksId string = aks.outputs.aksId
+output aksName string = aks.outputs.aksName
 output controlPlaneFQDN string = aks.outputs.controlPlaneFQDN
 // https://github.com/Azure/azure-rest-api-specs/issues/17563
 output kubeletIdentity string = aks.outputs.kubeletIdentity
 output keyVaultAddOnIdentity string = aks.outputs.keyVaultAddOnIdentity
 output spnClientId string = aks.outputs.spnClientId
-output aksId string = aks.outputs.aksId
 output aksOutboundType string = aks.outputs.aksOutboundType
 // The default number of managed outbound public IPs is 1.
 // https://learn.microsoft.com/en-us/azure/aks/load-balancer-standard#scale-the-number-of-managed-outbound-public-ips
