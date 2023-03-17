@@ -28,6 +28,7 @@ param aksSubnetName string = 'snet-aks'
 param mySQLadministratorLogin string = 'mys_adm'
 
 @secure()
+@minLength(8)
 @description('The MySQL DB Admin Password.')
 param mySQLadministratorLoginPassword string
 
@@ -65,6 +66,7 @@ param databaseSkuTier string = 'Burstable'
 param postgreSQLadministratorLogin string = 'pgs_adm'
 
 @secure()
+@minLength(8)
 @description('The PostgreSQL DB Admin Password.')
 param postgreSQLadministratorLoginPassword string
 
@@ -153,6 +155,30 @@ module identities './modules/aks/identity.bicep' = {
   }
 }
 
+output adminServerIdentityId string = identities.outputs.adminServerIdentityId
+output adminServerPrincipalId string = identities.outputs.adminServerPrincipalId
+output adminServerClientId string = identities.outputs.adminServerClientId
+
+output configServerIdentityId string = identities.outputs.configServerIdentityId
+output configServerPrincipalId string = identities.outputs.configServerPrincipalId
+output configServerClientId string = identities.outputs.configServerClientId
+
+output apiGatewayIdentityId string = identities.outputs.apiGatewayIdentityId
+output apiGatewayPrincipalId string = identities.outputs.apiGatewayPrincipalId
+output apiGatewayClientId string = identities.outputs.apiGatewayClientId
+
+output customersServiceIdentityId string = identities.outputs.customersServiceIdentityId
+output customersServicePrincipalId string = identities.outputs.customersServicePrincipalId
+output customersServiceClientId string = identities.outputs.customersServiceClientId
+
+output vetsServiceIdentityId string = identities.outputs.vetsServiceIdentityId
+output vetsServicePrincipalId string = identities.outputs.vetsServicePrincipalId
+output vetsServiceClientId string = identities.outputs.vetsServiceClientId
+
+output visitsServiceIdentityId string = identities.outputs.visitsServiceIdentityId
+output visitsServicePrincipalId string = identities.outputs.visitsServicePrincipalId
+output visitsServiceClientId string = identities.outputs.visitsServiceClientId
+
 module vnet './modules/aks/vnet.bicep' = {
   name: 'vnet-aks'
   // scope: resourceGroup(rg.name)
@@ -164,6 +190,10 @@ module vnet './modules/aks/vnet.bicep' = {
      aksSubnetCidr: aksSubnetCidr
   }   
 }
+
+output vnetId string = vnet.outputs.vnetId
+output aksSubnetId string = vnet.outputs.aksSubnetId
+output aksSubnetAddressPrefix string = vnet.outputs.aksSubnetAddressPrefix
 
 var vNetRules = [
   {

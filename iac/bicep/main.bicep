@@ -44,9 +44,9 @@ param sshPublicKey string
 param authorizedIPRanges array = []
   
 @description('The AKS Cluster Admin Username')
-param aksAdminUserName string = '${appName}-admin'
+param aksAdminUserName string = 'tap-admin'
 
-resource vnet 'Microsoft.Network/virtualNetworks@2022-07-01' existing= {
+resource vnet 'Microsoft.Network/virtualNetworks@2022-09-01' existing= {
   name: vnetName
 }
 
@@ -87,3 +87,16 @@ output aksOutboundType string = aks.outputs.aksOutboundType
 // https://learn.microsoft.com/en-us/azure/aks/load-balancer-standard#scale-the-number-of-managed-outbound-public-ips
 output aksEffectiveOutboundIPs array = aks.outputs.aksEffectiveOutboundIPs
 output aksManagedOutboundIPsCount int = aks.outputs.aksManagedOutboundIPsCount
+
+
+module attachacr './modules/aks/attach-acr.bicep' = {
+  name: 'attach-acr'
+  params: {
+    appName: appName
+    acrName: prereq.outputs.acrName
+    aksClusterPrincipalId: aks.outputs.kubeletIdentity
+  }
+  dependsOn: [
+    aks
+  ]
+}

@@ -92,7 +92,6 @@ resource kvRG 'Microsoft.Resources/resourceGroups@2022-09-01' existing = {
   scope: subscription()
 }
 
-
 // see https://github.com/microsoft/azure-container-apps/issues/469
 // Now KV must Allow AKS OutboundPubIP in the IP rules ...
 // Must allow AKS to access Existing KV
@@ -107,6 +106,13 @@ module kvsetiprules './modules/kv/kv.bicep' = {
     vNetRules: vNetRules
   }
 }
+
+output keyVault object = kvsetiprules.outputs.keyVault
+output keyVaultId string = kvsetiprules.outputs.keyVaultId
+output keyVaultName string = kvsetiprules.outputs.keyVaultName
+output keyVaultURI string = kvsetiprules.outputs.keyVaultURI
+output keyVaultPublicNetworkAccess string = kvsetiprules.outputs.keyVaultPublicNetworkAccess
+output keyVaultPublicNetworkAclsIpRules array = kvsetiprules.outputs.keyVaultPublicNetworkAclsIpRules
 
 resource kv 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
   name: kvName

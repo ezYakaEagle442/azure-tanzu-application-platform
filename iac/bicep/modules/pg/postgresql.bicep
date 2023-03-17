@@ -25,6 +25,7 @@ param location string = resourceGroup().location
 param postgreSQLadministratorLogin string = 'pgs_adm'
 
 @secure()
+@minLength(8)
 @description('The PostgreSQL DB Admin Password.')
 param postgreSQLadministratorLoginPassword string
 
