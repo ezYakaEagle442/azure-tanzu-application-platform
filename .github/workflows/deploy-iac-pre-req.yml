@@ -18,21 +18,22 @@ env:
   RG_KV: rg-kv-tanzu101 # RG where to deploy KV
   RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
 
+  ACR_NAME: tap42
+  KV_NAME: kv-tap42 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
+  #SPN_APP_NAME: gha_aks_tap_run # A Service Principal required for GitHub Action Runner
+  #VM_ADMIN_USER_NAME: adm_aks
+
   # ==== Azure storage to store Artifacts , values must be consistent with the ones in storage.bicep ====:
   AZ_STORAGE_NAME : statap42 # customize this
   AZ_BLOB_CONTAINER_NAME: tap42-blob # customize this
-  # AZ_BLOB_SVC_NAME: default # MUST NOT BE MODIFIED
     
-  ACR_NAME: tanzu42
-
+  # Network
   VNET_NAME: vnet-aks
   VNET_CIDR: 172.16.0.0/16
   AKS_SUBNET_CIDR: 172.16.0.0/21
   AKS_SUBNET_NAME: snet-aks
 
-  DNS_ZONE: cloudapp.azure.com
-  APP_DNS_ZONE: tap.westeurope.cloudapp.azure.com
-
+  # MySQL
   MYSQL_SERVER_NAME: tap42
   MYSQL_DB_NAME: petclinic
   MYSQL_ADM_USR: mys_adm
@@ -41,9 +42,11 @@ env:
   MYSQL_COLLATION: utf8_general_ci  
   MYSQL_PORT: 3306
 
+  # SKU common for MySQL & PG
   DB_SKU_NAME: Standard_B1ms
   DB_SKU_TIER : Burstable
 
+  # PG
   PG_SERVER_NAME: tap42
   PG_DB_NAME: tap
   PG_ADM_USR: pg_adm
@@ -52,17 +55,18 @@ env:
   PG_COLLATION: fr_FR.utf8 # select * from pg_collation ;   
   PG_PORT: 5432
 
-  DEPLOY_TO_VNET: false
+  # ==== Secrets ====
 
-  SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT: https://kv-tap42.vault.azure.net/
-  KV_NAME: kv-tap42 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
-  SET_KV_ACCESS_POLICIES: false # let it to false
+  # https://learn.microsoft.com/en-us/azure/key-vault/secrets/secrets-best-practices#secrets-rotation
+  # Because secrets are sensitive to leakage or exposure, it's important to rotate them often, at least every 60 days. 
+  # Expiry date in seconds since 1970-01-01T00:00:00Z. Ex: 1672444800 ==> 31/12/2022'
+  SECRET_EXPIRY_DATE: 1703980800 # ==> 31/12/2023
 
-  SPN_APP_NAME: gha_aks_tap_run # A Service Principal required for GitHub Action Runner
 
-  VM_ADMIN_USER_NAME: adm_aks
+  ################################## DO NOT CHANGE params below   ##################################
 
   # ==== Secrets ====
+  
   # /!\ In Bicep : RBAC ==> GH Runner SPN must have "Storage Blob Data Contributor" Role on the storage Account"
   # /!\ The Id is NOT the App Registration Object ID, but the Enterprise Registration Object ID"
   SPN_APP_ID: ${{ secrets.SPN_APP_ID }} # This the App clientID
@@ -90,11 +94,6 @@ env:
   SSH_PRV_KEY: ${{ secrets.SSH_PRV_KEY }}
   SSH_PUB_KEY: ${{ secrets.SSH_PUB_KEY }}
   SSH_KEY: aksadm
-
-  # https://learn.microsoft.com/en-us/azure/key-vault/secrets/secrets-best-practices#secrets-rotation
-  # Because secrets are sensitive to leakage or exposure, it's important to rotate them often, at least every 60 days. 
-  # Expiry date in seconds since 1970-01-01T00:00:00Z. Ex: 1672444800 ==> 31/12/2022'
-  SECRET_EXPIRY_DATE: 1703980800 # ==> 31/12/2023
 
   credentials: ${{ secrets.AZURE_CREDENTIALS }}
   AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -293,8 +292,7 @@ jobs:
             -p pgCollation=${{ env.PG_COLLATION }} \
             -p acrName=${{ env.ACR_NAME }} \
             -p azureStorageName=${{ env.AZ_STORAGE_NAME }}  \
-            -p blobContainerName=${{ env.AZ_BLOB_CONTAINER_NAME }} \
-            -p deployToVNet=${{ env.DEPLOY_TO_VNET }}
+            -p blobContainerName=${{ env.AZ_BLOB_CONTAINER_NAME }}
 
           vetsServicePrincipalId=$(az deployment group show --name aks-identities -g ${{ env.RG_APP }} --query properties.outputs.vetsServicePrincipalId.value -o tsv)
           vetsServiceClientId=$(az deployment group show --name aks-identities -g ${{ env.RG_APP }} --query properties.outputs.vetsServiceClientId.value -o tsv)

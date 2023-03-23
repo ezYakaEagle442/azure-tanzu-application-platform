@@ -56,7 +56,7 @@ env:
   TANZU_REGISTRY: registry.tanzu.vmware.com
 
   AZURE_CONTAINER_REGISTRY: tanzu42 # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
-  REGISTRY_URL: tanzu42.azurecr.io  # set this to the URL of your registry
+  REGISTRY_URL: tap42.azurecr.io  # set this to the URL of your registry
   REPOSITORY: tap                   # set this to your ACR repository
   REPO_SUBFOLDER_APP_TAP: tanzu-app-tap
 

@@ -3,7 +3,6 @@ name: Load SQL scripts to DB
 
 env:
 
-
   # ==== Versions ====
 
   # ==== General settings  ====

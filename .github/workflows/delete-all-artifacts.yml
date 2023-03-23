@@ -15,6 +15,8 @@ env:
 
   GH_API: api.github.com/user/packages/maven
 
+  ################################## DO NOT CHANGE params below   ##################################
+  
   # ==== APPS ====:
 
   API_GATEWAY: api-gateway

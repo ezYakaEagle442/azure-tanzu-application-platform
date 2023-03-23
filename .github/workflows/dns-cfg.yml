@@ -14,7 +14,7 @@ env:
   RG_KV: rg-kv-tanzu101 # RG where to deploy KV
   RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
   
-  ACR_NAME: tanzu42 # customize this
+  ACR_NAME: tap42 # customize this
   DNS_ZONE: cloudapp.azure.com
   APP_DNS_ZONE: tap.westeurope.cloudapp.azure.com
   CUSTOM_DNS: appinnohandsonlab.com # set here your own domain name

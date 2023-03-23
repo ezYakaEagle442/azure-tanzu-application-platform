@@ -26,7 +26,6 @@ env:
   # ==== Azure storage t, values must be consistent with the ones in iac/bicep/modules/aks/storage.bicep ====:
   AZ_STORAGE_NAME : statap42 # customize this
   AZ_BLOB_CONTAINER_NAME: tap42-blob # customize this
-  # AZ_BLOB_SVC_NAME: default # MUST NOT BE MODIFIED
 
   # https://learn.microsoft.com/en-us/rest/api/storageservices/setting-timeouts-for-blob-service-operations
   AZ_BLOB_MAX_CONNECTIONS: 10
@@ -56,7 +55,7 @@ env:
   TANZU_REGISTRY: registry.tanzu.vmware.com
 
   AZURE_CONTAINER_REGISTRY: tanzu42 # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
-  REGISTRY_URL: tanzu42.azurecr.io  # set this to the URL of your registry
+  REGISTRY_URL: tap42.azurecr.io  # set this to the URL of your registry
   REPOSITORY: tap                   # set this to your ACR repository
   REPO_SUBFOLDER_APP_TAP: tanzu-app-tap
 

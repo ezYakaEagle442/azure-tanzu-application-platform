@@ -14,11 +14,7 @@ env:
   RG_KV: rg-kv-tanzu101 # RG where to deploy KV
   RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
   
-  DEPLOY_TO_VNET: false
-
-  KV_NAME: kv-tap42 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
-  SET_KV_ACCESS_POLICIES: false # let it to false
-
+  #DNS
   DNS_ZONE: cloudapp.azure.com
   APP_DNS_ZONE: tap.westeurope.cloudapp.azure.com
   CUSTOM_DNS: javaonazurehandsonlabs.com
@@ -26,23 +22,19 @@ env:
   
   TAP_NAMESPACE: tanzu
   PETCLINIC_NAMESPACE: petclinic
-  AKS_CLUSTER_NAME: aks-tap42
-  AZURE_CONTAINER_REGISTRY: tanzu42 # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
-  REGISTRY_URL: tanzu42.azurecr.io  # set this to the URL of your registry
-  REPOSITORY: tap                  # set this to your ACR repository
+  REPOSITORY: tap                   # set this to your ACR repository
 
-  # ==== Azure storage to store Artifacts , values must be consistent with the ones in storage.bicep ====:
-  AZ_STORAGE_NAME : statap42 # customize this
-  AZ_BLOB_CONTAINER_NAME: tap42-blob # customize this
-  # AZ_BLOB_SVC_NAME: default # MUST NOT BE MODIFIED
-  # https://stakspetcliaks.blob.core.windows.net/petcliaks-blob/spring-petclinic-vets-service-2.6.13.jar
+  ################################## DO NOT CHANGE params below   ##################################
 
+  # ==== Azure storage ====:
+  
   # https://learn.microsoft.com/en-us/rest/api/storageservices/setting-timeouts-for-blob-service-operations
   AZ_BLOB_MAX_CONNECTIONS: 5
   AZ_BLOB_MAXSIZE_CONDITION: 104857600
   AZ_BLOB_TIMEOUT: 600
   
   # ==== APPS ====
+
   CLOUD_PROVIDER_ENV: azure
   PRJ_PREFIX: spring-petclinic
 
@@ -108,6 +100,22 @@ jobs:
         echo "blobContainerName=" $blobContainerName
         echo "AZ_BLOB_CONTAINER_NAME="$blobContainerName >> $GITHUB_ENV
 
+        REGISTRY_URL=$(az deployment group show --name acr -g ${{ env.RG_APP }} --query properties.outputs.acrRegistryUrl.value -o tsv)
+        echo "REGISTRY_URL="$REGISTRY_URL
+        echo "REGISTRY_URL="$REGISTRY_URL >> $GITHUB_ENV
+
+        AZURE_CONTAINER_REGISTRY=$(az deployment group show --name acr -g ${{ env.RG_APP }} --query properties.outputs.acrName.value -o tsv)
+        echo "AZURE_CONTAINER_REGISTRY="$AZURE_CONTAINER_REGISTRY
+        echo "AZURE_CONTAINER_REGISTRY="$AZURE_CONTAINER_REGISTRY >> $GITHUB_ENV
+
+        KV_NAME=$(az deployment group show --name aks-tap-kv -g ${{ env.RG_KV }} --query properties.outputs.keyVaultName.value -o tsv)
+        echo "KV_NAME=$KV_NAME" >> $GITHUB_ENV 
+        echo "KV_NAME=$KV_NAME"
+
+        AKS_CLUSTER_NAME=$(az deployment group show --name aks-main -g ${{ env.RG_APP }} --query properties.outputs.aksName.value)
+        echo "AKS_CLUSTER_NAME=" $AKS_CLUSTER_NAME
+        echo "AKS_CLUSTER_NAME=$AKS_CLUSTER_NAME" >> $GITHUB_ENV 
+
         echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
 
       shell: bash
@@ -116,10 +124,13 @@ jobs:
       run: |
 
         echo "Checking GITHUB_ENV"
-        echo "LOCAL_IP=$LOCAL_IP"
         echo "API_GATEWAY_FOLDER=$API_GATEWAY_FOLDER"
         echo "GH_WORKSPACE=$GH_WORKSPACE"
         echo "AZ_STORAGE_NAME="$AZ_STORAGE_NAME
+        echo "AZ_BLOB_CONTAINER_NAME=$AZ_BLOB_CONTAINER_NAME
+        echo "REGISTRY_URL="$REGISTRY_URL
+        echo "AZURE_CONTAINER_REGISTRY="$AZURE_CONTAINER_REGISTRY
+        echo "LOCAL_IP=$LOCAL_IP"
 
       shell: bash
 
