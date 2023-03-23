@@ -46,6 +46,14 @@ param mySqlCharset string = 'utf8'
 ])
 param mySqlCollation string = 'utf8_general_ci' // SELECT @@character_set_database, @@collation_database;
 
+@description('MySQL version see https://learn.microsoft.com/en-us/azure/mysql/concepts-version-policy')
+@allowed([
+  '8.0.21'
+  '8.0.28'
+  '5.7'
+])
+param mySqlVersion string = '5.7' // https://docs.microsoft.com/en-us/azure/mysql/concepts-supported-versions
+
 @description('Azure Database SKU')
 @allowed([
   'Standard_D4s_v3'
@@ -72,6 +80,15 @@ param postgreSQLadministratorLoginPassword string
 
 @description('The PostgreSQL server name')
 param postgreSQLServerName string = appName
+
+@description('PostgreSQL version. See https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-supported-versions')
+@allowed([
+  '14'
+  '13'
+  '12'
+  '11'
+])
+param postgreSQLVersion string = '13' // https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-supported-versions
 
 @description('The PostgreSQL DB name.')
 param pgDbName string = 'tap'
@@ -225,6 +242,7 @@ module mysql './modules/mysql/mysql.bicep' = {
     appName: appName
     location: location
     mySQLServerName: mySQLServerName
+    mySqlVersion: mySqlVersion
     dbName: mySqlDbName
     databaseSkuName: databaseSkuName
     databaseSkuTier: databaseSkuTier
@@ -249,6 +267,7 @@ module postgresqldb './modules/pg/postgresql.bicep' = {
     appName: appName
     location: location
     postgreSQLServerName: postgreSQLServerName
+    postgreSQLVersion: postgreSQLVersion
     dbName: pgDbName
     databaseSkuName: databaseSkuName
     databaseSkuTier: databaseSkuTier    
@@ -261,6 +280,7 @@ module postgresqldb './modules/pg/postgresql.bicep' = {
 
 output PostgreSQLResourceID string = postgresqldb.outputs.PostgreSQLResourceID
 output PostgreSQLServerName string = postgresqldb.outputs.PostgreSQLServerName
+output PostgreSQLUser string = postgresqldb.outputs.PostgreSQLUser
 output PostgreSQLFQDN string = postgresqldb.outputs.PostgreSQLFQDN
 output PostgreSQLDBResourceID string = postgresqldb.outputs.PostgreSQLDBResourceID
 output PostgreSQLDBName string = postgresqldb.outputs.PostgreSQLDBName

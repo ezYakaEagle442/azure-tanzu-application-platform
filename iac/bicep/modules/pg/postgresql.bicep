@@ -94,12 +94,12 @@ resource PostgreSQLserver 'Microsoft.DBforPostgreSQL/flexibleServers@2022-12-01'
       storageSizeGB: 32
     }
   }
-  
 }
 
 output PostgreSQLResourceID string = PostgreSQLserver.id
 output PostgreSQLServerName string = PostgreSQLserver.name
 output PostgreSQLFQDN string = PostgreSQLserver.properties.fullyQualifiedDomainName
+output PostgreSQLUser string = PostgreSQLserver.properties.administratorLogin
 
 
  // Allow AKS
