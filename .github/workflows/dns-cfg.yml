@@ -53,7 +53,7 @@ jobs:
       run: |
 
         # ==== AKS ====
-        AKS_CLUSTER_NAME=$(az deployment group show --name aks-main -g ${{ env.RG_APP }} --query properties.outputs.aksName.value)
+        AKS_CLUSTER_NAME=$(az deployment group show --name aks-main -g ${{ env.RG_APP }} --query properties.outputs.aksName.value -o tsv | tr -d '\r' | tr -d '"')
         echo "AKS_CLUSTER_NAME="$AKS_CLUSTER_NAME
         echo "AKS_CLUSTER_NAME=$AKS_CLUSTER_NAME" >> $GITHUB_ENV
 
