@@ -41,6 +41,7 @@ env:
   MYSQL_CHARACTER_SET: utf8
   MYSQL_COLLATION: utf8_general_ci  
   MYSQL_PORT: 3306
+  MYSQL_VERSION: "5.7" # "8.0.21"
 
   # SKU common for MySQL & PG
   DB_SKU_NAME: Standard_B1ms
@@ -54,6 +55,7 @@ env:
   PG_CHARACTER_SET: utf8
   PG_COLLATION: fr_FR.utf8 # select * from pg_collation ;   
   PG_PORT: 5432
+  PG_VERSION: "13"
 
   # ==== Secrets ====
 
@@ -113,6 +115,7 @@ jobs:
     - name: Set Base environment variables
       run: |
 
+        az version
         # ip addr show eth3 | grep inet
         # ifconfig -a
         # hostname -I
@@ -121,7 +124,6 @@ jobs:
         # myip=$(dig +short myip.opendns.com @resolver1.opendns.com)      
         echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
 
-        az version
       shell: bash
 
     - name: Login with GHA Runner SP
@@ -284,8 +286,10 @@ jobs:
             -p databaseSkuName=${{ env.DB_SKU_NAME }} \
             -p databaseSkuTier=${{ env.DB_SKU_TIER }} \
             -p mySQLServerName=${{ env.MYSQL_SERVER_NAME }} \
+            -p mySqlVersion=${{ env.MYSQL_VERSION }} \
             -p mySQLadministratorLoginPassword=${{ env.SPRING_DATASOURCE_PASSWORD }} \
             -p postgreSQLServerName=${{ env.PG_SERVER_NAME }} \
+            -p postgreSQLVersion=${{ env.PG_VERSION }} \
             -p pgDbName=${{ env.PG_DB_NAME }} \
             -p postgreSQLadministratorLoginPassword=${{ env.PG_ADM_PWD }} \
             -p pgCharset=${{ env.PG_CHARACTER_SET }} \

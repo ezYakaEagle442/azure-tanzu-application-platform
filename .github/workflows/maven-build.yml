@@ -16,21 +16,14 @@ env:
   JAVA_VERSION: 11
 
   # ==== General settings  ====
-  
-  AZURE_CONTAINER_REGISTRY: tanzu42 # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
-  REGISTRY_URL: tanzu42.azurecr.io  # set this to the URL of your registry
-  REPOSITORY: tap                  # set this to your ACR repository
-  PROJECT_NAME: petclinic                # set this to your project's name
 
-  KV_NAME: kv-tap42 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
   RG_KV: rg-kv-tanzu101 # RG where to deploy KV
   RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
 
-  # ==== Azure storage to store Artifacts , values must be consistent with the ones in storage.bicep ====:
-  AZ_STORAGE_NAME : statap42 # customize this
-  AZ_BLOB_CONTAINER_NAME: tap42-blob # customize this
-  # AZ_BLOB_SVC_NAME: default # MUST NOT BE MODIFIED
-  # https://stakspetcliaks.blob.core.windows.net/petcliaks-blob/spring-petclinic-vets-service-2.6.13.jar
+  REPOSITORY: tap                  # set this to your ACR repository
+  PROJECT_NAME: petclinic                # set this to your project's name
+
+  ################################## DO NOT CHANGE params below   ##################################
 
   # https://learn.microsoft.com/en-us/rest/api/storageservices/setting-timeouts-for-blob-service-operations
   AZ_BLOB_MAX_CONNECTIONS: 5
@@ -61,6 +54,7 @@ env:
 
   # https://github.com/Azure/actions-workflow-samples/blob/master/assets/create-secrets-for-GitHub-workflows.md#consume-secrets-in-your-workflow
   # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#example-using-secrets
+  
   # ==== Secrets ====
   credentials: ${{ secrets.AZURE_CREDENTIALS }}
   AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -105,7 +99,7 @@ jobs:
     # /!\ IMPORTANT:  The step that creates or updates the environment variable does not have access to the new value, but all subsequent steps in a job will have access.
     - name: Set Base environment variables
       run: |
-        
+
         echo "API_GATEWAY_JAR_ARTIFACT=${{ env.PRJ_PREFIX }}-${{ env.API_GATEWAY }}-${{ env.DEPLOYMENT_VERSION }}.jar" >> $GITHUB_ENV
         echo "ADMIN_SERVER_JAR_ARTIFACT=${{ env.PRJ_PREFIX }}-${{ env.ADMIN_SERVER }}-${{ env.DEPLOYMENT_VERSION }}.jar" >> $GITHUB_ENV
         echo "CONFIG_SERVER_JAR_ARTIFACT=${{ env.PRJ_PREFIX }}-${{ env.CONFIG_SERVER }}-${{ env.DEPLOYMENT_VERSION }}.jar" >> $GITHUB_ENV
@@ -135,10 +129,7 @@ jobs:
         echo "VISITS_SERVICE_GROUP_ID=org.springframework.samples.petclinic.visits" >> $GITHUB_ENV
         echo "VISITS_SERVICE_ARTIFACT_ID=${{ env.PRJ_PREFIX }}-${{ env.VISITS_SERVICE }}" >> $GITHUB_ENV
 
-        KV_NAME=$(az deployment group show --name aks-tap-kv -g ${{ env.RG_KV }} --query properties.outputs.keyVaultName.value -o tsv)
-        echo "KV_NAME=$KV_NAME" >> $GITHUB_ENV 
-        echo "KV_NAME=$KV_NAME"
-
+        # ==== Storage ====
         storage_name=$(az deployment group show --name storage -g ${{ env.RG_APP }} --query properties.outputs.azurestorageName.value -o tsv)
         echo "storage_name=" $storage_name
         echo "AZ_STORAGE_NAME="$storage_name >> $GITHUB_ENV
@@ -146,9 +137,30 @@ jobs:
         blobContainerName=$(az deployment group show --name storage -g ${{ env.RG_APP }} --query properties.outputs.blobcontainerName.value -o tsv)
         echo "blobContainerName=" $blobContainerName
         echo "AZ_BLOB_CONTAINER_NAME="$blobContainerName >> $GITHUB_ENV
+     
+        # ==== ACR ====
+        REGISTRY_URL=$(az deployment group show --name acr -g ${{ env.RG_APP }} --query properties.outputs.acrRegistryUrl.value -o tsv)
+        echo "REGISTRY_URL="$REGISTRY_URL
+        echo "REGISTRY_URL="$REGISTRY_URL >> $GITHUB_ENV
+
+        AZURE_CONTAINER_REGISTRY=$(az deployment group show --name acr -g ${{ env.RG_APP }} --query properties.outputs.acrName.value -o tsv)
+        echo "AZURE_CONTAINER_REGISTRY="$AZURE_CONTAINER_REGISTRY
+        echo "AZURE_CONTAINER_REGISTRY="$AZURE_CONTAINER_REGISTRY >> $GITHUB_ENV
 
         echo "GH_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV # "/github/workspace"
         echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
+
+      shell: bash
+
+    - name: Display environment variables
+      run: |
+
+        echo "Checking GITHUB_ENV"
+        echo "LOCAL_IP=$LOCAL_IP"
+        echo "GH_WORKSPACE=$GH_WORKSPACE"
+        echo "AZ_STORAGE_NAME="$AZ_STORAGE_NAME
+        echo "AZURE_CONTAINER_REGISTRY="$AZURE_CONTAINER_REGISTRY
+        echo "REGISTRY_URL="$REGISTRY_URL
 
       shell: bash
 
@@ -202,6 +214,7 @@ jobs:
     # https://maven.apache.org/plugins/maven-deploy-plugin/deploy-mojo.html#altDeploymentRepository
     - name:  Publish the Maven package
       run: |
+
         mkdir -p ~/.m2
         echo "<settings><servers><server><id>github-aca</id><username>$(echo "$GITHUB_REPOSITORY" | awk -F / '{print $1}')</username><password>\${env.GITHUB_TOKEN}</password></server></servers></settings>" > ~/.m2/settings.xml
         REPO="github-aca::default::https://maven.pkg.github.com/${GITHUB_REPOSITORY}"
@@ -261,6 +274,10 @@ jobs:
           az configure --defaults acr=${{ env.AZURE_CONTAINER_REGISTRY }}
           
           # https://learn.microsoft.com/en-us/azure/container-registry/container-registry-get-started-docker-cli?tabs=azure-cli
+
+          # https://learn.microsoft.com/en-us/azure/container-registry/container-registry-get-started-docker-cli?tabs=azure-cli
+          # tag_id=$(DOCKER_BUILDKIT=0 docker build --build-arg --no-cache -t ${{ env.REGISTRY_URL }}/${{ env.REPOSITORY }}/${{ env.CONFIG_SERVER }}:$tag_id -f "./docker/petclinic-config-server/Dockerfile" . 2>/dev/null | awk '/Successfully built/{print $NF}')
+
           docker build --build-arg --no-cache -t ${{ env.REGISTRY_URL }}/${{ env.REPOSITORY }}/${{ env.CONFIG_SERVER }}:$tag_id -f "./docker/petclinic-config-server/Dockerfile" .
           docker tag ${{ env.REGISTRY_URL }}/${{ env.REPOSITORY }}/${{ env.CONFIG_SERVER }}:$tag_id ${{ env.REGISTRY_URL }}/${{ env.REPOSITORY }}/${{ env.CONFIG_SERVER }}:latest
           docker push "${{ env.REGISTRY_URL }}/${{ env.REPOSITORY }}/${{ env.CONFIG_SERVER }}:latest"

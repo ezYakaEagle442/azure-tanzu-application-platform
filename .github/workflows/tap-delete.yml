@@ -18,16 +18,11 @@ env:
   RG_KV: rg-kv-tanzu101 # RG where to deploy KV
   RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
   
-  AZURE_CONTAINER_REGISTRY: tanzu42 # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
-  REGISTRY_URL: tanzu42.azurecr.io  # set this to the URL of your registry
   REPOSITORY: tap                   # set this to your ACR repository
-  REPO_SUBFOLDER_APP_TAP: tanzu-app-tap
+  # REPO_SUBFOLDER_APP_TAP: tanzu-app-tap
 
-  # ==== Azure storage t, values must be consistent with the ones in iac/bicep/modules/aks/storage.bicep ====:
-  AZ_STORAGE_NAME : statap42 # customize this
-  AZ_BLOB_CONTAINER_NAME: tap42-blob # customize this
-  # AZ_BLOB_SVC_NAME: default # MUST NOT BE MODIFIED
-
+  ################################## DO NOT CHANGE params below   ################################## 
+  
   # https://learn.microsoft.com/en-us/rest/api/storageservices/setting-timeouts-for-blob-service-operations
   AZ_BLOB_MAX_CONNECTIONS: 10
   AZ_BLOB_MAXSIZE_CONDITION: 440401920 # 420 Mb
@@ -49,8 +44,6 @@ env:
   DEV_NAMESPACE: tap-dev
   TAP_INSTALL_NAMESPACE: tap-install                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
   KAPP_NAMESPACE: kapp-controller
-  AKS_CLUSTER_NAME: aks-tap42  # set this to your AKS cluster name
-  CONTEXT_NAME: aks-tap42 # usuallythe conext is the same as the AKS cluster name
 
   # ==== Secrets ====
 
@@ -78,17 +71,13 @@ jobs:
 
     - name: Set Base environment variables
       run: |
-      
-        managed_rg=$(az aks show --resource-group ${{ env.RG_APP }} --name ${{ env.AKS_CLUSTER_NAME }} --query nodeResourceGroup -o tsv)
-        echo "CLUSTER_RESOURCE_GROUP:" $managed_rg
-        echo "managed_rg=$managed_rg" >> $GITHUB_ENV
 
-        acr_usr=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .username) # ${{ env.AZURE_CONTAINER_REGISTRY }} 
-        acr_pwd=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .passwords[0].value)
+        # ==== AKS ====
+        AKS_CLUSTER_NAME=$(az deployment group show --name aks-main -g ${{ env.RG_APP }} --query properties.outputs.aksName.value)
+        echo "AKS_CLUSTER_NAME="$AKS_CLUSTER_NAME
+        echo "AKS_CLUSTER_NAME=$AKS_CLUSTER_NAME" >> $GITHUB_ENV
 
-        echo "acr_usr=$acr_usr" >> $GITHUB_ENV
-        echo "acr_pwd=$acr_pwd" >> $GITHUB_ENV
-
+        # ==== Storage ====        
         storage_name=$(az deployment group show --name storage -g ${{ env.RG_APP }} --query properties.outputs.azurestorageName.value -o tsv)
         echo "storage_name=" $storage_name
         echo "AZ_STORAGE_NAME="$storage_name >> $GITHUB_ENV
@@ -97,8 +86,39 @@ jobs:
         echo "blobContainerName=" $blobContainerName
         echo "AZ_BLOB_CONTAINER_NAME="$blobContainerName >> $GITHUB_ENV
 
+        # ==== ACR ====
+        REGISTRY_URL=$(az deployment group show --name acr -g ${{ env.RG_APP }} --query properties.outputs.acrRegistryUrl.value -o tsv)
+        echo "REGISTRY_URL="$REGISTRY_URL
+        echo "REGISTRY_URL="$REGISTRY_URL >> $GITHUB_ENV
+
+        AZURE_CONTAINER_REGISTRY=$(az deployment group show --name acr -g ${{ env.RG_APP }} --query properties.outputs.acrName.value -o tsv)
+        echo "AZURE_CONTAINER_REGISTRY="$AZURE_CONTAINER_REGISTRY
+        echo "AZURE_CONTAINER_REGISTRY="$AZURE_CONTAINER_REGISTRY >> $GITHUB_ENV
+
+         # ==== KV ====
+        KV_NAME=$(az deployment group show --name aks-tap-kv -g ${{ env.RG_KV }} --query properties.outputs.keyVaultName.value -o tsv)
+        echo "KV_NAME=$KV_NAME" >> $GITHUB_ENV 
+        echo "KV_NAME=$KV_NAME"
+
+        SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT=$(az deployment group show --name aks-tap-kv -g ${{ env.RG_KV }} --query properties.outputs.keyVaultURI.value -o tsv)
+        echo "SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT=$SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT" >> $GITHUB_ENV 
+        echo "SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT=$SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT"
+        
+        # ==== IP ====
+
         echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
         echo "GH_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV # "/github/workspace"
+
+      shell: bash
+
+    - name: Set Dependent environment variables
+      run: |
+
+        acr_usr=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .username)
+        acr_pwd=$(az acr credential show --name ${{ env.REGISTRY_URL }} -g ${{ env.RG_APP }} | jq -r .passwords[0].value)
+
+        echo "acr_usr=$acr_usr" >> $GITHUB_ENV
+        echo "acr_pwd=$acr_pwd" >> $GITHUB_ENV
 
       shell: bash
 
@@ -106,10 +126,13 @@ jobs:
       run: |
 
         echo "Checking GITHUB_ENV"
-        echo "LOCAL_IP=$LOCAL_IP"
-        echo "managed_rg=$managed_rg"
         echo "GH_WORKSPACE=$GH_WORKSPACE"
+        echo "LOCAL_IP=$LOCAL_IP"
         echo "AZ_STORAGE_NAME="$AZ_STORAGE_NAME
+        echo "AKS_CLUSTER_NAME="$AKS_CLUSTER_NAME
+        echo "AZURE_CONTAINER_REGISTRY="$AZURE_CONTAINER_REGISTRY
+        echo "REGISTRY_URL="$REGISTRY_URL        
+        echo "acr_usr=$acr_usr"
 
       shell: bash
 

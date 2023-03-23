@@ -11,17 +11,13 @@ env:
 
   APP_NAME: tap42
   LOCATION: westeurope
-  RG_KV: rg-kv-tanzu101 # RG where to deploy KV
   RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
   
-  ACR_NAME: tap42 # customize this
   DNS_ZONE: cloudapp.azure.com
-  APP_DNS_ZONE: tap.westeurope.cloudapp.azure.com
+  APP_DNS_ZONE: tap.westeurope.cloudapp.azure.com # customize this
   CUSTOM_DNS: appinnohandsonlab.com # set here your own domain name
   AZURE_DNS_LABEL_NAME: petclinictapsaks
 
-  PETCLINIC_NAMESPACE: petclinic
-  AKS_CLUSTER_NAME: aks-tap42
   VNET_NAME: vnet-aks
 
   ING_NS: ingress # Namespace to use for the Ingress Controller
@@ -52,6 +48,29 @@ jobs:
       uses: azure/login@v1 # https://github.com/marketplace/actions/azure-login
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }} # ${{ env.credentials }}
+
+    - name: Set Base environment variables
+      run: |
+
+        # ==== AKS ====
+        AKS_CLUSTER_NAME=$(az deployment group show --name aks-main -g ${{ env.RG_APP }} --query properties.outputs.aksName.value)
+        echo "AKS_CLUSTER_NAME="$AKS_CLUSTER_NAME
+        echo "AKS_CLUSTER_NAME=$AKS_CLUSTER_NAME" >> $GITHUB_ENV
+
+        echo "GH_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV # "/github/workspace"
+        echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
+
+      shell: bash
+
+    - name: Display environment variables
+      run: |
+
+        echo "Checking GITHUB_ENV"
+        echo "LOCAL_IP=$LOCAL_IP"
+        echo "AKS_CLUSTER_NAME=$AKS_CLUSTER_NAME"
+        echo "GH_WORKSPACE=$GH_WORKSPACE"
+
+      shell: bash
 
     - name: Checkout
       uses: actions/checkout@v3 # https://github.com/actions/checkout

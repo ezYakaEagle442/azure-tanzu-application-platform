@@ -6,67 +6,9 @@ env:
 
   # ==== Versions ====
 
-  DEPLOYMENT_VERSION: 2.6.13
-  AZ_CLI_VERSION: 2.45.0
-  JAVA_VERSION: 11
-  TANZU_CLI_VERSION: v0.25.4
-  TAP_VERSION_NUMBER: 1.4.0
-
   # ==== General settings  ====  
 
-  APP_NAME: tap42
-  LOCATION: westeurope # francecentral
-  RG_KV: rg-kv-tanzu101 # RG where to deploy KV
   RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
-  
-  DNS_ZONE: cloudapp.azure.com
-  APP_DNS_ZONE: westeurope.cloudapp.azure.com
-  CUSTOM_DNS: javaonazurehandsonlabs.com
-  AZURE_DNS_LABEL_NAME: tap-gui
-  TANZU_DNS_CHILD_ZONE: tap.javaonazurehandsonlabs.com
-
-  # ==== Azure storage t, values must be consistent with the ones in iac/bicep/modules/aks/storage.bicep ====:
-  AZ_STORAGE_NAME : statapaks # customize this
-  AZ_BLOB_CONTAINER_NAME: statapaks-blob # customize this
-  # AZ_BLOB_SVC_NAME: default # MUST NOT BE MODIFIED
-
-  # https://learn.microsoft.com/en-us/rest/api/storageservices/setting-timeouts-for-blob-service-operations
-  AZ_BLOB_MAX_CONNECTIONS: 10
-  AZ_BLOB_MAXSIZE_CONDITION: 440401920 # 420 Mb
-  AZ_BLOB_TIMEOUT: 600
-
-  # ==== Tanzu Tools ====
-  IMG_PKG_CONCURRENCY: 2 # 1 or 2 ONLY for GitHub pulic Runners /!\ not more. Test with value 42 on Self-Hosted Runners deployed to AKS
-
-  TANZU_INSTALL_DIR: tanzu
-  TANZU_ESSENTIALS: tanzu-cluster-essentials-linux-amd64-1.4.0.tgz
-  TANZU_GUI_CAT: tap-gui-blank-catalog.tgz
-  TANZU_CLI: tanzu-framework-linux-amd64-v0.25.4.tar # /!\ the version name must match M.n.p like v0.25.4 NOT v0.25.4.1
-
-  TANZU_BLOB_CLI: tanzu-cli
-  TANZU_BLOB_ESSENTIALS: tanzu-essentials
-  TANZU_BLOB_GUI_CAT: tanzu-catalog
-
-  TANZU_REGISTRY: registry.tanzu.vmware.com
-
-  AZURE_CONTAINER_REGISTRY: tanzu42 # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
-  REGISTRY_URL: tanzu42.azurecr.io  # set this to the URL of your registry
-  REPOSITORY: tap                   # set this to your ACR repository
-  REPO_SUBFOLDER_APP_TAP: tanzu-app-tap
-
-  CATALOG_URL: https://github.com/ezYakaEagle442/tap-catalog
-  TAP_NAMESPACE: tanzu
-  DEV_NAMESPACE: tap-dev
-  TAP_INSTALL_NAMESPACE: tap-install                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
-  KAPP_NAMESPACE: kapp-controller
-  AKS_CLUSTER_NAME: aks-tap42  # set this to your AKS cluster name
-  CONTEXT_NAME: aks-tap42 # usuallythe conext is the same as the AKS cluster name
-
-  VNET_NAME: vnet-aks
-
-  DNS_PREFIX: tanzu-tap42 # customize this
-  ING_NS: tanzu-system-ingress # Namespace to use for the Ingress Controller
-  AKS_IDENTITY_NAME: id-tap-cluster-dev-westeurope-101 # customize this
   
   # ==== Secrets ====
 
@@ -74,9 +16,6 @@ env:
   AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
   AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-  CERT_ADMIN_EMAIL: ${{ secrets.TANZU_NET_USER }}
-  TANZU_NET_USER: ${{ secrets.TANZU_NET_USER }}
-  TANZU_NET_PASSWORD: ${{ secrets.TANZU_NET_PASSWORD }}
   GH_PAT: ${{ secrets.GH_PAT }}
 
 on:
@@ -100,12 +39,12 @@ jobs:
     - name: Set Base environment variables
       run: |
 
+        AKS_CLUSTER_NAME=$(az deployment group show --name aks-main -g ${{ env.RG_APP }} --query properties.outputs.aksName.value)
+        echo "AKS_CLUSTER_NAME="$AKS_CLUSTER_NAME
+        echo "AKS_CLUSTER_NAME=$AKS_CLUSTER_NAME" >> $GITHUB_ENV
+
         echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
         echo "GH_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV # "/github/workspace"
-
-        managed_rg=$(az aks show --resource-group ${{ env.RG_APP }} --name ${{ env.AKS_CLUSTER_NAME }} --query nodeResourceGroup -o tsv)
-        echo "CLUSTER_RESOURCE_GROUP:" $managed_rg
-        echo "managed_rg=$managed_rg" >> $GITHUB_ENV
 
       shell: bash
 
@@ -113,7 +52,7 @@ jobs:
       run: |
         echo "Checking GITHUB_ENV"
         echo "LOCAL_IP=$LOCAL_IP"
-        echo "managed_rg=$managed_rg"
+        echo "AKS_CLUSTER_NAME=$AKS_CLUSTER_NAME"
         echo "GH_WORKSPACE=$GH_WORKSPACE"
       shell: bash
 

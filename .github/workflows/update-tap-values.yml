@@ -16,31 +16,22 @@ env:
   RG_KV: rg-kv-tanzu101 # RG where to deploy KV
   RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
   
-  DNS_ZONE: cloudapp.azure.com
-  APP_DNS_ZONE: tap.westeurope.cloudapp.azure.com
-  CUSTOM_DNS: appinnohandsonlab.com
-  AZURE_DNS_LABEL_NAME: tap
+  #DNS_ZONE: cloudapp.azure.com
+  #APP_DNS_ZONE: tap.westeurope.cloudapp.azure.com
+  #CUSTOM_DNS: appinnohandsonlab.com
+  #AZURE_DNS_LABEL_NAME: tap
   TANZU_DNS_CHILD_ZONE: tap.appinnohandsonlab.com
 
-  # ==== Azure storage t, values must be consistent with the ones in iac/bicep/modules/aks/storage.bicep ====:
-  AZ_STORAGE_NAME : statap42 # customize this
-  AZ_BLOB_CONTAINER_NAME: tap42-blob # customize this
-  # AZ_BLOB_SVC_NAME: default # MUST NOT BE MODIFIED
+  ################################## DO NOT CHANGE params below   ################################## 
 
   # https://learn.microsoft.com/en-us/rest/api/storageservices/setting-timeouts-for-blob-service-operations
   AZ_BLOB_MAX_CONNECTIONS: 10
   AZ_BLOB_MAXSIZE_CONDITION: 440401920 # 420 Mb
   AZ_BLOB_TIMEOUT: 600
 
-
-  # ==== Tanzu DB ====
-
-  PG_SERVER_NAME: tap42
-  PG_DB_NAME: tap
-  PG_ADM_USR: pgs_adm
-  PG_PORT: 5432
-  
   # ==== Tanzu Tools ====
+
+  PG_PORT: 5432
 
   IMG_PKG_CONCURRENCY: 2 # 1 or 2 ONLY for GitHub pulic Runners /!\ not more. Test with value 42 on Self-Hosted Runners deployed to AKS
 
@@ -55,8 +46,6 @@ env:
 
   TANZU_REGISTRY: registry.tanzu.vmware.com
 
-  AZURE_CONTAINER_REGISTRY: tanzu42 # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
-  REGISTRY_URL: tap42.azurecr.io  # set this to the URL of your registry
   REPOSITORY: tap                   # set this to your ACR repository
   REPO_SUBFOLDER_APP_TAP: tanzu-app-tap
 
@@ -65,14 +54,6 @@ env:
   DEV_NAMESPACE: tap-dev
   TAP_INSTALL_NAMESPACE: tap-install                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
   KAPP_NAMESPACE: kapp-controller
-  AKS_CLUSTER_NAME: aks-tap42  # set this to your AKS cluster name
-  CONTEXT_NAME: aks-tap42 # usuallythe conext is the same as the AKS cluster name
-
-  VNET_NAME: vnet-aks
-
-  DNS_PREFIX: tanzu-tap42 # customize this
-  ING_NS: tanzu-system-ingress # Namespace to use for the Ingress Controller
-  AKS_IDENTITY_NAME: id-tap-cluster-dev-westeurope-101 # customize this
 
   # ==== Secrets ====
 
@@ -112,10 +93,12 @@ jobs:
     - name: Set Base environment variables
       run: |
 
-        managed_rg=$(az aks show --resource-group ${{ env.RG_APP }} --name ${{ env.AKS_CLUSTER_NAME }} --query nodeResourceGroup -o tsv)
-        echo "CLUSTER_RESOURCE_GROUP:" $managed_rg
-        echo "managed_rg=$managed_rg" >> $GITHUB_ENV
-        
+        # ==== AKS ====
+        AKS_CLUSTER_NAME=$(az deployment group show --name aks-main -g ${{ env.RG_APP }} --query properties.outputs.aksName.value)
+        echo "AKS_CLUSTER_NAME="$AKS_CLUSTER_NAME
+        echo "AKS_CLUSTER_NAME=$AKS_CLUSTER_NAME" >> $GITHUB_ENV
+
+        # ==== Storage ====        
         storage_name=$(az deployment group show --name storage -g ${{ env.RG_APP }} --query properties.outputs.azurestorageName.value -o tsv)
         echo "storage_name=" $storage_name
         echo "AZ_STORAGE_NAME="$storage_name >> $GITHUB_ENV
@@ -123,6 +106,37 @@ jobs:
         blobContainerName=$(az deployment group show --name storage -g ${{ env.RG_APP }} --query properties.outputs.blobcontainerName.value -o tsv)
         echo "blobContainerName=" $blobContainerName
         echo "AZ_BLOB_CONTAINER_NAME="$blobContainerName >> $GITHUB_ENV
+
+        # ==== Tanzu DB ====
+        PG_SERVER_NAME=$(az deployment group show --name postgresqldb -g ${{ env.RG_APP }} --query properties.outputs.postgreSQLServerName.value -o tsv)
+        echo "PG_SERVER_NAME="$PG_SERVER_NAME
+        echo "PG_SERVER_NAME="$PG_SERVER_NAME >> $GITHUB_ENV
+
+        PG_DB_NAME=$(az deployment group show --name postgresqldb -g ${{ env.RG_APP }} --query properties.outputs.PostgreSQLDBName.value -o tsv)
+        echo "PG_DB_NAME="$PG_DB_NAME
+        echo "PG_DB_NAME="$PG_DB_NAME >> $GITHUB_ENV
+
+        PG_ADM_USR=$(az deployment group show --name postgresqldb -g ${{ env.RG_APP }} --query properties.outputs.PostgreSQLUser.value -o tsv)
+        echo "PG_ADM_USR="$PG_ADM_USR
+        echo "PG_ADM_USR="$PG_ADM_USR >> $GITHUB_ENV
+      
+        # ==== ACR ====
+        REGISTRY_URL=$(az deployment group show --name acr -g ${{ env.RG_APP }} --query properties.outputs.acrRegistryUrl.value -o tsv)
+        echo "REGISTRY_URL="$REGISTRY_URL
+        echo "REGISTRY_URL="$REGISTRY_URL >> $GITHUB_ENV
+
+        AZURE_CONTAINER_REGISTRY=$(az deployment group show --name acr -g ${{ env.RG_APP }} --query properties.outputs.acrName.value -o tsv)
+        echo "AZURE_CONTAINER_REGISTRY="$AZURE_CONTAINER_REGISTRY
+        echo "AZURE_CONTAINER_REGISTRY="$AZURE_CONTAINER_REGISTRY >> $GITHUB_ENV
+
+         # ==== KV ====
+        KV_NAME=$(az deployment group show --name aks-tap-kv -g ${{ env.RG_KV }} --query properties.outputs.keyVaultName.value -o tsv)
+        echo "KV_NAME=$KV_NAME" >> $GITHUB_ENV 
+        echo "KV_NAME=$KV_NAME"
+
+        SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT=$(az deployment group show --name aks-tap-kv -g ${{ env.RG_KV }} --query properties.outputs.keyVaultURI.value -o tsv)
+        echo "SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT=$SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT" >> $GITHUB_ENV 
+        echo "SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT=$SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT"
 
         echo "GH_WORKSPACE=${{ github.workspace }}" >> $GITHUB_ENV # "/github/workspace"
         echo "LOCAL_IP=$(curl whatismyip.akamai.com)" >> $GITHUB_ENV
@@ -134,8 +148,14 @@ jobs:
 
         echo "Checking GITHUB_ENV"
         echo "LOCAL_IP=$LOCAL_IP"
-        echo "managed_rg=$managed_rg"
+        echo "AKS_CLUSTER_NAME=$AKS_CLUSTER_NAME"
         echo "AZ_STORAGE_NAME="$AZ_STORAGE_NAME
+        echo "AZURE_CONTAINER_REGISTRY="$AZURE_CONTAINER_REGISTRY
+        echo "REGISTRY_URL="$REGISTRY_URL
+        echo "PG_DB_NAME="$PG_DB_NAME
+        echo "PG_ADM_USR="$PG_ADM_USR
+        echo "PG_SERVER_NAME="$PG_SERVER_NAME
+        echo "PG_PORT="$PG_PORT
         echo "GH_WORKSPACE=$GH_WORKSPACE"
 
       shell: bash
@@ -205,7 +225,7 @@ jobs:
 
     - name: Install CLI & Plugins
       run: |
-      
+
             ls -al ${{ env.TANZU_INSTALL_DIR }}
 
             tar -xvf ${{ env.TANZU_INSTALL_DIR }}/${{ env.TANZU_ESSENTIALS }} -C ${{ env.TANZU_INSTALL_DIR }}

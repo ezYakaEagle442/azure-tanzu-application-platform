@@ -4,7 +4,12 @@ env:
 
   # ==== General settings  ====
 
+  RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
+
+  ################################## DO NOT CHANGE params below   ################################## 
+
   # ==== Tanzu Tools ====
+  
   TANZU_INSTALL_DIR: tanzu
   TANZU_ESSENTIALS: tanzu/tanzu-cluster-essentials-linux-amd64-1.4.0.tgz
   TANZU_GUI_CAT: tap-gui-blank-catalog.tgz
@@ -13,12 +18,6 @@ env:
   TANZU_BLOB_CLI: tanzu-cli
   TANZU_BLOB_ESSENTIALS: tanzu-essentials
   TANZU_BLOB_GUI_CAT: tanzu-catalog
-
-  RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
-
-  # ==== Azure storage to store Artifacts , values must be consistent with the ones in iac/bicep/modules/aks/storage.bicep ====:
-  AZ_STORAGE_NAME : statap42 # customize this
-  AZ_BLOB_CONTAINER_NAME: tap42-blob # customize this
 
   # https://learn.microsoft.com/en-us/rest/api/storageservices/setting-timeouts-for-blob-service-operations
   AZ_BLOB_MAX_CONNECTIONS: 10
