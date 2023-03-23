@@ -23,7 +23,7 @@ param networkRuleSetCidr string = '172.16.0.0/16'
 @description('The ACR SKU, either Basic with admin user enabled, or Premium with scoped-permissions')
 param acrSkuName string = 'Basic'
 
-@description('Admin user muste be enabled ONLY when acrSkuName is Basic')
+@description('Admin user must be enabled ONLY when acrSkuName is Basic')
 param adminUserEnabled bool = true
 
 resource acr 'Microsoft.ContainerRegistry/registries@2023-01-01-preview' = {
