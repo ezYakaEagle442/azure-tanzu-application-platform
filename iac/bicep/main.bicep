@@ -2,8 +2,11 @@
 // to get a unique name each time ==> param appName string = 'demo${uniqueString(resourceGroup().id, deployment().name)}'
 param appName string = 'tap${uniqueString(resourceGroup().id, subscription().id)}'
 
+@description('The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.')
+param acrName string = appName
+
 param location string = resourceGroup().location
-// param rgName string = 'rg-${appName}'
+
 param dnsPrefix string = 'tanzu-${appName}'
 param clusterName string = 'aks-${appName}'
 param aksVersion string = '1.24.6'
@@ -13,25 +16,6 @@ param vnetName string = 'vnet-aks'
 
 @description('The Admin Group Object IDs to use for AAD Integration.')
 param adminGroupObjectIDs string = '4242-4242-4242-4242'
-
-/*
-@description('The Azure AD Server App ID to use for AAD Integration.')
-param aadServerAppID string = '4242-4242-4242-4242'
-
-@secure()
-@description('The Azure AD Server App Secret to use for AAD Integration.')
-param aadServerAppSecret string
-
-@description('The Azure AD Client App ID to use for AAD Integration.')
-param aadClientAppID string = '4242-4242-4242-4242'
-
-@secure()
-@description('The Azure AD Client App Secret to use for AAD Integration.')
-param aadClientAppSecret string
-
-@description('Is Azure AD RBAC enabled ?')
-param aadEnableRBAC bool = false
-*/
 
 @description('AKS Cluster UserAssigned Managed Identity name. Character limit: 3-128 Valid characters: Alphanumerics, hyphens, and underscores')
 param aksIdentityName string = 'id-aks-${appName}-cluster-dev-${location}-101'
@@ -93,7 +77,7 @@ module attachacr './modules/aks/attach-acr.bicep' = {
   name: 'attach-acr'
   params: {
     appName: appName
-    acrName: prereq.outputs.acrName
+    acrName: acrName
     aksClusterPrincipalId: aks.outputs.kubeletIdentity
   }
   dependsOn: [
