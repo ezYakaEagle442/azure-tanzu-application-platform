@@ -305,7 +305,7 @@ az extension add -n k8s-configuration
 ## K8S Tips
 
 
-``sh
+```sh
   source <(kubectl completion bash) # setup autocomplete in bash into the current shell, bash-completion package should be installed first.
   echo "source <(kubectl completion bash)" >> ~/.bashrc 
   alias k=kubectl
@@ -327,7 +327,7 @@ az extension add -n k8s-configuration
   vi ~/.vimrc
   set ts=2 sw=2
   . ~/.vimrc
-``
+```
 
 ## AKS integration with AAD pre-req
 
@@ -1128,7 +1128,7 @@ To update TAP-values run the Workflow [.github/workflows/update-tap-values.yml](
 TANZU_INSTALL_DIR=tanzu
 TAP_INSTALL_NAMESPACE=tap-install
 
-tanzu package installed update tap -p tap.tanzu.vmware.com -v $TAP_VERSION --values-file ${{ env.TANZU_INSTALL_DIR }}/deploy/tap-values.yml -n ${{ env.TAP_INSTALL_NAMESPACE}}
+tanzu package installed update tap -p tap.tanzu.vmware.com -v $TAP_VERSION --values-file ${TANZU_INSTALL_DIR}/deploy/tap-values.yml -n ${TAP_INSTALL_NAMESPACE}
 
 tanzu package installed list -A
 ```
