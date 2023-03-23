@@ -33,7 +33,7 @@ env:
   # ==== Tanzu Tools ====
 
   PG_PORT: 5432
-  
+
   IMG_PKG_CONCURRENCY: 2 # 1 or 2 ONLY for GitHub pulic Runners /!\ not more. Test with value 42 on Self-Hosted Runners deployed to AKS
 
   TANZU_INSTALL_DIR: tanzu
@@ -119,11 +119,11 @@ jobs:
         echo "PG_SERVER_NAME="$PG_SERVER_NAME
         echo "PG_SERVER_NAME="$PG_SERVER_NAME >> $GITHUB_ENV
 
-        PG_DB_NAME=$(az deployment group show --name postgresqldb -g ${{ env.RG_APP }} --query properties.outputs.PostgreSQLDBName.value -o tsv)
+        PG_DB_NAME=$(az deployment group show --name postgresqldb -g ${{ env.RG_APP }} --query properties.outputs.postgreSQLDBName.value -o tsv)
         echo "PG_DB_NAME="$PG_DB_NAME
         echo "PG_DB_NAME="$PG_DB_NAME >> $GITHUB_ENV
 
-        PG_ADM_USR=$(az deployment group show --name postgresqldb -g ${{ env.RG_APP }} --query properties.outputs.PostgreSQLUser.value -o tsv)
+        PG_ADM_USR=$(az deployment group show --name postgresqldb -g ${{ env.RG_APP }} --query properties.outputs.postgreSQLUser.value -o tsv)
         echo "PG_ADM_USR="$PG_ADM_USR
         echo "PG_ADM_USR="$PG_ADM_USR >> $GITHUB_ENV       
 
