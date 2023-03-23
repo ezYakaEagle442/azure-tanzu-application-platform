@@ -40,7 +40,7 @@ param ipRules array = []
 @description('The KV vNetRules')
 param vNetRules array = [] 
 
-resource kv 'Microsoft.KeyVault/vaults@2022-07-01' = {
+resource kv 'Microsoft.KeyVault/vaults@2022-11-01' = {
   name: kvName
   location: location
   properties: {
@@ -74,6 +74,7 @@ resource kv 'Microsoft.KeyVault/vaults@2022-07-01' = {
 
 output keyVault object = kv
 output keyVaultName string = kv.name
+output keyVaultURI string = kv.properties.vaultUri
 output keyVaultId string = kv.id
 output keyVaultPublicNetworkAccess string = kv.properties.publicNetworkAccess
-output keyVaultURI string = kv.properties.vaultUri
+output keyVaultPublicNetworkAclsIpRules array = kv.properties.networkAcls.ipRules

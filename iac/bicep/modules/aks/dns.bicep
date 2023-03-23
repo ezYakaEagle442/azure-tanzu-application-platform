@@ -41,7 +41,7 @@ param customDns string = 'javaonazurehandsonlabs.com'
 param privateDnsZone string = 'privatelink.${location}.azmk8s.io' // API-server URL ex for public clusters: appinnojava-478b2e1b.hcp.westeurope.azmk8s.io
 
 
-resource vnet 'Microsoft.Network/virtualNetworks@2022-07-01' existing =  {
+resource vnet 'Microsoft.Network/virtualNetworks@2022-09-01' existing =  {
   name: vnetName
 }
 output vnetId string = vnet.id

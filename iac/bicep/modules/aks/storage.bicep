@@ -47,7 +47,7 @@ param tags object = {
 
 
 // https://learn.microsoft.com/en-us/azure/templates/microsoft.managedidentity/userassignedidentities?pivots=deployment-language-bicep
-resource storageIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' existing = {
+resource storageIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' existing = {
   name: storageIdentityName
 }
 
@@ -128,13 +128,12 @@ resource azurestorage 'Microsoft.Storage/storageAccounts@2022-09-01' = {
 
 output azurestorageId string = azurestorage.id
 output azurestorageName string = azurestorage.name
+output azurestorageHttpEndpoint string = azurestorage.properties.primaryEndpoints.blob
+output azurestorageFileEndpoint string = azurestorage.properties.primaryEndpoints.file
 // outputs-should-not-contain-secrets
 // output azurestorageSasToken string = azurestorage.listAccountSas().accountSasToken
 // output azurestorageKey0 string = azurestorage.listKeys().keys[0].value
 // output azurestorageKey1 string = azurestorage.listKeys().keys[1].value
-
-output azurestorageHttpEndpoint string = azurestorage.properties.primaryEndpoints.blob
-output azurestorageFileEndpoint string = azurestorage.properties.primaryEndpoints.file
 
 
 // https://learn.microsoft.com/en-us/azure/templates/microsoft.storage/storageaccounts/blobservices?pivots=deployment-language-bicep

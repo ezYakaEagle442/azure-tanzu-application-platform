@@ -54,7 +54,7 @@ param storageIdentityName string = 'id-aks-${appName}-strorage-dev-${location}-1
 
 
 // https://learn.microsoft.com/en-us/azure/templates/microsoft.managedidentity/userassignedidentities?pivots=deployment-language-bicep
-resource storageIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
+resource storageIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: storageIdentityName
   location: location
   tags: tags
@@ -65,7 +65,7 @@ output storageIdentityPrincipalId string = storageIdentity.properties.principalI
 
 
 // https://learn.microsoft.com/en-us/azure/templates/microsoft.managedidentity/userassignedidentities?pivots=deployment-language-bicep
-resource aksIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
+resource aksIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: aksIdentityName
   location: location
   tags: tags
@@ -75,7 +75,7 @@ output aksIdentityName string = aksIdentity.name
 output aksIdentityPrincipalId string = aksIdentity.properties.principalId
 output aksIdentityClientId string = aksIdentity.properties.clientId
 
-resource adminServerIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
+resource adminServerIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: adminServerAppIdentityName
   location: location
   tags: tags
@@ -85,7 +85,7 @@ output adminServerIdentityName string = adminServerIdentity.name
 output adminServerPrincipalId string = adminServerIdentity.properties.principalId
 output adminServerClientId string = adminServerIdentity.properties.clientId
 
-resource configServerIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
+resource configServerIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: configServerAppIdentityName
   location: location
   tags: tags
@@ -96,7 +96,7 @@ output configServerPrincipalId string = configServerIdentity.properties.principa
 output configServerClientId string = configServerIdentity.properties.clientId
 
 
-resource discoveryServerIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
+resource discoveryServerIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: discoveryServerAppIdentityName
   location: location
   tags: tags
@@ -106,7 +106,7 @@ output discoveryServerIdentityName string = discoveryServerIdentity.name
 output discoveryServerPrincipalId string = discoveryServerIdentity.properties.principalId
 output discoveryServerClientId string = discoveryServerIdentity.properties.clientId
 
-resource apiGatewayIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
+resource apiGatewayIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: apiGatewayAppIdentityName
   location: location
   tags: tags
@@ -116,7 +116,7 @@ output apiGatewayIdentityName string = apiGatewayIdentity.name
 output apiGatewayPrincipalId string = apiGatewayIdentity.properties.principalId
 output apiGatewayClientId string = apiGatewayIdentity.properties.clientId
 
-resource customersServicedentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
+resource customersServicedentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: customersServiceAppIdentityName
   location: location
   tags: tags
@@ -126,7 +126,7 @@ output customersServiceIdentityName string = customersServicedentity.name
 output customersServicePrincipalId string = customersServicedentity.properties.principalId
 output customersServiceClientId string = customersServicedentity.properties.clientId
 
-resource vetsServiceIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
+resource vetsServiceIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: vetsServiceAppIdentityName
   location: location
   tags: tags
@@ -136,7 +136,7 @@ output vetsServiceIdentityName string = vetsServiceIdentity.name
 output vetsServicePrincipalId string = vetsServiceIdentity.properties.principalId
 output vetsServiceClientId string = vetsServiceIdentity.properties.clientId
 
-resource visitsServiceIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' = {
+resource visitsServiceIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: visitsServiceAppIdentityName
   location: location
   tags: tags

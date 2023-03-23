@@ -33,7 +33,7 @@ param storageBlobRoleType string = 'StorageBlobDataContributor'
 
 param ghRunnerSpnPrincipalId string
 
-resource aksSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-07-01' existing = {
+resource aksSubnet 'Microsoft.Network/virtualNetworks/subnets@2022-09-01' existing = {
   name: '${vnetName}/${subnetName}'
 }
 

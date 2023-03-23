@@ -114,7 +114,7 @@ output keyVaultURI string = kvsetiprules.outputs.keyVaultURI
 output keyVaultPublicNetworkAccess string = kvsetiprules.outputs.keyVaultPublicNetworkAccess
 output keyVaultPublicNetworkAclsIpRules array = kvsetiprules.outputs.keyVaultPublicNetworkAclsIpRules
 
-resource kv 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
+resource kv 'Microsoft.KeyVault/vaults@2022-11-01' existing = {
   name: kvName
   scope: kvRG
 }  

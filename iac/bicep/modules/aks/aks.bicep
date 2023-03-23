@@ -18,7 +18,7 @@ param sshPublicKey string
 param authorizedIPRanges array = []
   
 @description('The AKS Cluster Admin Username')
-param aksAdminUserName string = '${appName}-admin'
+param aksAdminUserName string = 'tap-admin'
 
 // Preview: https://docs.microsoft.com/en-us/azure/aks/supported-kubernetes-versions?tabs=azure-cli#kubernetes-version-alias-preview
 @description('The AKS Cluster alias version')
@@ -126,7 +126,7 @@ resource aksIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-3
 
 // https://docs.microsoft.com/en-us/azure/templates/microsoft.containerservice/managedclusters?tabs=bicep
 // https://github.com/Azure/AKS-Construction/blob/main/bicep/main.bicep
-resource aks 'Microsoft.ContainerService/managedClusters@2022-10-02-preview' = {
+resource aks 'Microsoft.ContainerService/managedClusters@2022-11-02-preview' = {
   name: clusterName
   location: location
   sku: {
@@ -321,11 +321,12 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-10-02-preview' = {
 }
 
 // https://github.com/Azure/azure-rest-api-specs/issues/17563
+output aksId string = aks.id
+output aksName string = aks.name
 output controlPlaneFQDN string = aks.properties.fqdn
 output kubeletIdentity string = aks.properties.identityProfile.kubeletidentity.objectId
 output keyVaultAddOnIdentity string = aks.properties.addonProfiles.azureKeyvaultSecretsProvider.identity.objectId
 output spnClientId string = aks.properties.servicePrincipalProfile.clientId
-output aksId string = aks.id
 
 // output aksIdentityPrincipalId string = aks.identity.principalId
 output aksOutboundType string = aks.properties.networkProfile.outboundType
