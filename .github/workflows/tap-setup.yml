@@ -32,6 +32,8 @@ env:
 
   # ==== Tanzu Tools ====
 
+  PG_PORT: 5432
+  
   IMG_PKG_CONCURRENCY: 2 # 1 or 2 ONLY for GitHub pulic Runners /!\ not more. Test with value 42 on Self-Hosted Runners deployed to AKS
 
   TANZU_INSTALL_DIR: tanzu
@@ -117,17 +119,13 @@ jobs:
         echo "PG_SERVER_NAME="$PG_SERVER_NAME
         echo "PG_SERVER_NAME="$PG_SERVER_NAME >> $GITHUB_ENV
 
-        PG_DB_NAME=$(az deployment group show --name postgresqldb -g ${{ env.RG_APP }} --query properties.outputs.xxx.value -o tsv)
+        PG_DB_NAME=$(az deployment group show --name postgresqldb -g ${{ env.RG_APP }} --query properties.outputs.PostgreSQLDBName.value -o tsv)
         echo "PG_DB_NAME="$PG_DB_NAME
         echo "PG_DB_NAME="$PG_DB_NAME >> $GITHUB_ENV
 
-        PG_ADM_USR=$(az deployment group show --name postgresqldb -g ${{ env.RG_APP }} --query properties.outputs.xxx.value -o tsv)
+        PG_ADM_USR=$(az deployment group show --name postgresqldb -g ${{ env.RG_APP }} --query properties.outputs.PostgreSQLUser.value -o tsv)
         echo "PG_ADM_USR="$PG_ADM_USR
-        echo "PG_ADM_USR="$PG_ADM_USR >> $GITHUB_ENV
-
-        PG_PORT=$(az deployment group show --name postgresqldb -g ${{ env.RG_APP }} --query properties.outputs.xxx.value -o tsv)
-        echo "PG_PORT="$PG_PORT
-        echo "PG_PORT="$PG_PORT >> $GITHUB_ENV        
+        echo "PG_ADM_USR="$PG_ADM_USR >> $GITHUB_ENV       
 
         # ==== ACR ====
         REGISTRY_URL=$(az deployment group show --name acr -g ${{ env.RG_APP }} --query properties.outputs.acrRegistryUrl.value -o tsv)
@@ -159,6 +157,7 @@ jobs:
         CLUSTER_RESOURCE_GROUP=$(az aks show --resource-group ${{ env.RG_APP }} --name ${{ env.AKS_CLUSTER_NAME }} --query nodeResourceGroup -o tsv)
         echo "CLUSTER_RESOURCE_GROUP:" $CLUSTER_RESOURCE_GROUP
         echo "CLUSTER_RESOURCE_GROUP=$CLUSTER_RESOURCE_GROUP" >> $GITHUB_ENV
+
       shell: bash
 
     - name: Display environment variables
