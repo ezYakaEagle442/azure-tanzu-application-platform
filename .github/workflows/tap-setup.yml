@@ -98,10 +98,6 @@ jobs:
     - name: Set Base environment variables
       run: |
 
-        managed_rg=$(az aks show --resource-group ${{ env.RG_APP }} --name ${{ env.AKS_CLUSTER_NAME }} --query nodeResourceGroup -o tsv)
-        echo "CLUSTER_RESOURCE_GROUP:" $managed_rg
-        echo "managed_rg=$managed_rg" >> $GITHUB_ENV
-
         # ==== AKS ====
         AKS_CLUSTER_NAME=$(az deployment group show --name aks-main -g ${{ env.RG_APP }} --query properties.outputs.aksName.value -o tsv | tr -d '\r' | tr -d '"')
         echo "AKS_CLUSTER_NAME="$AKS_CLUSTER_NAME
@@ -156,12 +152,21 @@ jobs:
 
       shell: bash
 
+
+    - name: Set Dependent environment variables
+      run: |
+
+        CLUSTER_RESOURCE_GROUP=$(az aks show --resource-group ${{ env.RG_APP }} --name ${{ env.AKS_CLUSTER_NAME }} --query nodeResourceGroup -o tsv)
+        echo "CLUSTER_RESOURCE_GROUP:" $CLUSTER_RESOURCE_GROUP
+        echo "CLUSTER_RESOURCE_GROUP=$CLUSTER_RESOURCE_GROUP" >> $GITHUB_ENV
+      shell: bash
+
     - name: Display environment variables
       run: |
 
         echo "Checking GITHUB_ENV"
         echo "LOCAL_IP=$LOCAL_IP"
-        echo "managed_rg=$managed_rg"
+        echo "CLUSTER_RESOURCE_GROUP=$CLUSTER_RESOURCE_GROUP"
         echo "GH_WORKSPACE=$GH_WORKSPACE"
         echo "PG_SERVER_NAME="$PG_SERVER_NAME
         echo "PG_DB_NAME="$PG_DB_NAME
@@ -578,8 +583,8 @@ jobs:
             -p vnetName=${{ env.VNET_NAME }} \
             -p aksSvcIp=$ING_CTL_IP
 
-            echo "CLUSTER_RESOURCE_GROUP:" $managed_rg
-            ingControllerPublicIpId=$(az network public-ip list -g $managed_rg --query "[?ipAddress!=null]|[?contains(ipAddress, '$ING_CTL_IP')].[id]" --output tsv)
+            echo "CLUSTER_RESOURCE_GROUP:" $CLUSTER_RESOURCE_GROUP
+            ingControllerPublicIpId=$(az network public-ip list -g $CLUSTER_RESOURCE_GROUP --query "[?ipAddress!=null]|[?contains(ipAddress, '$ING_CTL_IP')].[id]" --output tsv)
             echo $ingControllerPublicIpId
             
             # az network public-ip update --ids $ingControllerPublicIpId --
