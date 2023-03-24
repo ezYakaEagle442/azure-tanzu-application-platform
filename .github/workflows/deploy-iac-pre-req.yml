@@ -279,6 +279,8 @@ jobs:
             -p appName=${{ env.APP_NAME }} \
             -p location=${{ env.LOCATION }} \
             -p ghRunnerSpnPrincipalId=${{ env.SPN_OBJECT_ID }} \
+            -p kvName=${{ env.KV_NAME }} \
+            -p kvRGName=${{ env.RG_KV }} \
             -p vnetName=${{ env.VNET_NAME }} \
             -p vnetCidr=${{ env.VNET_CIDR }} \
             -p aksSubnetCidr=${{ env.AKS_SUBNET_CIDR }} \
@@ -287,11 +289,9 @@ jobs:
             -p databaseSkuTier=${{ env.DB_SKU_TIER }} \
             -p mySQLServerName=${{ env.MYSQL_SERVER_NAME }} \
             -p mySqlVersion=${{ env.MYSQL_VERSION }} \
-            -p mySQLadministratorLoginPassword=${{ env.SPRING_DATASOURCE_PASSWORD }} \
             -p postgreSQLServerName=${{ env.PG_SERVER_NAME }} \
             -p postgreSQLVersion=${{ env.PG_VERSION }} \
             -p pgDbName=${{ env.PG_DB_NAME }} \
-            -p postgreSQLadministratorLoginPassword=${{ env.PG_ADM_PWD }} \
             -p pgCharset=${{ env.PG_CHARACTER_SET }} \
             -p pgCollation=${{ env.PG_COLLATION }} \
             -p acrName=${{ env.ACR_NAME }} \

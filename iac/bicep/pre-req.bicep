@@ -27,11 +27,6 @@ param aksSubnetName string = 'snet-aks'
 @description('The MySQL DB Admin Login.')
 param mySQLadministratorLogin string = 'mys_adm'
 
-@secure()
-@minLength(8)
-@description('The MySQL DB Admin Password.')
-param mySQLadministratorLoginPassword string
-
 @description('The MySQL server name')
 param mySQLServerName string = appName
 
@@ -73,11 +68,6 @@ param databaseSkuTier string = 'Burstable'
 @description('The PostgreSQL DB Admin Login. IMPORTANT: username can not start with prefix "pg_" which is reserved, ex: pg_adm would fails in Bicep. Admin login name cannot be azure_superuser, azuresu, azure_pg_admin, sa, admin, administrator, root, guest, dbmanager, loginmanager, dbo, information_schema, sys, db_accessadmin, db_backupoperator, db_datareader, db_datawriter, db_ddladmin, db_denydatareader, db_denydatawriter, db_owner, db_securityadmin, public')
 param postgreSQLadministratorLogin string = 'pgs_adm'
 
-@secure()
-@minLength(8)
-@description('The PostgreSQL DB Admin Password.')
-param postgreSQLadministratorLoginPassword string
-
 @description('The PostgreSQL server name')
 param postgreSQLServerName string = appName
 
@@ -110,6 +100,23 @@ param blobContainerName string = '${appName}-blob'
 
 @description('The GitHub Runner Service Principal Id')
 param ghRunnerSpnPrincipalId string
+
+@maxLength(24)
+@description('The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters.')
+param kvName string = 'kv-${appName}'
+
+@description('The name of the KV RG')
+param kvRGName string
+
+resource kvRG 'Microsoft.Resources/resourceGroups@2022-09-01' existing = {
+  name: kvRGName
+  scope: subscription()
+}
+
+resource kv 'Microsoft.KeyVault/vaults@2022-11-01' existing = {
+  name: kvName
+  scope: kvRG
+}  
 
 // https://docs.microsoft.com/en-us/azure/templates/microsoft.operationalinsights/workspaces?tabs=bicep
 resource logAnalyticsWorkspace  'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
@@ -247,7 +254,7 @@ module mysql './modules/mysql/mysql.bicep' = {
     databaseSkuName: databaseSkuName
     databaseSkuTier: databaseSkuTier
     mySQLadministratorLogin: mySQLadministratorLogin
-    mySQLadministratorLoginPassword: mySQLadministratorLoginPassword
+    mySQLadministratorLoginPassword: kv.getSecret('SPRING-DATASOURCE-PASSWORD')
     charset: mySqlCharset
     collation: mySqlCollation
     // The default number of managed outbound public IPs is 1.
@@ -272,7 +279,7 @@ module postgresqldb './modules/pg/postgresql.bicep' = {
     databaseSkuName: databaseSkuName
     databaseSkuTier: databaseSkuTier    
     postgreSQLadministratorLogin: postgreSQLadministratorLogin 
-    postgreSQLadministratorLoginPassword: postgreSQLadministratorLoginPassword
+    postgreSQLadministratorLoginPassword: kv.getSecret('PG-ADM-PWD')
     charset: pgCharset
     collation: pgCollation
   }
