@@ -237,14 +237,19 @@ jobs:
 
             # tanzu package repository list --namespace tap-install
             # tanzu package repository delete PACKAGE-REPO-NAME --namespace tap-install
-            tanzu package repository list --namespace ${{ env.TAP_INSTALL_NAMESPACE }} -o=custom-columns=:.metadata.name
+            echo "Verifying Package Repository List:"
+            echo ""
+            tanzu package repository list --namespace ${{ env.TAP_INSTALL_NAMESPACE }}
 
+            echo "Verifying packagerepositories CRD List:"
+            echo ""
             kubectl get packagerepositories -n ${{ env.TAP_INSTALL_NAMESPACE }} -o=custom-columns=:.metadata.name
 
             for repo in $(tanzu package repository list --namespace ${{ env.TAP_INSTALL_NAMESPACE }} -o=custom-columns=:.metadata.name)
             do
               echo "Verifying Package Repository $repo"
-              tanzu package repository delete $repo n ${{ env.TAP_INSTALL_NAMESPACE }} --yes
+              kubectl delete packagerepositories $repo  -n ${{ env.TAP_INSTALL_NAMESPACE }} --yes
+              # tanzu package repository delete $repo n ${{ env.TAP_INSTALL_NAMESPACE }} --yes
               # tanzu package installed delete $package -n ${{ env.TAP_INSTALL_NAMESPACE }} --yes
             done
 
