@@ -245,7 +245,8 @@ jobs:
             echo "Verifying packagerepositories CRD List:"
             kubectl get packagerepositories -n ${{ env.TAP_INSTALL_NAMESPACE }} -o=custom-columns=:.metadata.name
 
-            for repo in $(tanzu package repository list --namespace ${{ env.TAP_INSTALL_NAMESPACE }} -o=custom-columns=:.metadata.name)
+            # tanzu package repository list --namespace ${{ env.TAP_INSTALL_NAMESPACE }} -o=custom-columns=:.metadata.name
+            for repo in $(kubectl get packagerepositories -n ${{ env.TAP_INSTALL_NAMESPACE }} -o=custom-columns=:.metadata.name)
             do
               echo "Verifying Package Repository $repo"
               kubectl delete packagerepositories $repo  -n ${{ env.TAP_INSTALL_NAMESPACE }}
