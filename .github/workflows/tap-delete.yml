@@ -215,6 +215,7 @@ jobs:
       run: |
 
             echo "To troubleshoot, read https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/troubleshooting-tap-troubleshoot-install-tap.html"
+            # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/uninstall.html
             # https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap/tap-gui-install-tap-gui.html
 
             # kubectl get apps -n ${{ env.TAP_INSTALL_NAMESPACE }} 
@@ -227,12 +228,21 @@ jobs:
             # kubectl describe app buildservice -n tap-install
             for package in $(kubectl get apps -n ${{ env.TAP_INSTALL_NAMESPACE }} -o=custom-columns=:.metadata.name)
             do
-              echo "Verifying Package $package"
-              # tanzu package installed delete $package -n ${{ env.TAP_INSTALL_NAMESPACE }} --yes
+              echo "Verifying App $package"
+              tanzu package installed delete $package -n ${{ env.TAP_INSTALL_NAMESPACE }} --yes
             done
 
             # Deleting just the tap package is enough to delete correctly all its dependencies
-            tanzu package installed delete tap -n ${{ env.TAP_INSTALL_NAMESPACE }} --yes
+            # tanzu package installed delete tap -n ${{ env.TAP_INSTALL_NAMESPACE }} --yes
+
+            # tanzu package repository list --namespace tap-install
+            # tanzu package repository delete PACKAGE-REPO-NAME --namespace tap-install
+            for repo in $(tanzu package repository list --namespace ${{ env.TAP_INSTALL_NAMESPACE }} -o=custom-columns=:.metadata.name)
+            do
+              echo "Verifying Package Repository $repo"
+              tanzu package repository delete $repo n ${{ env.TAP_INSTALL_NAMESPACE }} --yes
+              # tanzu package installed delete $package -n ${{ env.TAP_INSTALL_NAMESPACE }} --yes
+            done
 
             az acr login --name ${{ env.REGISTRY_URL }} -u $acr_usr -p $acr_pwd
             az acr repository list --name ${{ env.AZURE_CONTAINER_REGISTRY }}
