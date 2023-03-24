@@ -260,12 +260,25 @@ jobs:
             az acr repository delete --repository ${{ env.REPOSITORY }}/tbs-full-deps --name ${{ env.AZURE_CONTAINER_REGISTRY }} -u $acr_usr -p $acr_pwd --yes
 
             kubectl delete ns ${{ env.TAP_INSTALL_NAMESPACE}} --ignore-not-found=true
+            kubectl get ns ${{ env.TAP_INSTALL_NAMESPACE}}  -o=json > tap-install-ns.json
+            kubectl patch ns/${{ env.TAP_INSTALL_NAMESPACE}} -p '{"metadata":{"finalizers":[]}}' --type=merge
+
             kubectl delete ns ${{ env.KAPP_NAMESPACE}} --ignore-not-found=true --force=true --wait=false
+            kubectl get ns ${{ env.KAPP_NAMESPACE}}  -o=json > kapp-controller-ns.json
+            kubectl patch ns/${{ env.KAPP_NAMESPACE}} -p '{"metadata":{"finalizers":[]}}' --type=merge
+
             kubectl delete ns ${{ env.DEV_NAMESPACE}} --ignore-not-found=true --force=true --wait=false
+            kubectl get ns ${{ env.DEV_NAMESPACE}}  -o=json > tap-dev-ns.json
+            kubectl patch ns/${{ env.DEV_NAMESPACE}} -p '{"metadata":{"finalizers":[]}}' --type=merge
 
             kubectl delete ns tanzu-cluster-essentials --ignore-not-found=true --force=true --wait=false
+            kubectl patch ns/tanzu-cluster-essentials -p '{"metadata":{"finalizers":[]}}' --type=merge
+
             kubectl delete ns secretgen-controller --ignore-not-found=true --force=true --wait=false
+            kubectl patch ns/secretgen-controller -p '{"metadata":{"finalizers":[]}}' --type=merge
+
             kubectl delete ns tanzu-package-repo-global --ignore-not-found=true --force=true --wait=false
+            kubectl patch ns/tanzu-package-repo-global -p '{"metadata":{"finalizers":[]}}' --type=merge
 
             kubectl get crd -o wide
 
@@ -353,8 +366,6 @@ jobs:
           helm uninstall cert-manager --namespace cert-manager
 
       shell: bash
-
-
 
     - name: Azure Logout security hardening
       run: |
