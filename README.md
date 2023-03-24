@@ -798,6 +798,8 @@ You need to set your own param values in :
 
 ```sh
 env:
+  # ==== Versions ====
+
   DEPLOYMENT_VERSION: 2.6.13
   AZ_CLI_VERSION: 2.45.0
   JAVA_VERSION: 11
@@ -808,8 +810,8 @@ env:
   LOCATION: westeurope # francecentral
   RG_KV: rg-kv-tanzu101 # RG where to deploy KV
   RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
-  
-  ACR_NAME: tanzu42 # customize this
+
+  # DNS  
   DNS_ZONE: cloudapp.azure.com
   APP_DNS_ZONE: tap.westeurope.cloudapp.azure.com
   CUSTOM_DNS: appinnohandsonlab.com # set here your own domain name
@@ -824,60 +826,53 @@ env:
   ING_NS: ingress # Namespace to use for the Ingress Controller
   AKS_IDENTITY_NAME: id-aks-tap42-cluster-dev-westeurope-101 # customize this , MUST BE 'id-aks-${appName}-cluster-dev-${location}-101'
 
-  # APPLICATION INSIGHTS
-  APPLICATIONINSIGHTS_CONFIGURATION_FILE: BOOT-INF/classes/applicationinsights.json
-
   # ==== Identities ====:
   CUSTOMERS_SVC_APP_ID_NAME: id-aks-tap42-petclinic-customers-service-dev-westeurope-101 # customize this, MUST BE 'id-aks-${appName}-petclinic-customers-service-dev-${location}-101'
   VETS_SVC_APP_ID_NAME: id-aks-tap42-petclinic-vets-service-dev-westeurope-101 # customize this, MUST BE 'id-aks-${appName}-petclinic-vets-service-dev-${location}-101'
   VISITS_SVC_APP_ID_NAME: id-aks-tap42-petclinic-visits-service-dev-westeurope-101 # customize this, MUST BE 'id-aks-${appName}-petclinic-visits-service-dev-${location}-101'
   CONFIG_SERVER_APP_ID_NAME: id-aks-tap42-petclinic-config-server-dev-westeurope-101 # customize this, MUST BE  'id-aks-${appName}-petclinic-config-server-dev-${location}-101'
  
-  MYSQL_SERVER_NAME: tap4242
-  MYSQL_DB_NAME: tap4242
+   # MySQL
+  MYSQL_SERVER_NAME: tap42
+  MYSQL_DB_NAME: petclinic
   MYSQL_ADM_USR: mys_adm
   MYSQL_TIME_ZONE: Europe/Paris
   MYSQL_CHARACTER_SET: utf8
   MYSQL_COLLATION: utf8_general_ci 
   MYSQL_PORT: 3306
+  MYSQL_VERSION: "5.7" # "8.0.21"
 
+   # SKU common for MySQL & PG
   DB_SKU_NAME: Standard_B1ms
   DB_SKU_TIER : Burstable
 
-  PG_SERVER_NAME: tap4242
-  PG_DB_NAME: tap4242
+  # PG
+  PG_SERVER_NAME: tap42
+  PG_DB_NAME: tap
   PG_ADM_USR: pgs_adm
   PG_TIME_ZONE: Europe/Paris
   PG_CHARACTER_SET: utf8
   PG_COLLATION: fr_FR.utf8 # select * from pg_collation ;
   PG_PORT: 5432
-
-  SPRING_CLOUD_AZURE_KEY_VAULT_ENDPOINT: https://kv-tap42.vault.azure.net/
-  KV_NAME: kv-tap42 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
-  SECRET_EXPIRY_DATE: 1703980800 # ==> 31/12/2023
+  PG_VERSION: "13"
 ```
 
 - [Maven Build workflow](./.github/workflows/maven-build.yml)
 ```sh
+
+  # ==== Versions ====
 
   DEPLOYMENT_VERSION: 2.6.13
   AZ_CLI_VERSION: 2.45.0
   JAVA_VERSION: 11
 
   # ==== General settings  ====
-  
-  AZURE_CONTAINER_REGISTRY: tanzu42 # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
-  REGISTRY_URL: tanzu42.azurecr.io  # set this to the URL of your registry
-  REPOSITORY: tap                  # set this to your ACR repository
-  PROJECT_NAME: petclinic                # set this to your project's name
 
-  KV_NAME: kv-tap42 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
   RG_KV: rg-kv-tanzu101 # RG where to deploy KV
   RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
 
-  # ==== Azure storage to store Artifacts , values must be consistent with the ones in storage.bicep ====:
-  AZ_STORAGE_NAME : statap42 # customize this
-  AZ_BLOB_CONTAINER_NAME: tap42-blob # customize this
+  REPOSITORY: tap                  # set this to your ACR repository
+  PROJECT_NAME: petclinic                # set this to your project's name
 
 ```
 
@@ -885,26 +880,18 @@ env:
 - [Maven Build workflow for the UI](./.github/workflows/maven-build-ui.yml)
 
 ```sh
+env:
 
+  # ==== Versions ====
+  
   DEPLOYMENT_VERSION: 2.6.13
   AZ_CLI_VERSION: 2.45.0
   JAVA_VERSION: 11
 
   # ==== General settings  ====
 
-  AZURE_CONTAINER_REGISTRY: tanzu42 # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
-  REGISTRY_URL: tanzu42.azurecr.io  # set this to the URL of your registry
-  REPOSITORY: tap                  # set this to your ACR repository
-  PROJECT_NAME: petclinic                # set this to your project's name
-
-  KV_NAME: kv-tap42 # The name of the KV, must be UNIQUE. A vault name must be between 3-24 alphanumeric characters
-  
-  RG_KV: rg-kv-tanzu101 # RG where to deploy KV
   RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
-
- # ==== Azure storage to store Artifacts , values must be consistent with the ones in storage.bicep ====:
-  AZ_STORAGE_NAME : statap42 # customize this
-  AZ_BLOB_CONTAINER_NAME: tap42-blob # customize this
+  REPOSITORY: tap                  # set this to your ACR repository
 
 ```
 
@@ -916,53 +903,29 @@ Note: the GH Hosted Runner / [Ubuntu latest image has already Azure CLI installe
 - [Tanzu Setup](./.github/workflows/tap-setup.yml)
 
 ```sh
-  APP_NAME: tap777
+env:
+
+  # ==== Versions ====
+  
+  TANZU_CLI_VERSION: v0.25.4
+  TAP_VERSION_NUMBER: 1.4.0
+  CERT_MANAGER_VERSION: v1.11.0
+  AZ_CLI_VERSION: 2.45.0
+
+  # ==== General settings  ====
+
+  APP_NAME: tap42
   LOCATION: westeurope # francecentral
   RG_KV: rg-kv-tanzu101 # RG where to deploy KV
   RG_APP: rg-aks-tap-apps # RG where to deploy the other Azure services: AKS, TAP, ACR, MySQL, etc.
   
-  DNS_ZONE: cloudapp.azure.com
-  APP_DNS_ZONE: westeurope.cloudapp.azure.com
-  CUSTOM_DNS: appinno.com
+  #DNS_ZONE: cloudapp.azure.com
+  #APP_DNS_ZONE: westeurope.cloudapp.azure.com
+  CUSTOM_DNS: appinnohandsonlab.com
   AZURE_DNS_LABEL_NAME: tap-gui
-  TANZU_DNS_CHILD_ZONE: tap.appinno.com
-
-  # ==== Azure storage t, values must be consistent with the ones in iac/bicep/modules/aks/storage.bicep ====:
-  AZ_STORAGE_NAME : statap42 # customize this
-  AZ_BLOB_CONTAINER_NAME: tap42-blob # customize this
-
-  # ==== Tanzu Tools ====
-  IMG_PKG_CONCURRENCY: 2 # 1 or 2 ONLY for GitHub pulic Runners /!\ not more. Test with value 42 on Self-Hosted Runners deployed to AKS
-
-  TANZU_INSTALL_DIR: tanzu
-  TANZU_ESSENTIALS: tanzu-cluster-essentials-linux-amd64-1.4.0.tgz
-  TANZU_GUI_CAT: tap-gui-blank-catalog.tgz
-  TANZU_CLI: tanzu-framework-linux-amd64-v0.25.4.tar # /!\ the version name must match M.n.p like v0.25.4 NOT v0.25.4.1
-
-  TANZU_BLOB_CLI: tanzu-cli
-  TANZU_BLOB_ESSENTIALS: tanzu-essentials
-  TANZU_BLOB_GUI_CAT: tanzu-catalog
-
-  TANZU_REGISTRY: registry.tanzu.vmware.com
-
-  AZURE_CONTAINER_REGISTRY: tanzu42 # The name of the ACR, must be UNIQUE. The name must contain only alphanumeric characters, be globally unique, and between 5 and 50 characters in length.
-  REGISTRY_URL: tanzu42.azurecr.io  # set this to the URL of your registry
-  REPOSITORY: tap                   # set this to your ACR repository
-  REPO_SUBFOLDER_APP_TAP: tanzu-app-tap
+  TANZU_DNS_CHILD_ZONE: tap.appinnohandsonlab.com
 
   CATALOG_URL: https://github.com/ezYakaEagle442/tap-catalog
-  TAP_NAMESPACE: tanzu
-  DEV_NAMESPACE: tap-dev
-  TAP_INSTALL_NAMESPACE: tap-install install
-
-  KAPP_NAMESPACE: kapp-controller
-  AKS_CLUSTER_NAME: aks-tap42  # set this to your AKS cluster name
-  CONTEXT_NAME: aks-tap42 # usuallythe conext is the same as the AKS cluster name
-
-  VNET_NAME: vnet-aks
-
-  DNS_PREFIX: tanzu-tap42 # customize this
-  ING_NS: tanzu-system-ingress # Namespace to use for the Ingress Controller
 
 ```
 
@@ -1012,6 +975,8 @@ APP_NAME=tap42
 
 aks_cluster_id=$(az aks show -n $AKS_CLUSTER_NAME -g $RG_APP --query id -o tsv)
 echo "AKS cluster ID : " $aks_cluster_id
+
+az aks get-credentials --name $AKS_CLUSTER_NAME -g $RG_APP
 
 # Create the first example group in Azure AD for the application developers
 TAP_APP_OPERATOR_ID=$(az ad group create --display-name tap-app-operator --mail-nickname tap-app-operator --query id -o tsv)
@@ -1073,6 +1038,13 @@ tanzu rbac binding add -g $TAP_APP_EDITOR_ID -r app-editor -n $KAPP_NAMESPACE
 
 # You must use one of the verified domain names in your organization ex: foo@xxxEnvMCAP123456.onmicrosoft.com
 USR_ID=$(az account show --query user.name -o tsv)
+
+APPDEV_ID=$(az ad group show  --group appdev-${APP_NAME} --query id -o tsv)
+echo "APPDEV GROUP ID: " $APPDEV_ID
+
+OPSSRE_ID=$(az ad group show --group opssre-${APP_NAME}  --query id -o tsv)
+echo "OPSSRE GROUP ID: " $OPSSRE_ID
+
 
 tanzu rbac binding add --user $USR_ID --role app-operator --namespace $DEV_NAMESPACE
 tanzu rbac binding add --user $USR_ID --role app-viewer --namespace $DEV_NAMESPACE
@@ -1163,3 +1135,32 @@ It is not possible to [fork twice a repository using the same user account.](htt
 However you can [duplicate a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/duplicating-a-repository)
 
 This repo [https://github.com/ezYakaEagle442/azure-tanzu-application-platform](https://github.com/ezYakaEagle442/azure-tanzu-application-platform) has been duplicated from [https://github.com/spring-petclinic/spring-petclinic-microservices](https://github.com/spring-petclinic/spring-petclinic-microservices)
+
+
+## K8S Tips
+
+
+```sh
+  source <(kubectl completion bash) # setup autocomplete in bash into the current shell, bash-completion package should be installed first.
+  echo "source <(kubectl completion bash)" >> ~/.bashrc 
+  alias k=kubectl
+  complete -F __start_kubectl k
+
+  alias kn='kubectl config set-context --current --namespace '
+
+  export gen="--dry-run=client -o yaml"
+
+  alias kp="kubectl get pods -o wide"
+  alias kd="kubectl get deployment -o wide"
+  alias ks="kubectl get svc -o wide"
+  alias kno="kubectl get nodes -o wide"
+
+  alias kdp="kubectl describe pod"
+  alias kdd="kubectl describe deployment"
+  alias kds="kubectl describe service"
+
+  vi ~/.vimrc
+  set ts=2 sw=2
+  . ~/.vimrc
+``
+
