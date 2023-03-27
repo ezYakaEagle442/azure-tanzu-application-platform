@@ -118,6 +118,14 @@ resource kv 'Microsoft.KeyVault/vaults@2022-11-01' existing = {
   scope: kvRG
 }  
 
+@allowed([
+  'CapacityReservation'
+  'LACluster'
+]
+)
+@description('The Log AnalyticsWorkspace SKU - see https://learn.microsoft.com/en-us/azure/azure-monitor/logs/cost-logs')
+param laSKU string = 'LACluster'
+
 // https://docs.microsoft.com/en-us/azure/templates/microsoft.operationalinsights/workspaces?tabs=bicep
 resource logAnalyticsWorkspace  'Microsoft.OperationalInsights/workspaces@2022-10-01' = {
   name: logAnalyticsWorkspaceName
@@ -128,11 +136,12 @@ resource logAnalyticsWorkspace  'Microsoft.OperationalInsights/workspaces@2022-1
       searchVersion: 1
     }
     sku: {
-      name: 'PerGB2018'
+      name: laSKU
     }
   })
 }
 output logAnalyticsWorkspaceResourceId string = logAnalyticsWorkspace.id
+output logAnalyticsWorkspaceName string = logAnalyticsWorkspace.name
 output logAnalyticsWorkspaceCustomerId string = logAnalyticsWorkspace.properties.customerId
 
 // https://docs.microsoft.com/en-us/azure/templates/microsoft.insights/components?tabs=bicep
