@@ -10,6 +10,17 @@ param location string = resourceGroup().location
 @description('The name of the Managed Cluster resource.')
 param clusterName string = 'aks-${appName}'
 
+@description('The AKS Cluster SKU name. See https://learn.microsoft.com/en-us/azure/aks/free-standard-pricing-tiers')
+param aksSkuName string = 'Base'
+
+@description('The AKS Cluster SKU Tier. See https://learn.microsoft.com/en-us/azure/templates/microsoft.containerservice/managedclusters?pivots=deployment-language-bicep#managedclustersku')
+@allowed([
+  'Free'
+  'Paid'
+  'Standard'
+])
+param aksSkuTier string = 'Free'
+
 @description('The AKS SSH public key')
 @secure()
 param sshPublicKey string
@@ -130,8 +141,8 @@ resource aks 'Microsoft.ContainerService/managedClusters@2022-11-02-preview' = {
   name: clusterName
   location: location
   sku: {
-    name: 'Basic'
-    tier: 'Free'
+    name: aksSkuName
+    tier: aksSkuTier
   }    
   identity: {
     type: 'UserAssigned'
