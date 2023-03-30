@@ -5,7 +5,7 @@ vim arrayContent.json
   "42.42.42.42"
 ]
 
-az deployment group create --name postgresql -f ./iac/bicep/modules/pg/postgresql.bicep -g rg-aca-tap-quarkus \
+az deployment group create --name postgresql -f ./iac/bicep/modules/pg/postgresql.bicep -g rg-aks-tap-apps \
 -p appName=tap42424242 -p location=westeurope -p postgreSQLadministratorLogin=pgs_adm \
 -p postgreSQLServerName=tap42424242 -p dbName=tap -p databaseSkuName=Standard_B1ms -p databaseSkuTier=Burstable -p postgreSQLVersion=13 \
 -p charset=utf8 -p collation=fr_FR.utf8 \
