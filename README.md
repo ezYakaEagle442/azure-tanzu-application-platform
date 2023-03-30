@@ -1105,6 +1105,19 @@ tanzu package installed update tap -p tap.tanzu.vmware.com -v $TAP_VERSION --val
 tanzu package installed list -A
 ```
 
+To check the TAP-GUI final configiuration inside the AKS cluster : 
+
+```sh
+kubernetes describe pod server-6d88c74f7d-mfrm7 -n tap-gui
+kubernetes logs server-6d88c74f7d-mfrm7 -n tap-gui
+kubernetes get secrets  -n tap-gui
+kubernetes get secret app-config-ver-1 -n tap-gui
+kubernetes get secret app-config-ver-1 -n tap-gui -o jsonpath='{.data}' > app-config.encoded
+cat app-config.encoded | base64 --decode > app-config.yaml
+
+```
+
+
 # Cost savings - Green-IT
 
 ```sh
