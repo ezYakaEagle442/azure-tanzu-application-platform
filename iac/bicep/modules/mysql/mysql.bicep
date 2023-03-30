@@ -8,7 +8,7 @@ az deployment group create --name mysqldb -f ./iac/bicep/modules/mysql/mysql.bic
 -p appName=tap42424242 -p location=westeurope -p mySQLadministratorLogin=pgs_adm \
 -p mySQLServerName=tap42424242 -p dbName=tap -p databaseSkuName=Standard_B1ms -p databaseSkuTier=Burstable -p mySqlVersion=5.7 \
 -p charset=utf8 -p collation=utf8_general_ci \
--p k8sOutboundPubIP=@arrayContent.json \
+-p k8sOutboundPubIP=42.42.42.42 \
 -p mySQLadministratorLoginPassword=xxx
 
 */
