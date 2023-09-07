@@ -28,6 +28,7 @@ Se also :
 - [repo from VMWare](https://github.com/pacphi/gha-workflows-with-gitops-for-tanzu-application-platform/blob/main/docs/AZURE.md)
 - [https://tap-gui.demo-aks.spuchol.me](https://tap-gui.demo-aks.spuchol.me)
 - [https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap.pdf](https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap.pdf)
+- [https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap-reference-architecture/GUID-reference-designs-tap-architecture-planning.html](https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.4/tap-reference-architecture/GUID-reference-designs-tap-architecture-planning.html)
 
 This microservices branch was initially derived from [AngularJS version](https://github.com/spring-petclinic/spring-petclinic-angular1) to demonstrate how to split sample Spring application into [microservices](http://www.martinfowler.com/articles/microservices.html).
 To achieve that goal we use IaC with Azure Bicep, MS build of OpenJDK 11, GitHub Actions, Azure AD Workload Identity, Azure Key Vault,  Azure Container Registry, Azure Database for MySQL
